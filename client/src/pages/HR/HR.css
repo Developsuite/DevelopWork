@@ -1,0 +1,394 @@
+.hr-dashboard {
+    padding: var(--space-xl);
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Header */
+.hr-dashboard__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+}
+
+.hr-dashboard__title {
+    font-size: var(--font-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.hr-dashboard__subtitle {
+    font-size: var(--font-base);
+    color: var(--text-secondary);
+}
+
+/* Stats Cards */
+.hr-dashboard__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.hr-dashboard__stat-card {
+    padding: var(--space-lg);
+    transition: transform var(--transition-base);
+}
+
+.hr-dashboard__stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.hr-dashboard__stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.hr-dashboard__stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hr-dashboard__stat-change {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.hr-dashboard__stat-change.positive {
+    color: var(--success);
+    background: var(--success-light);
+}
+
+.hr-dashboard__stat-change.negative {
+    color: var(--danger);
+    background: var(--danger-light);
+}
+
+.hr-dashboard__stat-value {
+    font-size: var(--font-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.hr-dashboard__stat-label {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Content Layout */
+.hr-dashboard__content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--space-lg);
+}
+
+/* Main Section */
+.hr-dashboard__main {
+    min-width: 0;
+}
+
+.hr-dashboard__section {
+    padding: var(--space-lg);
+}
+
+.hr-dashboard__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.hr-dashboard__section-title {
+    font-size: var(--font-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Filters */
+.hr-dashboard__filters {
+    display: flex;
+    gap: var(--space-md);
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.hr-dashboard__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0 var(--space-md);
+    min-width: 280px;
+}
+
+.hr-dashboard__search svg {
+    color: var(--text-muted);
+    margin-right: var(--space-sm);
+}
+
+.hr-dashboard__search input {
+    border: none;
+    background: transparent;
+    padding: 10px 0;
+    font-size: var(--font-sm);
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.hr-dashboard__search input::placeholder {
+    color: var(--text-muted);
+}
+
+.hr-dashboard__department-filter {
+    padding: 10px var(--space-md);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.hr-dashboard__department-filter:hover {
+    border-color: var(--primary-500);
+}
+
+/* Employee List */
+.hr-dashboard__employee-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.hr-dashboard__employee-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.hr-dashboard__employee-card:hover {
+    border-color: var(--primary-500);
+    transform: translateX(4px);
+}
+
+.hr-dashboard__employee-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex: 1;
+    min-width: 0;
+}
+
+.hr-dashboard__employee-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.hr-dashboard__employee-name {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.hr-dashboard__employee-role {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.hr-dashboard__employee-meta {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.hr-dashboard__employee-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+}
+
+.hr-dashboard__employee-meta svg {
+    flex-shrink: 0;
+}
+
+.hr-dashboard__employee-details {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.hr-dashboard__employee-menu {
+    padding: var(--space-sm);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+.hr-dashboard__employee-menu:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Sidebar */
+.hr-dashboard__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.hr-dashboard__widget {
+    padding: var(--space-lg);
+}
+
+.hr-dashboard__widget-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+}
+
+/* Events */
+.hr-dashboard__events {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.hr-dashboard__event {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.hr-dashboard__event:hover {
+    border-color: var(--primary-500);
+}
+
+.hr-dashboard__event-date {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-50);
+    color: var(--primary-500);
+    border-radius: var(--radius-md);
+    font-size: var(--font-xs);
+    font-weight: 700;
+    text-align: center;
+}
+
+.hr-dashboard__event-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.hr-dashboard__event-title {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+/* Quick Actions */
+.hr-dashboard__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .hr-dashboard__content {
+        grid-template-columns: 1fr;
+    }
+
+    .hr-dashboard__sidebar {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 768px) {
+    .hr-dashboard {
+        padding: var(--space-md);
+    }
+
+    .hr-dashboard__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+
+    .hr-dashboard__stats {
+        grid-template-columns: 1fr;
+    }
+
+    .hr-dashboard__section-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .hr-dashboard__filters {
+        flex-direction: column;
+    }
+
+    .hr-dashboard__search {
+        min-width: 100%;
+    }
+
+    .hr-dashboard__employee-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-md);
+    }
+
+    .hr-dashboard__employee-main {
+        width: 100%;
+    }
+
+    .hr-dashboard__employee-details {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .hr-dashboard__sidebar {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+}

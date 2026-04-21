@@ -1,0 +1,45 @@
+.not-found {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    padding: 24px;
+    background: var(--bg-primary);
+}
+
+.not-found__content {
+    animation: fadeInUp 0.4s ease;
+}
+
+.not-found__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: var(--font-xl);
+    font-weight: 700;
+    color: var(--primary-500);
+    margin-bottom: 32px;
+}
+
+.not-found__code {
+    font-size: 6rem;
+    font-weight: 800;
+    color: var(--gray-200);
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.not-found__title {
+    font-size: var(--font-2xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.not-found__text {
+    font-size: var(--font-base);
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}

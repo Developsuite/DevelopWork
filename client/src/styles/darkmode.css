@@ -1,0 +1,392 @@
+/* ============================================
+   DevelopWork - Dark Mode Theme
+   Applied when [data-theme="dark"] on <html>
+   ============================================ */
+
+[data-theme="dark"] {
+    /* Primary Blue — slightly brighter for dark bg */
+    --primary-50: rgba(0, 85, 254, 0.08);
+    --primary-100: rgba(0, 85, 254, 0.12);
+    --primary-200: rgba(0, 85, 254, 0.2);
+    --primary-300: #4D8AFF;
+    --primary-400: #3377FE;
+    --primary-500: #3B82F6;
+    --primary-600: #5A9BFF;
+    --primary-700: #7FB3FF;
+    --primary-800: #A6CCFF;
+    --primary-900: #D0E4FF;
+
+    /* Neutral / Gray — inverted for dark */
+    --gray-50: #0F1117;
+    --gray-100: #151822;
+    --gray-200: #1C2030;
+    --gray-300: #252A3A;
+    --gray-400: #363D50;
+    --gray-500: #5A6270;
+    --gray-600: #8B929E;
+    --gray-700: #B0B7C3;
+    --gray-800: #D1D5DB;
+    --gray-900: #F0F2F5;
+
+    /* Semantic Colors — slightly adjusted for dark */
+    --success: #34D399;
+    --success-light: rgba(16, 185, 129, 0.12);
+    --warning: #FBBF24;
+    --warning-light: rgba(245, 158, 11, 0.12);
+    --danger: #F87171;
+    --danger-light: rgba(239, 68, 68, 0.12);
+    --info: #60A5FA;
+    --info-light: rgba(59, 130, 246, 0.12);
+
+    /* Background */
+    --bg-body: #0C0E16;
+    --bg-primary: #12151F;
+    --bg-secondary: #181C28;
+    --bg-sidebar: rgba(18, 21, 31, 0.8);
+    --bg-hover: rgba(59, 130, 246, 0.06);
+    --bg-active: rgba(59, 130, 246, 0.1);
+    --bg-overlay: rgba(0, 0, 0, 0.5);
+
+    /* Text */
+    --text-primary: #F0F2F5;
+    --text-secondary: #8B929E;
+    --text-muted: #5A6270;
+    --text-inverse: #0C0E16;
+    --text-link: #5A9BFF;
+
+    /* Borders */
+    --border-light: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.08);
+    --border-focus: #3B82F6;
+
+    /* Neomorphism Shadows — dark mode */
+    --neo-shadow: 6px 6px 16px rgba(0, 0, 0, 0.35), -6px -6px 16px rgba(40, 45, 60, 0.15);
+    --neo-shadow-sm: 3px 3px 10px rgba(0, 0, 0, 0.3), -3px -3px 10px rgba(40, 45, 60, 0.1);
+    --neo-shadow-lg: 10px 10px 28px rgba(0, 0, 0, 0.4), -10px -10px 28px rgba(40, 45, 60, 0.12);
+    --neo-inset: inset 3px 3px 6px rgba(0, 0, 0, 0.3), inset -3px -3px 6px rgba(40, 45, 60, 0.1);
+    --neo-inset-sm: inset 2px 2px 5px rgba(0, 0, 0, 0.25), inset -2px -2px 5px rgba(40, 45, 60, 0.08);
+
+    /* Glass Shadows — dark mode */
+    --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-glass-lg: 0 16px 48px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-glass-xl: 0 24px 64px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.15);
+
+    /* Flat Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* ---- Dark Mode Glass Overrides ---- */
+[data-theme="dark"] .glass {
+    background: rgba(18, 21, 31, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .glass-card {
+    background: rgba(24, 28, 40, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.15),
+        0 1px 4px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .glass-card:hover {
+    background: rgba(30, 34, 48, 0.7);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        0 2px 8px rgba(0, 0, 0, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .glass-elevated {
+    background: rgba(24, 28, 40, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .glass-sidebar {
+    background: rgba(18, 21, 31, 0.75);
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .glass-topbar {
+    background: rgba(18, 21, 31, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .glass-neo {
+    background: rgba(24, 28, 40, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+        6px 6px 16px rgba(0, 0, 0, 0.3),
+        -6px -6px 16px rgba(40, 45, 60, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .glass-neo:hover {
+    background: rgba(30, 34, 48, 0.65);
+    box-shadow:
+        8px 8px 20px rgba(0, 0, 0, 0.35),
+        -8px -8px 20px rgba(40, 45, 60, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* ---- Dark Mode Component Overrides ---- */
+
+/* Inputs */
+[data-theme="dark"] .glass-input,
+[data-theme="dark"] .neo-input {
+    background: rgba(12, 14, 22, 0.5);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .glass-input:focus,
+[data-theme="dark"] .neo-input:focus {
+    background: rgba(12, 14, 22, 0.7);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Buttons */
+[data-theme="dark"] .dw-button--secondary {
+    background: rgba(24, 28, 40, 0.6);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dw-button--secondary:hover:not(:disabled) {
+    background: rgba(30, 34, 48, 0.7);
+}
+
+[data-theme="dark"] .dw-button--ghost:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+[data-theme="dark"] .dw-button--outline {
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* Sidebar Items */
+[data-theme="dark"] .sidebar__board-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .sidebar__board-item.active {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+[data-theme="dark"] .workspace-switcher {
+    background: rgba(12, 14, 22, 0.4);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .workspace-switcher:hover {
+    background: rgba(12, 14, 22, 0.6);
+}
+
+[data-theme="dark"] .workspace-switcher__icon {
+    background: rgba(59, 130, 246, 0.12);
+}
+
+/* TopBar */
+[data-theme="dark"] .topbar__search-input {
+    background: rgba(12, 14, 22, 0.4);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .topbar__search-input:focus {
+    background: rgba(12, 14, 22, 0.6);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="dark"] .topbar__search-shortcut {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .topbar__profile {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .topbar__profile:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .topbar__icon-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Table View */
+[data-theme="dark"] .table-view__table {
+    background: rgba(24, 28, 40, 0.4);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .table-view__thead th {
+    background: rgba(18, 21, 31, 0.5);
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .table-view__row:hover {
+    background: rgba(59, 130, 246, 0.04);
+}
+
+[data-theme="dark"] .table-view__row td {
+    border-bottom-color: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .table-group__header:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .table-group__count {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .table-view__add-btn {
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .table-view__add-btn:hover {
+    border-color: rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.04);
+}
+
+/* View Switcher */
+[data-theme="dark"] .view-switcher {
+    background: rgba(12, 14, 22, 0.4);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .view-switcher__btn.active {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--primary-500);
+}
+
+/* Kanban */
+[data-theme="dark"] .kanban-column__body {
+    background: rgba(12, 14, 22, 0.3);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .kanban-column__count {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .kanban-column__add {
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .kanban-column__add:hover {
+    background: rgba(59, 130, 246, 0.04);
+    border-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Drawer */
+[data-theme="dark"] .item-drawer-overlay {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .item-drawer__header {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .item-drawer__tabs {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .item-drawer__comment-input {
+    border-top-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .item-drawer__comment-input textarea {
+    background: rgba(12, 14, 22, 0.4);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+/* Dashboard */
+[data-theme="dark"] .dashboard__activity-item:hover {
+    background: rgba(59, 130, 246, 0.04);
+}
+
+[data-theme="dark"] .dashboard__stat-change.positive {
+    background: rgba(52, 211, 153, 0.12);
+}
+
+[data-theme="dark"] .dashboard__stat-change.negative {
+    background: rgba(248, 113, 113, 0.12);
+}
+
+/* Login Page */
+[data-theme="dark"] .login-page__form-section {
+    background: var(--bg-body);
+}
+
+[data-theme="dark"] .login-page__input {
+    background: rgba(12, 14, 22, 0.5);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .login-page__input:focus {
+    background: rgba(12, 14, 22, 0.7);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .login-page__social-btn {
+    background: rgba(24, 28, 40, 0.5);
+    border-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .login-page__social-btn:hover {
+    background: rgba(30, 34, 48, 0.7);
+}
+
+[data-theme="dark"] .login-page__divider::before,
+[data-theme="dark"] .login-page__divider::after {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Sidebar dividers */
+[data-theme="dark"] .sidebar__logo {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .sidebar__workspace {
+    border-bottom-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .sidebar__section-add:hover {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+/* 404 Page */
+[data-theme="dark"] .not-found {
+    background: var(--bg-body);
+}
+
+[data-theme="dark"] .not-found__code {
+    color: var(--gray-300);
+}
+
+/* Badge overrides */
+[data-theme="dark"] .dw-badge--tag {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}

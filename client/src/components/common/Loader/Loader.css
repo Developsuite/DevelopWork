@@ -1,0 +1,54 @@
+.dw-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+}
+
+.dw-spinner {
+    animation: spin 0.8s linear infinite;
+    color: var(--primary-500);
+}
+
+.dw-loader--full {
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+}
+
+/* Skeleton Loader */
+.dw-skeleton {
+    background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-50) 50%, var(--gray-100) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+}
+
+.dw-skeleton--text {
+    height: 14px;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.dw-skeleton--title {
+    height: 20px;
+    width: 60%;
+    margin-bottom: 12px;
+}
+
+.dw-skeleton--avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+}
+
+.dw-skeleton--card {
+    height: 120px;
+    width: 100%;
+}
+
+.dw-skeleton--row {
+    height: 44px;
+    width: 100%;
+    margin-bottom: 4px;
+}

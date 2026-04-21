@@ -1,0 +1,122 @@
+.dw-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 20px;
+    font-family: var(--font-family);
+    font-size: var(--font-sm);
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    white-space: nowrap;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    position: relative;
+    overflow: hidden;
+}
+
+.dw-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Primary — vibrant blue with glow */
+.dw-button--primary {
+    background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-400) 100%);
+    color: var(--text-inverse);
+    box-shadow: 0 2px 8px rgba(0, 85, 254, 0.2);
+}
+
+.dw-button--primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%);
+    box-shadow: 0 4px 16px rgba(0, 85, 254, 0.3);
+    transform: translateY(-1px);
+}
+
+.dw-button--primary:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 4px rgba(0, 85, 254, 0.2);
+}
+
+/* Secondary — neomorphic */
+.dw-button--secondary {
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: var(--neo-shadow-sm);
+}
+
+.dw-button--secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: var(--neo-shadow);
+}
+
+.dw-button--secondary:active:not(:disabled) {
+    box-shadow: var(--neo-inset-sm);
+}
+
+/* Ghost — minimal */
+.dw-button--ghost {
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+.dw-button--ghost:hover:not(:disabled) {
+    background: rgba(0, 85, 254, 0.04);
+    color: var(--primary-500);
+}
+
+/* Danger */
+.dw-button--danger {
+    background: linear-gradient(135deg, var(--danger) 0%, #DC2626 100%);
+    color: var(--text-inverse);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.dw-button--danger:hover:not(:disabled) {
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Outline */
+.dw-button--outline {
+    background: transparent;
+    color: var(--primary-500);
+    border: 1.5px solid rgba(0, 85, 254, 0.2);
+}
+
+.dw-button--outline:hover:not(:disabled) {
+    background: rgba(0, 85, 254, 0.04);
+    border-color: rgba(0, 85, 254, 0.35);
+}
+
+/* Sizes */
+.dw-button--sm {
+    padding: 6px 14px;
+    font-size: var(--font-xs);
+    border-radius: var(--radius-sm);
+}
+
+.dw-button--lg {
+    padding: 12px 28px;
+    font-size: var(--font-md);
+    border-radius: var(--radius-md);
+}
+
+.dw-button--icon {
+    padding: 9px;
+    border-radius: var(--radius-md);
+}
+
+.dw-button--full {
+    width: 100%;
+}
+
+.dw-button .button-spinner {
+    animation: spin 0.6s linear infinite;
+    width: 16px;
+    height: 16px;
+}

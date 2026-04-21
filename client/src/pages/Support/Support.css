@@ -1,0 +1,333 @@
+.support-dashboard {
+    padding: var(--space-xl);
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.support-dashboard__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+}
+
+.support-dashboard__title {
+    font-size: var(--font-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.support-dashboard__subtitle {
+    font-size: var(--font-base);
+    color: var(--text-secondary);
+}
+
+.support-dashboard__header-actions {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.support-dashboard__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.support-dashboard__stat-card { padding: var(--space-lg); transition: transform var(--transition-base); }
+.support-dashboard__stat-card:hover { transform: translateY(-2px); }
+
+.support-dashboard__stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+}
+
+.support-dashboard__stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.support-dashboard__stat-change {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.support-dashboard__stat-change.positive { color: var(--success); background: var(--success-light); }
+.support-dashboard__stat-change.negative { color: var(--danger); background: var(--danger-light); }
+
+.support-dashboard__stat-value {
+    font-size: var(--font-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.support-dashboard__stat-label {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.support-dashboard__content {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: var(--space-lg);
+}
+
+.support-dashboard__main { min-width: 0; }
+
+.support-dashboard__section { padding: var(--space-lg); }
+
+.support-dashboard__section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.support-dashboard__section-title {
+    font-size: var(--font-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.support-dashboard__filters {
+    display: flex;
+    gap: var(--space-md);
+    flex: 1;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.support-dashboard__search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 0 var(--space-md);
+    min-width: 240px;
+}
+
+.support-dashboard__search svg { color: var(--text-muted); margin-right: var(--space-sm); }
+
+.support-dashboard__search input {
+    border: none;
+    background: transparent;
+    padding: 10px 0;
+    font-size: var(--font-sm);
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.support-dashboard__search input::placeholder { color: var(--text-muted); }
+
+.support-dashboard__filter {
+    padding: 10px var(--space-md);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.support-dashboard__filter:hover { border-color: var(--primary-500); }
+
+/* Ticket List */
+.support-dashboard__ticket-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.support-dashboard__ticket-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.support-dashboard__ticket-card:hover {
+    border-color: var(--primary-500);
+    transform: translateX(4px);
+}
+
+.support-dashboard__ticket-main {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    flex: 1;
+    min-width: 0;
+}
+
+.support-dashboard__ticket-id {
+    flex-shrink: 0;
+    font-size: var(--font-xs);
+    font-weight: 700;
+    color: var(--primary-500);
+    background: var(--primary-50);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    margin-top: 2px;
+}
+
+.support-dashboard__ticket-info { flex: 1; min-width: 0; }
+
+.support-dashboard__ticket-subject {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.support-dashboard__ticket-meta {
+    display: flex;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.support-dashboard__ticket-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+}
+
+.support-dashboard__ticket-details {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-shrink: 0;
+}
+
+.support-dashboard__ticket-menu {
+    padding: var(--space-sm);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+.support-dashboard__ticket-menu:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* Sidebar */
+.support-dashboard__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.support-dashboard__widget { padding: var(--space-lg); }
+
+.support-dashboard__widget-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-md);
+}
+
+/* SLA Overview */
+.support-dashboard__sla {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.support-dashboard__sla-item {
+    padding: var(--space-md);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.support-dashboard__sla-item:hover { border-color: var(--primary-500); }
+
+.support-dashboard__sla-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.support-dashboard__sla-metric {
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.support-dashboard__sla-check {
+    color: var(--success);
+}
+
+.support-dashboard__sla-values {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.support-dashboard__sla-actual {
+    font-size: var(--font-lg);
+    font-weight: 700;
+    color: var(--success);
+}
+
+.support-dashboard__sla-target {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+}
+
+.support-dashboard__actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .support-dashboard__content { grid-template-columns: 1fr; }
+    .support-dashboard__sidebar { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+}
+
+@media (max-width: 768px) {
+    .support-dashboard { padding: var(--space-md); }
+    .support-dashboard__header { flex-direction: column; align-items: flex-start; }
+    .support-dashboard__stats { grid-template-columns: 1fr; }
+    .support-dashboard__section-header { flex-direction: column; align-items: stretch; }
+    .support-dashboard__filters { flex-direction: column; }
+    .support-dashboard__search { min-width: 100%; }
+    .support-dashboard__ticket-card { flex-direction: column; align-items: flex-start; }
+    .support-dashboard__ticket-details { width: 100%; flex-wrap: wrap; }
+    .support-dashboard__sidebar { grid-template-columns: 1fr; }
+}

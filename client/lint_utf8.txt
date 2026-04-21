@@ -1,0 +1,95 @@
+
+> client@0.0.0 lint
+> eslint .
+
+
+D:\FYP_Antigravity\client\src\components\layout\IconRail\IconRail.jsx
+   1:10  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+  30:11  error  'location' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\FYP_Antigravity\client\src\pages\Board\Board.jsx
+   14:42  error    'getInitials' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+   84:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+  82 |     // Kanban: group items by status
+  83 |     const statusColumn = board.columns.find((c) => c.type === 'status');
+> 84 |     const kanbanColumns = useMemo(() => {
+     |                           ^^^^^^^^^^^^^^^
+> 85 |         if (!statusColumn || !statusColumn.options) return [];
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 86 |         return statusColumn.options.map((option) => ({
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 87 |             ...option,
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 88 |             items: boardItems.filter((item) => item.fields[statusColumn._id] === option.label),
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 89 |         }));
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 90 |     }, [boardItems, statusColumn]);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Could not preserve existing memoization
+  91 |
+  92 |     // Drag and Drop handler
+  93 |     const handleDragEnd = useCallback((result) => {  react-hooks/preserve-manual-memoization
+   90:9   error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+  88 |             items: boardItems.filter((item) => item.fields[statusColumn._id] === option.label),
+  89 |         }));
+> 90 |     }, [boardItems, statusColumn]);
+     |         ^^^^^^^^^^ This dependency may be modified later
+  91 |
+  92 |     // Drag and Drop handler
+  93 |     const handleDragEnd = useCallback((result) => {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react-hooks/preserve-manual-memoization
+   90:21  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+  88 |             items: boardItems.filter((item) => item.fields[statusColumn._id] === option.label),
+  89 |         }));
+> 90 |     }, [boardItems, statusColumn]);
+     |                     ^^^^^^^^^^^^ This dependency may be modified later
+  91 |
+  92 |     // Drag and Drop handler
+  93 |     const handleDragEnd = useCallback((result) => {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/preserve-manual-memoization
+   93:39  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.
+
+   91 |
+   92 |     // Drag and Drop handler
+>  93 |     const handleDragEnd = useCallback((result) => {
+      |                                       ^^^^^^^^^^^^^
+>  94 |         const { source, destination, draggableId } = result;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  95 |
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 135 |         });
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 136 |     }, [statusColumn]);
+      | ^^^^^^ Could not preserve existing memoization
+  137 |
+  138 |     const views = [
+  139 |         { key: 'table', label: 'Table', icon: Table2 },                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/preserve-manual-memoization
+  136:8   warning  React Hook useCallback has a missing dependency: 'board._id'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         react-hooks/exhaustive-deps
+  136:9   error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly.
+
+  134 |             return newItems;
+  135 |         });
+> 136 |     }, [statusColumn]);
+      |         ^^^^^^^^^^^^ This dependency may be modified later
+  137 |
+  138 |     const views = [
+  139 |         { key: 'table', label: 'Table', icon: Table2 },                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/preserve-manual-memoization
+
+D:\FYP_Antigravity\client\src\store\slices\uiSlice.js
+  33:74  error  Empty block statement  no-empty
+  37:74  error  Empty block statement  no-empty
+
+✖ 11 problems (10 errors, 1 warning)
+

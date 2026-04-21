@@ -1,0 +1,210 @@
+/* ========================================
+   Icon Rail — Narrow Left Module Panel
+   Light theme by default, dark in dark mode
+   ======================================== */
+
+.icon-rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--icon-rail-width, 60px);
+    height: 100vh;
+    background: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: calc(var(--z-sidebar) + 1);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 0;
+    user-select: none;
+    box-shadow: 1px 0 8px rgba(0, 0, 0, 0.03);
+}
+
+/* Logo */
+.icon-rail__logo {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 0 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    margin-bottom: 6px;
+}
+
+.icon-rail__logo-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0055FE, #3377FE);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 14px rgba(0, 85, 254, 0.35);
+    transition: transform var(--transition-base);
+}
+
+.icon-rail__logo-icon:hover {
+    transform: scale(1.08);
+}
+
+/* Navigation */
+.icon-rail__nav {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Icon Button */
+.icon-rail__btn {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: var(--font-family);
+    padding: 0;
+}
+
+.icon-rail__btn:hover {
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.04);
+    transform: scale(1.05);
+}
+
+.icon-rail__btn.active {
+    color: var(--module-color, #579BFC);
+    background: rgba(0, 85, 254, 0.06);
+}
+
+/* Active indicator bar */
+.icon-rail__btn-indicator {
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    border-radius: 0 3px 3px 0;
+    background: var(--module-color, #579BFC);
+    transition: height 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-rail__btn.active .icon-rail__btn-indicator {
+    height: 20px;
+}
+
+/* Small label under icon */
+.icon-rail__label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    opacity: 0.7;
+    line-height: 1;
+    display: none;
+}
+
+/* Tooltip on hover */
+.icon-rail__btn::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 12px;
+    background: var(--gray-800);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease, transform 150ms ease;
+    transform: translateY(-50%) translateX(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+}
+
+.icon-rail__btn:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* Bottom section */
+.icon-rail__bottom {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.icon-rail__avatar {
+    margin-top: 4px;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: transform var(--transition-fast);
+}
+
+.icon-rail__avatar:hover {
+    transform: scale(1.1);
+}
+
+/* ---- Dark Theme ---- */
+[data-theme="dark"] .icon-rail {
+    background: #1A1D23;
+    border-right-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 1px 0 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .icon-rail__logo {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .icon-rail__btn {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme="dark"] .icon-rail__btn:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .icon-rail__btn.active {
+    color: var(--module-color, #579BFC);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .icon-rail__btn::after {
+    background: #2A2D35;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .icon-rail__bottom {
+    border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .icon-rail {
+        display: none;
+    }
+}
