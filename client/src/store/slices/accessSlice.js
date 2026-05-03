@@ -69,6 +69,67 @@ const initialState = {
         },
     ],
 
+    // Full manager profiles with credentials and teams
+    managers: [
+        {
+            id: 'mgr-1',
+            userId: 'user-2',
+            name: 'Sarah Ahmed',
+            email: 'sarah@developwork.com',
+            password: 'manager123',
+            assignedModule: 'projects',
+            teams: [
+                {
+                    id: 'team-mgr-1',
+                    name: 'Frontend Team',
+                    members: [
+                        { id: 'mem-1', name: 'Usman Ali', email: 'usman@developwork.com', role: 'Developer', joinedAt: '2026-03-16T10:00:00Z' },
+                        { id: 'mem-2', name: 'Hina Tariq', email: 'hina@developwork.com', role: 'Designer', joinedAt: '2026-03-17T10:00:00Z' },
+                    ],
+                },
+            ],
+            createdAt: '2026-03-15T10:00:00Z',
+        },
+        {
+            id: 'mgr-2',
+            userId: 'user-5',
+            name: 'Omar Raza',
+            email: 'omar@developwork.com',
+            password: 'manager123',
+            assignedModule: 'hr',
+            teams: [
+                {
+                    id: 'team-mgr-2',
+                    name: 'Recruitment Cell',
+                    members: [
+                        { id: 'mem-3', name: 'Zara Sheikh', email: 'zara@developwork.com', role: 'Recruiter', joinedAt: '2026-03-11T10:00:00Z' },
+                    ],
+                },
+            ],
+            createdAt: '2026-03-10T14:30:00Z',
+        },
+        {
+            id: 'mgr-3',
+            userId: 'user-3',
+            name: 'Ali Hassan',
+            email: 'ali@developwork.com',
+            password: 'manager123',
+            assignedModule: 'finance',
+            teams: [],
+            createdAt: '2026-03-12T09:00:00Z',
+        },
+        {
+            id: 'mgr-4',
+            userId: 'user-4',
+            name: 'Fatima Noor',
+            email: 'fatima@developwork.com',
+            password: 'manager123',
+            assignedModule: 'leads',
+            teams: [],
+            createdAt: '2026-03-18T11:00:00Z',
+        },
+    ],
+
     // Pending invitations
     pendingInvites: [
         {
@@ -79,6 +140,12 @@ const initialState = {
             status: 'pending',
         },
     ],
+
+    // Credentials modal state
+    credentialsModal: {
+        open: false,
+        manager: null,
+    },
 
     // Currently selected module in the hub for access management
     selectedModuleForAccess: null,
@@ -125,6 +192,88 @@ const accessSlice = createSlice({
         removeInvite: (state, action) => {
             state.pendingInvites = state.pendingInvites.filter(i => i.id !== action.payload);
         },
+
+        // Manager CRUD
+        addManager: (state, action) => {
+            const { userId, name, email, moduleKey } = action.payload;
+            const newManager = {
+                id: `mgr-${Date.now()}`,
+                userId,
+                name,
+                email,
+                password: 'manager123',
+                assignedModule: moduleKey,
+                teams: [],
+                createdAt: new Date().toISOString(),
+            };
+            state.managers.push(newManager);
+            // Open the credentials modal
+            state.credentialsModal = {
+                open: true,
+                manager: newManager,
+            };
+        },
+        removeManager: (state, action) => {
+            state.managers = state.managers.filter(m => m.id !== action.payload);
+        },
+        closeCredentialsModal: (state) => {
+            state.credentialsModal = { open: false, manager: null };
+        },
+
+        // Team management within a manager's module
+        addTeamToModule: (state, action) => {
+            const { managerId, teamName } = action.payload;
+            const manager = state.managers.find(m => m.id === managerId);
+            if (manager) {
+                manager.teams.push({
+                    id: `team-${Date.now()}`,
+                    name: teamName,
+                    members: [],
+                });
+            }
+        },
+        removeTeamFromModule: (state, action) => {
+            const { managerId, teamId } = action.payload;
+            const manager = state.managers.find(m => m.id === managerId);
+            if (manager) {
+                manager.teams = manager.teams.filter(t => t.id !== teamId);
+            }
+        },
+        renameTeam: (state, action) => {
+            const { managerId, teamId, newName } = action.payload;
+            const manager = state.managers.find(m => m.id === managerId);
+            if (manager) {
+                const team = manager.teams.find(t => t.id === teamId);
+                if (team) team.name = newName;
+            }
+        },
+
+        // Team member management
+        addTeamMember: (state, action) => {
+            const { managerId, teamId, member } = action.payload;
+            const manager = state.managers.find(m => m.id === managerId);
+            if (manager) {
+                const team = manager.teams.find(t => t.id === teamId);
+                if (team) {
+                    team.members.push({
+                        id: `mem-${Date.now()}`,
+                        joinedAt: new Date().toISOString(),
+                        ...member,
+                    });
+                }
+            }
+        },
+        removeTeamMember: (state, action) => {
+            const { managerId, teamId, memberId } = action.payload;
+            const manager = state.managers.find(m => m.id === managerId);
+            if (manager) {
+                const team = manager.teams.find(t => t.id === teamId);
+                if (team) {
+                    team.members = team.members.filter(m => m.id !== memberId);
+                }
+            }
+        },
+
         setSelectedModuleForAccess: (state, action) => {
             state.selectedModuleForAccess = action.payload;
         },
@@ -150,6 +299,14 @@ export const {
     removeAccess,
     addInvite,
     removeInvite,
+    addManager,
+    removeManager,
+    closeCredentialsModal,
+    addTeamToModule,
+    removeTeamFromModule,
+    renameTeam,
+    addTeamMember,
+    removeTeamMember,
     setSelectedModuleForAccess,
     toggleAccessManager,
     setAccessManagerOpen,

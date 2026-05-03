@@ -1,23 +1,66 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { loginSuccess } from '../../../store/slices/authSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginSuccess, loginFailure } from '../../../store/slices/authSlice';
 import { mockUser } from '../../../utils/mockData';
 import ThemeToggle from '../../../components/common/ThemeToggle/ThemeToggle';
-import { Zap, LayoutDashboard, Users, BarChart3, Shield } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const managers = useSelector((state) => state.access.managers);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Mock login — just dispatch the success and navigate
-        dispatch(loginSuccess(mockUser));
-        navigate('/onboarding');
+        setError('');
+
+        // Check if admin login
+        if (email === mockUser.email) {
+            dispatch(loginSuccess({
+                ...mockUser,
+                role: 'admin',
+            }));
+            navigate('/modules');
+            return;
+        }
+
+        // Check if manager login
+        const manager = managers.find(
+            (m) => m.email === email && m.password === password
+        );
+
+        if (manager) {
+            dispatch(loginSuccess({
+                _id: manager.userId,
+                name: manager.name,
+                email: manager.email,
+                role: 'manager',
+                assignedModule: manager.assignedModule,
+                managerId: manager.id,
+                avatar: null,
+            }));
+            navigate(`/manager/${manager.assignedModule}`);
+            return;
+        }
+
+        // Check if email matches a manager but password is wrong
+        const managerByEmail = managers.find((m) => m.email === email);
+        if (managerByEmail) {
+            setError('Incorrect password. Default password is manager123');
+            return;
+        }
+
+        // No match found — still allow mock admin login for any credentials
+        dispatch(loginSuccess({
+            ...mockUser,
+            role: 'admin',
+        }));
+        navigate('/modules');
     };
 
     return (
@@ -49,6 +92,26 @@ const Login = () => {
                         Role-Based Access Control
                     </div>
                 </div>
+
+                {/* Demo credentials hint */}
+                <div className="login-page__demo-creds">
+                    <div className="login-page__demo-title">
+                        <Shield size={14} />
+                        Demo Credentials
+                    </div>
+                    <div className="login-page__demo-row">
+                        <span>Admin:</span>
+                        <span>abbas@developwork.com (any password)</span>
+                    </div>
+                    <div className="login-page__demo-row">
+                        <span>HR Manager:</span>
+                        <span>omar@developwork.com / manager123</span>
+                    </div>
+                    <div className="login-page__demo-row">
+                        <span>Projects Mgr:</span>
+                        <span>sarah@developwork.com / manager123</span>
+                    </div>
+                </div>
             </div>
 
             {/* Right Form Panel */}
@@ -59,6 +122,13 @@ const Login = () => {
                 <div className="login-page__form-container">
                     <h1 className="login-page__form-title">Welcome back</h1>
                     <p className="login-page__form-subtitle">Sign in to your DevelopWork account</p>
+
+                    {error && (
+                        <div className="login-page__error">
+                            <AlertCircle size={14} />
+                            {error}
+                        </div>
+                    )}
 
                     <form className="login-page__form" onSubmit={handleSubmit}>
                         <div className="login-page__field">

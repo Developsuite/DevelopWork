@@ -7,6 +7,8 @@ import {
     removeAccess,
     addInvite,
     removeInvite,
+    addManager,
+    closeCredentialsModal,
     setAccessManagerOpen,
     setInviteModalOpen,
     setSelectedModuleForAccess,
@@ -40,6 +42,9 @@ import {
     ChevronDown,
     LayoutGrid,
     Zap,
+    Copy,
+    CheckCircle2,
+    Key,
 } from 'lucide-react';
 import './ModuleHub.css';
 
@@ -62,7 +67,10 @@ const ModuleHub = () => {
         accessManagerOpen,
         inviteModalOpen,
         selectedModuleForAccess,
+        credentialsModal,
     } = useSelector((state) => state.access);
+
+    const [copied, setCopied] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
@@ -112,6 +120,7 @@ const ModuleHub = () => {
         );
         if (existing) return;
 
+        // Add access entry
         dispatch(
             addAccess({
                 moduleKey: selectedModuleForAccess,
@@ -121,8 +130,27 @@ const ModuleHub = () => {
                 role: 'manager',
             })
         );
+
+        // Create manager profile with credentials
+        dispatch(
+            addManager({
+                userId: member._id,
+                name: member.name,
+                email: member.email,
+                moduleKey: selectedModuleForAccess,
+            })
+        );
+
         setSelectedManager('');
         setShowManagerDropdown(false);
+    };
+
+    const handleCopyCredentials = () => {
+        if (!credentialsModal.manager) return;
+        const text = `Module: ${DEPARTMENT_MODULES.find(m => m.key === credentialsModal.manager.assignedModule)?.label}\nEmail: ${credentialsModal.manager.email}\nPassword: ${credentialsModal.manager.password}`;
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const handleSendInvite = () => {
@@ -605,6 +633,64 @@ const ModuleHub = () => {
                                     Send Invitation
                                 </Button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Credentials Modal */}
+            {credentialsModal.open && credentialsModal.manager && (
+                <div
+                    className="module-hub__overlay glass-overlay"
+                    onClick={() => dispatch(closeCredentialsModal())}
+                >
+                    <div
+                        className="module-hub__creds-modal glass-elevated"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="module-hub__creds-header">
+                            <div className="module-hub__creds-icon">
+                                <CheckCircle2 size={28} color="var(--success)" />
+                            </div>
+                            <h2 className="module-hub__creds-title">Manager Assigned!</h2>
+                            <p className="module-hub__creds-subtitle">
+                                Share these credentials with the new manager
+                            </p>
+                        </div>
+                        <div className="module-hub__creds-card">
+                            <div className="module-hub__creds-row">
+                                <span className="module-hub__creds-label">Module</span>
+                                <span className="module-hub__creds-value">
+                                    {DEPARTMENT_MODULES.find(m => m.key === credentialsModal.manager.assignedModule)?.label}
+                                </span>
+                            </div>
+                            <div className="module-hub__creds-divider" />
+                            <div className="module-hub__creds-row">
+                                <span className="module-hub__creds-label">Email</span>
+                                <span className="module-hub__creds-value">{credentialsModal.manager.email}</span>
+                            </div>
+                            <div className="module-hub__creds-row">
+                                <span className="module-hub__creds-label">
+                                    <Key size={12} /> Password
+                                </span>
+                                <span className="module-hub__creds-value module-hub__creds-password">
+                                    {credentialsModal.manager.password}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="module-hub__creds-actions">
+                            <button
+                                className="module-hub__creds-copy"
+                                onClick={handleCopyCredentials}
+                            >
+                                {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+                                {copied ? 'Copied!' : 'Copy Credentials'}
+                            </button>
+                            <button
+                                className="module-hub__creds-done"
+                                onClick={() => dispatch(closeCredentialsModal())}
+                            >
+                                Done
+                            </button>
                         </div>
                     </div>
                 </div>

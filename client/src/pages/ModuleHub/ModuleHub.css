@@ -644,6 +644,140 @@
     border-top: 1px solid var(--border-default);
 }
 
+/* ---- Credentials Modal ---- */
+.module-hub__creds-modal {
+    width: 100%;
+    max-width: 440px;
+    padding: var(--space-xl);
+    animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-align: center;
+}
+
+.module-hub__creds-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.module-hub__creds-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--success-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.module-hub__creds-title {
+    font-size: var(--font-xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.module-hub__creds-subtitle {
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+}
+
+.module-hub__creds-card {
+    background: var(--bg-body);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.module-hub__creds-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.module-hub__creds-label {
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.module-hub__creds-value {
+    font-size: var(--font-sm);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.module-hub__creds-password {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    background: var(--bg-hover);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.05em;
+}
+
+.module-hub__creds-divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: 4px 0;
+}
+
+.module-hub__creds-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.module-hub__creds-copy {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 16px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--font-family);
+}
+
+.module-hub__creds-copy:hover {
+    background: var(--primary-50);
+    border-color: var(--primary-400);
+    color: var(--primary-500);
+}
+
+.module-hub__creds-done {
+    flex: 1;
+    padding: 11px 16px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: var(--font-family);
+    box-shadow: 0 4px 14px rgba(0, 85, 254, 0.2);
+}
+
+.module-hub__creds-done:hover {
+    box-shadow: 0 6px 20px rgba(0, 85, 254, 0.3);
+    transform: translateY(-1px);
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 1200px) {
     .module-hub__grid {
