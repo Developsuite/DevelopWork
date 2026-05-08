@@ -136,6 +136,43 @@
     box-shadow: 0 0 0 3px rgba(0, 85, 254, 0.06);
 }
 
+/* ---- Quick Add ---- */
+.sidebar__quick-add {
+    padding: 4px 14px 10px;
+}
+
+.sidebar__add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary-500), #2563EB);
+    color: white;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.sidebar__add-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    filter: brightness(1.05);
+}
+
+.sidebar__add-btn:active {
+    transform: translateY(0);
+}
+
+.sidebar__add-btn span {
+    white-space: nowrap;
+}
+
 /* ---- Module Hub Button ---- */
 .sidebar__module-hub {
     position: relative;

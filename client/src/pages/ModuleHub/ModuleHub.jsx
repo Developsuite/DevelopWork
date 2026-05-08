@@ -13,6 +13,7 @@ import {
     setInviteModalOpen,
     setSelectedModuleForAccess,
 } from '../../store/slices/accessSlice';
+import { setCreateModalOpen } from '../../store/slices/projectSlice';
 import { DEPARTMENT_MODULES } from '../../utils/constants';
 import { mockMembers } from '../../utils/mockData';
 import Button from '../../components/common/Button/Button';
@@ -45,6 +46,7 @@ import {
     Copy,
     CheckCircle2,
     Key,
+    Plus,
 } from 'lucide-react';
 import './ModuleHub.css';
 
@@ -199,6 +201,13 @@ const ModuleHub = () => {
                     </div>
                     <Button
                         variant="primary"
+                        icon={Plus}
+                        onClick={() => dispatch(setCreateModalOpen(true))}
+                    >
+                        New Project
+                    </Button>
+                    <Button
+                        variant="ghost"
                         icon={UserPlus}
                         onClick={() => dispatch(setInviteModalOpen(true))}
                     >

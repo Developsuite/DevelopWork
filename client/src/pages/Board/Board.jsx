@@ -34,6 +34,8 @@ import {
     UserPlus,
     GripVertical,
     LayoutList,
+    Upload,
+    FileText,
 } from 'lucide-react';
 import './Board.css';
 
@@ -88,6 +90,23 @@ const Board = () => {
             items: boardItems.filter((item) => item.fields[statusColumn._id] === option.label),
         }));
     }, [boardItems, statusColumn]);
+
+    const handleAddItem = (groupId, status) => {
+        const newItem = {
+            _id: `item-${Date.now()}`,
+            boardId: board._id,
+            groupId: groupId || groups[0]?._id,
+            fields: {
+                [board.columns.find(c => c.type === 'text')?._id]: 'New Item',
+                [board.columns.find(c => c.type === 'status')?._id]: status || 'To Do',
+                [board.columns.find(c => c.type === 'priority')?._id]: 'medium',
+                [board.columns.find(c => c.type === 'person')?._id]: 'user-1',
+                [board.columns.find(c => c.type === 'date')?._id]: new Date().toISOString(),
+            },
+        };
+        setItems(prev => [...prev, newItem]);
+        dispatch(openItemDrawer(newItem._id)); // Open drawer for editing the new item
+    };
 
     // Drag and Drop handler
     const handleDragEnd = useCallback((result) => {
@@ -176,7 +195,7 @@ const Board = () => {
                         ))}
                     </div>
                     <Button variant="ghost" size="sm" icon={Filter}>Filter</Button>
-                    <Button variant="primary" size="sm" icon={Plus}>New Item</Button>
+                    <Button variant="primary" size="sm" icon={Plus} onClick={() => handleAddItem()}>New Item</Button>
                 </div>
             </div>
 
@@ -273,7 +292,7 @@ const Board = () => {
                                             </tbody>
                                         </table>
                                         <div className="table-view__add-row">
-                                            <button className="table-view__add-btn">
+                                            <button className="table-view__add-btn" onClick={() => handleAddItem(group._id)}>
                                                 <Plus size={14} /> Add item
                                             </button>
                                         </div>
@@ -300,7 +319,7 @@ const Board = () => {
                                         <span className="kanban-column__title">{column.label}</span>
                                         <span className="kanban-column__count">{column.items.length}</span>
                                     </div>
-                                    <button className="kanban-column__header-btn">
+                                    <button className="kanban-column__header-btn" onClick={() => handleAddItem(null, column.label)}>
                                         <Plus size={16} />
                                     </button>
                                 </div>
@@ -371,7 +390,7 @@ const Board = () => {
                                                 );
                                             })}
                                             {provided.placeholder}
-                                            <button className="kanban-column__add">
+                                            <button className="kanban-column__add" onClick={() => handleAddItem(null, column.label)}>
                                                 <Plus size={14} /> Add item
                                             </button>
                                         </div>
@@ -435,21 +454,96 @@ const Board = () => {
                 </div>
             )}
 
-            {activeView === 'timeline' && (
-                <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    <GanttChart size={48} style={{ marginBottom: 12, opacity: 0.3 }} />
-                    <p style={{ fontSize: 'var(--font-md)', fontWeight: 500 }}>Timeline View</p>
-                    <p style={{ fontSize: 'var(--font-sm)' }}>Coming soon — visualize project schedules</p>
-                </div>
-            )}
+            {activeView === 'timeline' && (() => {
+                const dateCol = board.columns.find(c => c.type === 'date');
+                const nameCol = board.columns.find(c => c.type === 'text');
+                const personCol = board.columns.find(c => c.type === 'person');
+                const priorityCol = board.columns.find(c => c.type === 'priority');
+                const timelineItems = boardItems.filter(i => dateCol && i.fields[dateCol._id]);
+                const dates = timelineItems.map(i => new Date(i.fields[dateCol._id]).getTime());
+                const minDate = dates.length ? new Date(Math.min(...dates) - 7 * 86400000) : new Date();
+                const maxDate = dates.length ? new Date(Math.max(...dates) + 7 * 86400000) : new Date();
+                const totalDays = Math.ceil((maxDate - minDate) / 86400000) || 14;
+                const weeks = [];
+                for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 7)) {
+                    weeks.push(new Date(d));
+                }
+                return (
+                    <div className="timeline-view">
+                        <div className="timeline-header">
+                            {weeks.map((w, i) => (
+                                <div key={i} className="timeline-week" style={{ width: `${(7 / totalDays) * 100}%` }}>
+                                    {w.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="timeline-body">
+                            {timelineItems.map(item => {
+                                const itemDate = new Date(item.fields[dateCol._id]);
+                                const startDay = Math.floor((itemDate.getTime() - 5 * 86400000 - minDate.getTime()) / 86400000);
+                                const left = Math.max(0, (startDay / totalDays) * 100);
+                                const width = Math.min((5 / totalDays) * 100, 100 - left);
+                                const priority = priorityCol ? item.fields[priorityCol._id] : 'medium';
+                                const barColor = priority === 'critical' ? '#E2445C' : priority === 'high' ? '#FDAB3D' : priority === 'medium' ? '#579BFC' : '#00C875';
+                                return (
+                                    <div key={item._id} className="timeline-row" onClick={() => dispatch(openItemDrawer(item._id))}>
+                                        <div className="timeline-row__label">
+                                            {personCol && <Avatar name={getMemberName(item.fields[personCol._id])} size="sm" />}
+                                            <span>{nameCol ? item.fields[nameCol._id] : 'Task'}</span>
+                                        </div>
+                                        <div className="timeline-row__bar-area">
+                                            <div className="timeline-row__bar" style={{ left: `${left}%`, width: `${width}%`, background: barColor }} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            })()}
 
-            {activeView === 'calendar' && (
-                <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    <Calendar size={48} style={{ marginBottom: 12, opacity: 0.3 }} />
-                    <p style={{ fontSize: 'var(--font-md)', fontWeight: 500 }}>Calendar View</p>
-                    <p style={{ fontSize: 'var(--font-sm)' }}>Coming soon — see tasks on a calendar</p>
-                </div>
-            )}
+            {activeView === 'calendar' && (() => {
+                const dateCol = board.columns.find(c => c.type === 'date');
+                const nameCol = board.columns.find(c => c.type === 'text');
+                const [calMonth, setCalMonth] = useState(new Date().getMonth());
+                const [calYear, setCalYear] = useState(new Date().getFullYear());
+                const firstDay = new Date(calYear, calMonth, 1).getDay();
+                const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+                const calDays = [];
+                for (let i = 0; i < firstDay; i++) calDays.push(null);
+                for (let d = 1; d <= daysInMonth; d++) calDays.push(d);
+                const calItems = dateCol ? boardItems.filter(i => {
+                    const dt = new Date(i.fields[dateCol._id]);
+                    return dt.getMonth() === calMonth && dt.getFullYear() === calYear;
+                }) : [];
+                const getItemsForDay = (day) => calItems.filter(i => new Date(i.fields[dateCol._id]).getDate() === day);
+                const prevMonth = () => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); };
+                const nextMonth = () => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); };
+                return (
+                    <div className="calendar-view">
+                        <div className="calendar-nav">
+                            <button onClick={prevMonth} className="calendar-nav__btn">&lt;</button>
+                            <span className="calendar-nav__title">{new Date(calYear, calMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                            <button onClick={nextMonth} className="calendar-nav__btn">&gt;</button>
+                        </div>
+                        <div className="calendar-grid">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                                <div key={d} className="calendar-grid__day-header">{d}</div>
+                            ))}
+                            {calDays.map((day, idx) => (
+                                <div key={idx} className={`calendar-grid__cell ${day ? '' : 'empty'}`}>
+                                    {day && <span className="calendar-grid__date">{day}</span>}
+                                    {day && getItemsForDay(day).map(item => (
+                                        <div key={item._id} className="calendar-grid__item" onClick={() => dispatch(openItemDrawer(item._id))}>
+                                            {nameCol ? item.fields[nameCol._id] : 'Task'}
+                                        </div>
+                                    ))}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Item Drawer */}
             {itemDrawerOpen && activeItem && (
@@ -520,6 +614,48 @@ const Board = () => {
                                             </div>
                                         );
                                     })}
+
+                                    <div className="item-drawer__divider" />
+
+                                    <div className="item-drawer__field">
+                                        <span className="item-drawer__field-label">Time Tracking</span>
+                                        <div className="item-drawer__timer glass-card">
+                                            <div className="timer-display">
+                                                <Clock size={14} />
+                                                <span>02:45:12</span>
+                                                <span className="timer-total">/ 08:00h</span>
+                                            </div>
+                                            <div className="timer-actions">
+                                                <button className="timer-btn timer-btn--start"><Check size={12} /> Start</button>
+                                                <button className="timer-btn timer-btn--log"><Clock size={12} /> Log</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="item-drawer__field">
+                                        <div className="item-drawer__subtasks-header">
+                                            <span className="item-drawer__field-label">Subtasks</span>
+                                            <span className="subtask-progress">3/5 (60%)</span>
+                                        </div>
+                                        <div className="subtask-progress-bar">
+                                            <div className="subtask-progress-fill" style={{ width: '60%' }} />
+                                        </div>
+                                        <div className="subtask-list">
+                                            {[
+                                                { id: 1, text: 'Initial research and wireframes', done: true },
+                                                { id: 2, text: 'Component architecture design', done: true },
+                                                { id: 3, text: 'State management implementation', done: true },
+                                                { id: 4, text: 'Unit tests and documentation', done: false },
+                                                { id: 5, text: 'User acceptance testing', done: false },
+                                            ].map(st => (
+                                                <div key={st.id} className="subtask-item">
+                                                    <input type="checkbox" checked={st.done} readOnly />
+                                                    <span className={st.done ? 'done' : ''}>{st.text}</span>
+                                                </div>
+                                            ))}
+                                            <button className="add-subtask-btn"><Plus size={12} /> Add subtask</button>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -549,16 +685,48 @@ const Board = () => {
                             )}
 
                             {drawerTab === 'files' && (
-                                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                                    <Download size={32} style={{ marginBottom: 8, opacity: 0.3 }} />
-                                    <p>No files attached yet</p>
+                                <div className="item-drawer__files">
+                                    <div className="item-drawer__file-upload">
+                                        <Upload size={24} />
+                                        <p>Drop files here or click to upload</p>
+                                        <span>PNG, JPG, PDF up to 10MB</span>
+                                    </div>
+                                    <div className="item-drawer__file-list">
+                                        {[
+                                            { name: 'design-spec.pdf', size: '2.4 MB', type: 'pdf' },
+                                            { name: 'screenshot.png', size: '856 KB', type: 'image' },
+                                        ].map((f, i) => (
+                                            <div key={i} className="item-drawer__file-item">
+                                                <FileText size={16} />
+                                                <div className="item-drawer__file-info">
+                                                    <span className="item-drawer__file-name">{f.name}</span>
+                                                    <span className="item-drawer__file-size">{f.size}</span>
+                                                </div>
+                                                <button className="item-drawer__file-dl"><Download size={14} /></button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
 
                             {drawerTab === 'activity' && (
-                                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                                    <Clock size={32} style={{ marginBottom: 8, opacity: 0.3 }} />
-                                    <p>Activity log will appear here</p>
+                                <div className="item-drawer__activity">
+                                    {[
+                                        { user: 'user-2', action: 'changed status', from: 'Not Started', to: 'In Progress', time: '2 hours ago' },
+                                        { user: 'user-1', action: 'changed priority', from: 'medium', to: 'high', time: '5 hours ago' },
+                                        { user: 'user-3', action: 'added comment', from: null, to: null, time: '1 day ago' },
+                                        { user: 'user-1', action: 'created this item', from: null, to: null, time: '3 days ago' },
+                                    ].map((log, i) => (
+                                        <div key={i} className="item-drawer__activity-item">
+                                            <Avatar name={getMemberName(log.user)} size="xs" />
+                                            <div className="item-drawer__activity-info">
+                                                <span><strong>{getMemberName(log.user)}</strong> {log.action}
+                                                    {log.from && <> from <em>{log.from}</em> to <em>{log.to}</em></>}
+                                                </span>
+                                                <span className="item-drawer__activity-time">{log.time}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>

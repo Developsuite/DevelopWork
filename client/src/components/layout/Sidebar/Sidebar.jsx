@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toggleSidebar } from '../../../store/slices/uiSlice';
+import { setCreateModalOpen } from '../../../store/slices/projectSlice';
 import { DEPARTMENT_MODULES } from '../../../utils/constants';
 import {
     PanelLeftClose,
@@ -28,6 +29,7 @@ import {
     BookOpen,
     Upload,
     Layout,
+    Plus,
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -48,10 +50,10 @@ const moduleSubPages = {
         { label: 'Milestones', path: '/projects', icon: Target },
     ],
     hr: [
-        { label: 'Overview', path: '/hr', icon: BarChart3 },
-        { label: 'Employees', path: '/hr', icon: Users },
-        { label: 'Recruitment', path: '/hr', icon: UserCheck },
-        { label: 'Attendance', path: '/hr', icon: Calendar },
+        { label: 'Overview', path: '/hr?tab=directory', icon: BarChart3 },
+        { label: 'Employees', path: '/hr?tab=directory', icon: Users },
+        { label: 'Recruitment', path: '/hr?tab=recruitment', icon: UserCheck },
+        { label: 'Attendance', path: '/hr?tab=attendance', icon: Calendar },
     ],
     finance: [
         { label: 'Overview', path: '/finance', icon: BarChart3 },
@@ -160,6 +162,17 @@ const Sidebar = () => {
                     />
                 </div>
 
+                {/* Quick Add */}
+                <div className="sidebar__quick-add">
+                    <button 
+                        className="sidebar__add-btn" 
+                        onClick={() => dispatch(setCreateModalOpen(true))}
+                    >
+                        <Plus size={16} />
+                        <span>Add Project</span>
+                    </button>
+                </div>
+
                 {/* Module Hub — single dropdown button */}
                 <div className="sidebar__module-hub" ref={dropdownRef}>
                     <button
@@ -244,10 +257,10 @@ const Sidebar = () => {
                 <div className="sidebar__footer">
                     <button
                         className="sidebar__nav-item"
-                        onClick={() => navigate('/modules')}
+                        onClick={() => navigate('/settings')}
                     >
                         <Settings size={16} />
-                        <span>Manage Modules</span>
+                        <span>Settings</span>
                     </button>
                 </div>
             </aside>

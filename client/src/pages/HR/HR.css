@@ -1,394 +1,154 @@
-.hr-dashboard {
-    padding: var(--space-xl);
-    max-width: 1600px;
-    margin: 0 auto;
-}
+.hr-dashboard { padding: 32px; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.4s ease-out; }
+.hr-dashboard__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.hr-dashboard__title { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+.hr-dashboard__subtitle { color: var(--text-secondary); font-size: 14px; }
 
-/* Header */
-.hr-dashboard__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-xl);
-}
+/* Stats */
+.hr-dashboard__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.hr-stat-card { padding: 20px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.hr-stat-card__icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.hr-stat-card__value { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+.hr-stat-card__label { font-size: 13px; color: var(--text-muted); }
 
-.hr-dashboard__title {
-    font-size: var(--font-3xl);
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--space-xs);
-}
+/* Tabs */
+.hr-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px; overflow-x: auto; position: relative; z-index: 10; }
+.hr-tab { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border: none; background: transparent; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-radius: 8px; transition: all 0.2s; font-family: inherit; white-space: nowrap; position: relative; z-index: 1; }
+.hr-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.5); z-index: 2; }
+.hr-tab.active { color: var(--primary-600); background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 600; z-index: 3; }
 
-.hr-dashboard__subtitle {
-    font-size: var(--font-base);
-    color: var(--text-secondary);
-}
+/* Section */
+.hr-section { padding: 24px; margin-bottom: 24px; }
+.hr-section__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.hr-section__header h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.hr-filters { display: flex; gap: 12px; align-items: center; }
+.hr-search { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); }
+.hr-search input { border: none; background: none; font-size: 13px; color: var(--text-primary); outline: none; width: 180px; }
+.hr-section select { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: var(--bg-primary); color: var(--text-primary); }
 
-/* Stats Cards */
-.hr-dashboard__stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--space-lg);
-    margin-bottom: var(--space-xl);
-}
+/* Org Chart */
+.hr-org-chart { padding: 40px 0; display: flex; justify-content: center; overflow-x: auto; }
+.hr-org-node { display: flex; flex-direction: column; align-items: center; position: relative; }
+.hr-org-children { display: flex; gap: 40px; margin-top: 40px; position: relative; }
+.hr-org-children::before { content: ''; position: absolute; top: -20px; left: 50%; transform: translateX(-50%); width: 2px; height: 20px; background: var(--border-color); }
+.hr-org-node:not(:only-child)::after { content: ''; position: absolute; top: -20px; left: 0; width: 100%; height: 2px; background: var(--border-color); }
+.hr-org-node:first-child::after { left: 50%; width: 50%; }
+.hr-org-node:last-child::after { width: 50%; }
+.hr-org-node--root::after { display: none !important; }
+.hr-org-card { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; width: 200px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); position: relative; z-index: 2; transition: all 0.2s; cursor: pointer; }
+.hr-org-card:hover { transform: translateY(-3px); border-color: var(--primary-400); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+.hr-org-card.active { border-color: var(--primary-500); background: var(--primary-50); }
+.hr-org-card strong { display: block; font-size: 13px; color: var(--text-primary); }
+.hr-org-card span { font-size: 11px; color: var(--text-muted); }
 
-.hr-dashboard__stat-card {
-    padding: var(--space-lg);
-    transition: transform var(--transition-base);
-}
+/* Employee Cards */
+.hr-employee-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.hr-employee-card { padding: 20px; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 14px; transition: all 0.2s; }
+.hr-employee-card:hover { border-color: var(--primary-300); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.hr-employee-card__top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.hr-employee-card__badges { display: flex; gap: 6px; }
+.hr-employee-card__name { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.hr-employee-card__role { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+.hr-employee-card__contact { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+.hr-employee-card__contact span { display: flex; align-items: center; gap: 6px; }
+.hr-employee-card__skills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.hr-skill-tag { padding: 3px 10px; background: var(--primary-50); color: var(--primary-600); font-size: 11px; font-weight: 500; border-radius: 6px; }
+.hr-employee-card__footer { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); padding-top: 12px; border-top: 1px solid var(--border-color); }
+.hr-employee-card__footer span { display: flex; align-items: center; gap: 4px; }
 
-.hr-dashboard__stat-card:hover {
-    transform: translateY(-2px);
-}
+/* Leave */
+.hr-leave-balance { display: flex; gap: 24px; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+.hr-leave-balance__item { flex: 1; }
+.hr-leave-balance__item > span { font-size: 13px; font-weight: 600; color: var(--text-primary); display: block; margin-bottom: 8px; }
+.hr-leave-bar { height: 8px; background: rgba(0,0,0,0.06); border-radius: 4px; position: relative; overflow: hidden; }
+.hr-leave-bar__fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.hr-leave-bar span { position: absolute; right: 0; top: -20px; font-size: 11px; color: var(--text-muted); }
+.hr-leave-list { display: flex; flex-direction: column; gap: 12px; }
+.hr-leave-item { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border-color); }
+.hr-leave-item__info { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--text-secondary); }
+.hr-leave-item__info strong { color: var(--text-primary); font-weight: 600; }
+.hr-leave-item__reason { font-size: 12px; color: var(--text-muted); font-style: italic; }
+.hr-leave-item__actions { display: flex; gap: 8px; }
+.hr-approve-btn, .hr-reject-btn { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.hr-approve-btn { background: var(--success); color: white; }
+.hr-approve-btn:hover { filter: brightness(1.1); }
+.hr-reject-btn { background: var(--danger); color: white; }
+.hr-reject-btn:hover { filter: brightness(1.1); }
 
-.hr-dashboard__stat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-md);
-}
+/* Recruitment Kanban */
+.hr-recruitment-kanban { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 10px; }
+.hr-kanban-col { flex: 0 0 240px; background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px solid rgba(0,0,0,0.04); overflow: hidden; }
+.hr-kanban-col__header { display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: rgba(255,255,255,0.5); border-bottom: 1px solid rgba(0,0,0,0.04); }
+.hr-kanban-col__dot { width: 8px; height: 8px; border-radius: 50%; }
+.hr-kanban-col__title { font-size: 13px; font-weight: 700; color: var(--text-primary); flex: 1; }
+.hr-kanban-col__count { font-size: 10px; font-weight: 700; color: var(--text-muted); background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 10px; }
+.hr-kanban-col__body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 100px; }
+.hr-candidate-card { padding: 14px !important; }
+.hr-candidate-card__name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.hr-candidate-card__role { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.hr-candidate-card__meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+.hr-candidate-card__interviewer { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
 
-.hr-dashboard__stat-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* Payroll */
+.hr-payroll-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.hr-payroll-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); }
+.hr-payroll-table td { padding: 14px; font-size: 14px; color: var(--text-primary); border-bottom: 1px solid rgba(0,0,0,0.03); }
+.hr-payroll-table td.positive { color: var(--success); font-weight: 600; }
+.hr-payroll-table td.negative { color: var(--danger); font-weight: 600; }
+.hr-payroll-net { font-weight: 700 !important; color: var(--text-primary) !important; }
+.hr-payroll-employee { display: flex; align-items: center; gap: 10px; }
 
-.hr-dashboard__stat-change {
-    font-size: var(--font-sm);
-    font-weight: 600;
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-}
+/* Performance */
+.hr-performance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+.hr-performance-card { padding: 24px !important; }
+.hr-performance-card__header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.hr-performance-card__header h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.hr-rating { display: flex; align-items: center; gap: 2px; }
+.hr-rating span { margin-left: 8px; font-size: 13px; color: var(--text-muted); font-weight: 600; }
+.hr-performance-card__goals { margin-bottom: 16px; }
+.hr-performance-card__goals h4, .hr-performance-card__feedback h4 { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.hr-goal { margin-bottom: 10px; }
+.hr-goal__header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+.hr-goal__header span:first-child { font-weight: 500; color: var(--text-primary); }
+.hr-goal__header span:last-child { color: var(--text-muted); font-weight: 600; }
+.hr-goal__bar { height: 6px; background: rgba(0,0,0,0.06); border-radius: 3px; overflow: hidden; }
+.hr-goal__fill { height: 100%; background: var(--primary-500); border-radius: 3px; transition: width 0.5s; }
+.hr-performance-card__feedback p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; font-style: italic; }
 
-.hr-dashboard__stat-change.positive {
-    color: var(--success);
-    background: var(--success-light);
-}
+/* Dark theme */
+[data-theme="dark"] .hr-tab.active { background: rgba(255,255,255,0.08); }
+[data-theme="dark"] .hr-tabs { background: rgba(255,255,255,0.04); }
+[data-theme="dark"] .hr-employee-card { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); }
+[data-theme="dark"] .hr-kanban-col { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.06); }
+[data-theme="dark"] .hr-kanban-col__header { background: rgba(255,255,255,0.03); }
+[data-theme="dark"] .hr-leave-item { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.06); }
 
-.hr-dashboard__stat-change.negative {
-    color: var(--danger);
-    background: var(--danger-light);
-}
+.hr-payroll-actions { display: flex; gap: 12px; align-items: center; }
+.hr-month-select, .hr-dept-select { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; }
+.hr-month-select:hover, .hr-dept-select:hover { border-color: var(--primary-400); }
 
-.hr-dashboard__stat-value {
-    font-size: var(--font-3xl);
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--space-xs);
-}
+.hr-candidate-card { transition: all 0.2s; border: 1px solid transparent; width: 100%; text-align: left; background: none; font-family: inherit; padding: 0; cursor: pointer; display: block; }
+.hr-candidate-card:hover { transform: translateY(-2px); border-color: var(--primary-300); box-shadow: 0 4px 12px rgba(0,0,0,0.06) !important; }
+.hr-candidate-card__interviewer { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); cursor: pointer; transition: color 0.2s; }
+.hr-candidate-card__interviewer:hover { color: var(--primary-500); }
+.hr-candidate-card__interviewer span { font-size: 12px; font-weight: 500; }
 
-.hr-dashboard__stat-label {
-    font-size: var(--font-sm);
-    color: var(--text-secondary);
-    font-weight: 500;
-}
+.hr-section__header { border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 20px; }
 
-/* Content Layout */
-.hr-dashboard__content {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: var(--space-lg);
-}
+/* Dark theme overrides */
+[data-theme="dark"] .hr-month-select, [data-theme="dark"] .hr-dept-select { background: rgba(255,255,255,0.05); }
 
-/* Main Section */
-.hr-dashboard__main {
-    min-width: 0;
-}
-
-.hr-dashboard__section {
-    padding: var(--space-lg);
-}
-
-.hr-dashboard__section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    gap: var(--space-md);
-    flex-wrap: wrap;
-}
-
-.hr-dashboard__section-title {
-    font-size: var(--font-xl);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-/* Filters */
-.hr-dashboard__filters {
-    display: flex;
-    gap: var(--space-md);
-    flex: 1;
-    justify-content: flex-end;
-}
-
-.hr-dashboard__search {
-    position: relative;
-    display: flex;
-    align-items: center;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    padding: 0 var(--space-md);
-    min-width: 280px;
-}
-
-.hr-dashboard__search svg {
-    color: var(--text-muted);
-    margin-right: var(--space-sm);
-}
-
-.hr-dashboard__search input {
-    border: none;
-    background: transparent;
-    padding: 10px 0;
-    font-size: var(--font-sm);
-    color: var(--text-primary);
-    width: 100%;
-}
-
-.hr-dashboard__search input::placeholder {
-    color: var(--text-muted);
-}
-
-.hr-dashboard__department-filter {
-    padding: 10px var(--space-md);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: var(--font-sm);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.hr-dashboard__department-filter:hover {
-    border-color: var(--primary-500);
-}
-
-/* Employee List */
-.hr-dashboard__employee-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-}
-
-.hr-dashboard__employee-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-md);
-    background: var(--bg-primary);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-}
-
-.hr-dashboard__employee-card:hover {
-    border-color: var(--primary-500);
-    transform: translateX(4px);
-}
-
-.hr-dashboard__employee-main {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    flex: 1;
-    min-width: 0;
-}
-
-.hr-dashboard__employee-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.hr-dashboard__employee-name {
-    font-size: var(--font-md);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 2px;
-}
-
-.hr-dashboard__employee-role {
-    font-size: var(--font-sm);
-    color: var(--text-secondary);
-    margin-bottom: var(--space-xs);
-}
-
-.hr-dashboard__employee-meta {
-    display: flex;
-    gap: var(--space-md);
-    flex-wrap: wrap;
-}
-
-.hr-dashboard__employee-meta span {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: var(--font-xs);
-    color: var(--text-muted);
-}
-
-.hr-dashboard__employee-meta svg {
-    flex-shrink: 0;
-}
-
-.hr-dashboard__employee-details {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-}
-
-.hr-dashboard__employee-menu {
-    padding: var(--space-sm);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    transition: all var(--transition-fast);
-}
-
-.hr-dashboard__employee-menu:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-/* Sidebar */
-.hr-dashboard__sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-}
-
-.hr-dashboard__widget {
-    padding: var(--space-lg);
-}
-
-.hr-dashboard__widget-title {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-size: var(--font-md);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--space-md);
-}
-
-/* Events */
-.hr-dashboard__events {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
-}
-
-.hr-dashboard__event {
-    display: flex;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    background: var(--bg-primary);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-}
-
-.hr-dashboard__event:hover {
-    border-color: var(--primary-500);
-}
-
-.hr-dashboard__event-date {
-    flex-shrink: 0;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--primary-50);
-    color: var(--primary-500);
-    border-radius: var(--radius-md);
-    font-size: var(--font-xs);
-    font-weight: 700;
-    text-align: center;
-}
-
-.hr-dashboard__event-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.hr-dashboard__event-title {
-    font-size: var(--font-sm);
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--space-xs);
-}
-
-/* Quick Actions */
-.hr-dashboard__actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
-    .hr-dashboard__content {
-        grid-template-columns: 1fr;
-    }
-
-    .hr-dashboard__sidebar {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        flex-direction: row;
-    }
-}
+.hr-profile-detail { display: flex; flex-direction: column; gap: 24px; padding: 10px; }
+.hr-profile-detail__header { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+.hr-profile-detail__id { font-size: 12px; font-weight: 700; color: var(--text-muted); background: var(--bg-primary); padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border-color); }
+.hr-profile-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.hr-profile-info-group { display: flex; flex-direction: column; gap: 6px; }
+.hr-profile-info-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.hr-profile-info-group div { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 
 @media (max-width: 768px) {
-    .hr-dashboard {
-        padding: var(--space-md);
-    }
-
-    .hr-dashboard__header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-md);
-    }
-
-    .hr-dashboard__stats {
-        grid-template-columns: 1fr;
-    }
-
-    .hr-dashboard__section-header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .hr-dashboard__filters {
-        flex-direction: column;
-    }
-
-    .hr-dashboard__search {
-        min-width: 100%;
-    }
-
-    .hr-dashboard__employee-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--space-md);
-    }
-
-    .hr-dashboard__employee-main {
-        width: 100%;
-    }
-
-    .hr-dashboard__employee-details {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .hr-dashboard__sidebar {
-        grid-template-columns: 1fr;
-        flex-direction: column;
-    }
+    .hr-dashboard__stats { grid-template-columns: repeat(2, 1fr); }
+    .hr-employee-grid { grid-template-columns: 1fr; }
+    .hr-tabs { flex-wrap: wrap; }
+    .hr-payroll-actions { flex-direction: column; align-items: stretch; }
+    .hr-profile-info-grid { grid-template-columns: 1fr; }
 }

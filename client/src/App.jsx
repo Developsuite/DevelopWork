@@ -18,6 +18,7 @@ import Leads from './pages/Leads/Leads';
 import Support from './pages/Support/Support';
 import Docs from './pages/Docs/Docs';
 import ManagerDashboard from './pages/ManagerDashboard/ManagerDashboard';
+import Settings from './pages/Settings/Settings';
 import NotFound from './pages/NotFound/NotFound';
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
           <Route path="/leads" element={<Leads />} />
           <Route path="/support" element={<Support />} />
           <Route path="/docs" element={<Docs />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
 
         {/* Manager Routes — module-specific dashboard */}

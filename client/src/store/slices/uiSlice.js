@@ -21,6 +21,8 @@ const initialState = {
         createBoard: false,
         createWorkspace: false,
         inviteMember: false,
+        addTask: false,
+        generateReport: false,
     },
 };
 

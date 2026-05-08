@@ -360,3 +360,84 @@ ol {
     box-shadow: 0 0 30px rgba(0, 85, 254, 0.2);
   }
 }
+
+/* ---- Form Utilities ---- */
+.dw-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.dw-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.dw-form-label {
+    font-size: var(--font-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.dw-form-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-default);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: var(--font-sm);
+    transition: all var(--transition-fast);
+}
+
+.dw-form-input:focus {
+    border-color: var(--primary-500);
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 4px var(--primary-50);
+}
+
+.dw-form-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.dw-form-member-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: 4px 0;
+}
+
+.dw-form-member-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border-default);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: var(--font-xs);
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.dw-form-member-chip:hover {
+    border-color: var(--primary-300);
+    background: var(--primary-50);
+}
+
+.dw-form-member-chip.active {
+    background: var(--primary-500);
+    color: white;
+    border-color: var(--primary-500);
+    box-shadow: 0 4px 12px rgba(0, 85, 254, 0.2);
+}
+
+.dw-form-member-chip.active .avatar {
+    border-color: rgba(255, 255, 255, 0.3);
+}
