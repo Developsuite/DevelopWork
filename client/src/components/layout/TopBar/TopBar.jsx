@@ -47,6 +47,8 @@ const TopBar = () => {
             parts.push({ label: 'Customer Support', path: '/support', current: true });
         } else if (path === '/docs') {
             parts.push({ label: 'Documentation', path: '/docs', current: true });
+        } else if (path === '/settings') {
+            parts.push({ label: 'Settings', path: '/settings', current: true });
         }
 
         return parts;
@@ -104,10 +106,10 @@ const TopBar = () => {
                         <span className="topbar__badge">{unreadCount}</span>
                     )}
                 </button>
-                <button className="topbar__icon-btn" title="Settings" id="settings-btn">
+                <button className="topbar__icon-btn" title="Settings" id="settings-btn" onClick={() => navigate('/settings')}>
                     <Settings size={19} />
                 </button>
-                <button className="topbar__profile" id="profile-btn">
+                <button className="topbar__profile" id="profile-btn" onClick={() => navigate('/settings')}>
                     <Avatar name={mockUser.name} size="sm" />
                     <span className="topbar__profile-name">{mockUser.name}</span>
                 </button>

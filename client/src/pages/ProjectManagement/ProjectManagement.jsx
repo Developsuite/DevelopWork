@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import Button from '../../components/common/Button/Button';
 import Badge from '../../components/common/Badge/Badge';
 import Avatar from '../../components/common/Avatar/Avatar';
@@ -18,17 +20,65 @@ import {
     BarChart3,
     ArrowRight,
     Filter,
+    UserPlus,
+    X,
 } from 'lucide-react';
+import { mockMembers } from '../../utils/mockData';
+import { setCreateModalOpen, assignMember, removeMember } from '../../store/slices/projectSlice';
+import { openModal, addToast } from '../../store/slices/uiSlice';
 import './ProjectManagement.css';
 
 const ProjectManagement = () => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const projectList = useSelector((state) => state.project.projects);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('all');
+    const [activeAssignId, setActiveAssignId] = useState(null);
+
+    const handleAddTask = () => {
+        dispatch(openModal('addTask'));
+    };
+
+    const handleGenerateReport = () => {
+        dispatch(addToast({
+            title: 'Report Generated',
+            message: 'Monthly project performance report is ready for download.',
+            type: 'success'
+        }));
+    };
+
+    const handleViewAnalytics = () => {
+        dispatch(addToast({
+            title: 'Opening Analytics',
+            message: 'Redirecting to project analytics dashboard...',
+            type: 'info'
+        }));
+    };
+
+    // Close dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = () => setActiveAssignId(null);
+        if (activeAssignId) {
+            document.addEventListener('click', handleClickOutside);
+        }
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, [activeAssignId]);
+
+    const handleAssign = (e, projectId, memberName) => {
+        e.stopPropagation();
+        dispatch(assignMember({ projectId, memberName }));
+    };
+
+    const handleUnassign = (e, projectId, memberName) => {
+        e.stopPropagation();
+        dispatch(removeMember({ projectId, memberName }));
+    };
 
     const stats = [
         {
             label: 'Active Projects',
-            value: 14,
+            value: projectList.length,
             change: '+3',
             positive: true,
             icon: FolderKanban,
@@ -64,68 +114,9 @@ const ProjectManagement = () => {
         },
     ];
 
-    const projects = [
-        {
-            id: 1,
-            name: 'Dashboard Redesign v2.0',
-            description: 'Complete overhaul of the admin dashboard with new analytics widgets.',
-            status: 'In Progress',
-            priority: 'High',
-            progress: 65,
-            dueDate: '2026-05-15',
-            members: ['Abbas Khan', 'Sarah Ahmed', 'Ali Hassan'],
-            tasksTotal: 24,
-            tasksDone: 16,
-        },
-        {
-            id: 2,
-            name: 'Mobile App Development',
-            description: 'React Native cross-platform mobile application for iOS and Android.',
-            status: 'In Progress',
-            priority: 'Critical',
-            progress: 42,
-            dueDate: '2026-06-30',
-            members: ['Omar Raza', 'Fatima Noor'],
-            tasksTotal: 48,
-            tasksDone: 20,
-        },
-        {
-            id: 3,
-            name: 'API Gateway Migration',
-            description: 'Migrate legacy REST APIs to new GraphQL-based gateway architecture.',
-            status: 'Planning',
-            priority: 'Medium',
-            progress: 15,
-            dueDate: '2026-07-01',
-            members: ['Ali Hassan', 'Abbas Khan'],
-            tasksTotal: 32,
-            tasksDone: 5,
-        },
-        {
-            id: 4,
-            name: 'Customer Onboarding Flow',
-            description: 'Redesign the onboarding experience for new enterprise customers.',
-            status: 'Completed',
-            priority: 'High',
-            progress: 100,
-            dueDate: '2026-03-20',
-            members: ['Sarah Ahmed', 'Fatima Noor', 'Omar Raza'],
-            tasksTotal: 18,
-            tasksDone: 18,
-        },
-        {
-            id: 5,
-            name: 'Performance Optimization',
-            description: 'Improve application load times and reduce database query latency.',
-            status: 'In Progress',
-            priority: 'High',
-            progress: 78,
-            dueDate: '2026-04-28',
-            members: ['Abbas Khan'],
-            tasksTotal: 12,
-            tasksDone: 9,
-        },
-    ];
+    const handleAddProject = () => {
+        dispatch(setCreateModalOpen(true));
+    };
 
     const statuses = ['all', 'Planning', 'In Progress', 'Completed', 'On Hold'];
 
@@ -135,7 +126,7 @@ const ProjectManagement = () => {
         { id: 3, title: 'Beta Release - Mobile', date: '2026-05-01', project: 'Mobile App' },
     ];
 
-    const filteredProjects = projects.filter((p) => {
+    const filteredProjects = projectList.filter((p) => {
         const matchesSearch =
             p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             p.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -172,7 +163,7 @@ const ProjectManagement = () => {
                     <p className="pm-dashboard__subtitle">Track and manage all your projects in one place</p>
                 </div>
                 <div className="pm-dashboard__header-actions">
-                    <Button variant="primary" icon={Plus}>
+                    <Button variant="primary" icon={Plus} onClick={handleAddProject}>
                         New Project
                     </Button>
                 </div>
@@ -231,8 +222,19 @@ const ProjectManagement = () => {
 
                         <div className="pm-dashboard__project-list">
                             {filteredProjects.map((project) => (
-                                <div key={project.id} className="pm-dashboard__project-card">
-                                    <div className="pm-dashboard__project-main">
+                                <div 
+                                    key={project.id} 
+                                    className={`pm-dashboard__project-card ${activeAssignId === project.id ? 'active-dropdown' : ''}`}
+                                    style={{ 
+                                        zIndex: activeAssignId === project.id ? 100 : 1,
+                                        position: 'relative'
+                                    }}
+                                >
+                                    <div 
+                                        className="pm-dashboard__project-main" 
+                                        onClick={() => navigate(`/board/board-1`)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <div className="pm-dashboard__project-info">
                                             <div className="pm-dashboard__project-name">{project.name}</div>
                                             <div className="pm-dashboard__project-desc">{project.description}</div>
@@ -276,14 +278,48 @@ const ProjectManagement = () => {
                                             <span className="pm-dashboard__progress-text">{project.progress}%</span>
                                         </div>
                                         <div className="pm-dashboard__project-members">
-                                            {project.members.slice(0, 3).map((name) => (
-                                                <Avatar key={name} name={name} size="xs" />
+                                            {project.members.map((name) => (
+                                                <div key={name} className="pm-dashboard__member-wrapper">
+                                                    <Avatar name={name} size="xs" />
+                                                    <button 
+                                                        className="pm-dashboard__member-remove"
+                                                        onClick={(e) => handleUnassign(e, project.id, name)}
+                                                    >
+                                                        <X size={8} />
+                                                    </button>
+                                                </div>
                                             ))}
-                                            {project.members.length > 3 && (
-                                                <span className="pm-dashboard__members-more">
-                                                    +{project.members.length - 3}
-                                                </span>
-                                            )}
+                                            <div className="pm-dashboard__assign-wrap">
+                                                <button 
+                                                    className="pm-dashboard__member-add"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveAssignId(activeAssignId === project.id ? null : project.id);
+                                                    }}
+                                                >
+                                                    <UserPlus size={12} />
+                                                </button>
+                                                
+                                                {activeAssignId === project.id && (
+                                                    <div className="pm-dashboard__assign-dropdown glass-dropdown" onClick={e => e.stopPropagation()}>
+                                                        <div className="pm-dashboard__assign-title">Assign Members</div>
+                                                        {mockMembers.map(member => {
+                                                            const isAssigned = project.members.includes(member.name);
+                                                            return (
+                                                                <button 
+                                                                    key={member._id}
+                                                                    className={`pm-dashboard__assign-option ${isAssigned ? 'assigned' : ''}`}
+                                                                    onClick={(e) => isAssigned ? handleUnassign(e, project.id, member.name) : handleAssign(e, project.id, member.name)}
+                                                                >
+                                                                    <Avatar name={member.name} size="xs" />
+                                                                    <span>{member.name}</span>
+                                                                    {isAssigned && <CheckCircle2 size={12} className="check" />}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <button className="pm-dashboard__project-menu">
                                             <MoreVertical size={16} />
@@ -328,16 +364,16 @@ const ProjectManagement = () => {
                             Quick Actions
                         </h3>
                         <div className="pm-dashboard__actions">
-                            <Button variant="ghost" size="sm" icon={Plus} fullWidth>
+                            <Button variant="ghost" size="sm" icon={Plus} fullWidth onClick={handleAddProject}>
                                 New Project
                             </Button>
-                            <Button variant="ghost" size="sm" icon={Target} fullWidth>
+                            <Button variant="ghost" size="sm" icon={Target} fullWidth onClick={handleAddTask}>
                                 Add Task
                             </Button>
-                            <Button variant="ghost" size="sm" icon={FileText} fullWidth>
+                            <Button variant="ghost" size="sm" icon={FileText} fullWidth onClick={handleGenerateReport}>
                                 Generate Report
                             </Button>
-                            <Button variant="ghost" size="sm" icon={BarChart3} fullWidth>
+                            <Button variant="ghost" size="sm" icon={BarChart3} fullWidth onClick={handleViewAnalytics}>
                                 View Analytics
                             </Button>
                         </div>
