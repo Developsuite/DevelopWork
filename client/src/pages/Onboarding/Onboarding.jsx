@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setActiveModules } from '../../store/slices/accessSlice';
 import {
-    Zap,
     ChevronLeft,
     ChevronRight,
     Briefcase,
@@ -111,6 +110,7 @@ const STEPS = [
 const Onboarding = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
     const [currentStep, setCurrentStep] = useState(0);
     const [selections, setSelections] = useState({
         purpose: null,
@@ -161,7 +161,7 @@ const Onboarding = () => {
     const handleContinue = () => {
         if (!canContinue()) return;
         if (isLastStep) {
-            // Save selected modules and go to Module Hub
+            // Save selected modules and go to next step
             const validModules = ['projects', 'hr', 'finance', 'leads', 'support', 'docs'];
             const selectedModules = (selections.modules || []).filter((m) =>
                 validModules.includes(m)
@@ -169,7 +169,10 @@ const Onboarding = () => {
             if (selectedModules.length > 0) {
                 dispatch(setActiveModules(selectedModules));
             }
-            navigate('/modules');
+            
+            // If user isn't logged in, send them to register with their onboarding info
+            // In a real app, you'd pass this state to register
+            navigate(user ? '/modules' : '/register');
         } else {
             setCurrentStep((prev) => prev + 1);
         }
@@ -195,7 +198,7 @@ const Onboarding = () => {
                 {/* Logo */}
                 <div className="onboarding__logo">
                     <span className="onboarding__logo-icon">
-                        <Zap size={20} />
+                        <img src="/images/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </span>
                     DevelopWork
                 </div>

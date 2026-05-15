@@ -9,11 +9,12 @@ export const mockUser = {
 };
 
 export const mockMembers = [
-    { _id: 'user-1', name: 'Abbas Khan', email: 'abbas@developwork.com', role: 'admin', avatar: null },
-    { _id: 'user-2', name: 'Sarah Ahmed', email: 'sarah@developwork.com', role: 'manager', avatar: null },
-    { _id: 'user-3', name: 'Ali Hassan', email: 'ali@developwork.com', role: 'employee', avatar: null },
-    { _id: 'user-4', name: 'Fatima Noor', email: 'fatima@developwork.com', role: 'employee', avatar: null },
-    { _id: 'user-5', name: 'Omar Raza', email: 'omar@developwork.com', role: 'manager', avatar: null },
+    { _id: 'user-1', name: 'Abbas Khan', email: 'abbas@developwork.com', role: 'admin', avatar: null, department: 'Management' },
+    { _id: 'user-2', name: 'Sarah Ahmed', email: 'sarah@developwork.com', role: 'manager', avatar: null, department: 'Engineering' },
+    { _id: 'user-3', name: 'Ali Hassan', email: 'ali@developwork.com', role: 'employee', avatar: null, department: 'Finance' },
+    { _id: 'user-4', name: 'Fatima Noor', email: 'fatima@developwork.com', role: 'employee', avatar: null, department: 'Engineering' },
+    { _id: 'user-5', name: 'Omar Raza', email: 'omar@developwork.com', role: 'manager', avatar: null, department: 'HR' },
+    { _id: 'user-6', name: 'Usman Ali', email: 'usman@developwork.com', role: 'employee', avatar: null, department: 'Engineering' },
 ];
 
 export const mockWorkspaces = [
@@ -84,7 +85,7 @@ export const statusOptions = {
         { label: 'Closed Won', color: '#00C875' },
         { label: 'Closed Lost', color: '#E2445C' },
     ],
-    support: [
+    clients: [
         { label: 'New', color: '#579BFC' },
         { label: 'In Progress', color: '#FDAB3D' },
         { label: 'Waiting', color: '#A25DDC' },

@@ -1,66 +1,43 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginSuccess, loginFailure } from '../../../store/slices/authSlice';
-import { mockUser } from '../../../utils/mockData';
+import { signInWithEmail, signInWithGoogle, clearError } from '../../../store/slices/authSlice';
 import ThemeToggle from '../../../components/common/ThemeToggle/ThemeToggle';
-import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle, Loader2 } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const managers = useSelector((state) => state.access.managers);
+    const { isAuthenticated, isLoading, error, user } = useSelector((state) => state.auth);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            if (user.role === 'manager' && user.assignedModule) {
+                navigate(`/manager/${user.assignedModule}`);
+            } else if (user.role === 'employee') {
+                navigate('/employee/dashboard');
+            } else {
+                navigate('/modules');
+            }
+        }
+    }, [isAuthenticated, user, navigate]);
+
+    // Clear errors when component mounts
+    useEffect(() => {
+        dispatch(clearError());
+    }, [dispatch]);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
+        dispatch(signInWithEmail({ email, password }));
+    };
 
-        // Check if admin login
-        if (email === mockUser.email) {
-            dispatch(loginSuccess({
-                ...mockUser,
-                role: 'admin',
-            }));
-            navigate('/modules');
-            return;
-        }
-
-        // Check if manager login
-        const manager = managers.find(
-            (m) => m.email === email && m.password === password
-        );
-
-        if (manager) {
-            dispatch(loginSuccess({
-                _id: manager.userId,
-                name: manager.name,
-                email: manager.email,
-                role: 'manager',
-                assignedModule: manager.assignedModule,
-                managerId: manager.id,
-                avatar: null,
-            }));
-            navigate(`/manager/${manager.assignedModule}`);
-            return;
-        }
-
-        // Check if email matches a manager but password is wrong
-        const managerByEmail = managers.find((m) => m.email === email);
-        if (managerByEmail) {
-            setError('Incorrect password. Default password is manager123');
-            return;
-        }
-
-        // No match found — still allow mock admin login for any credentials
-        dispatch(loginSuccess({
-            ...mockUser,
-            role: 'admin',
-        }));
-        navigate('/modules');
+    const handleGoogleSignIn = () => {
+        dispatch(signInWithGoogle());
     };
 
     return (
@@ -68,7 +45,7 @@ const Login = () => {
             {/* Left Branding Panel */}
             <div className="login-page__brand">
                 <div className="login-page__brand-logo">
-                    <span className="logo-icon-lg"><Zap size={24} /></span>
+                    <img src="/images/white_logo.png" alt="Logo" className="logo-img" />
                     DevelopWork
                 </div>
                 <p className="login-page__brand-tagline">
@@ -90,26 +67,6 @@ const Login = () => {
                     <div className="login-page__brand-feature">
                         <span className="login-page__brand-feature-icon"><Shield size={18} /></span>
                         Role-Based Access Control
-                    </div>
-                </div>
-
-                {/* Demo credentials hint */}
-                <div className="login-page__demo-creds">
-                    <div className="login-page__demo-title">
-                        <Shield size={14} />
-                        Demo Credentials
-                    </div>
-                    <div className="login-page__demo-row">
-                        <span>Admin:</span>
-                        <span>abbas@developwork.com (any password)</span>
-                    </div>
-                    <div className="login-page__demo-row">
-                        <span>HR Manager:</span>
-                        <span>omar@developwork.com / manager123</span>
-                    </div>
-                    <div className="login-page__demo-row">
-                        <span>Projects Mgr:</span>
-                        <span>sarah@developwork.com / manager123</span>
                     </div>
                 </div>
             </div>
@@ -141,6 +98,7 @@ const Login = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                disabled={isLoading}
                             />
                         </div>
 
@@ -154,6 +112,7 @@ const Login = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                disabled={isLoading}
                             />
                         </div>
 
@@ -166,17 +125,32 @@ const Login = () => {
                             </Link>
                         </div>
 
-                        <button type="submit" className="login-page__submit">
-                            Sign In
+                        <button type="submit" className="login-page__submit" disabled={isLoading}>
+                            {isLoading ? (
+                                <><Loader2 size={16} className="spin-icon" /> Signing in...</>
+                            ) : (
+                                'Sign In'
+                            )}
                         </button>
 
                         <div className="login-page__divider">or continue with</div>
 
                         <div className="login-page__social">
-                            <button type="button" className="login-page__social-btn">
+                            <button
+                                type="button"
+                                className="login-page__social-btn"
+                                onClick={handleGoogleSignIn}
+                                disabled={isLoading}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24">
+                                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                                </svg>
                                 Google
                             </button>
-                            <button type="button" className="login-page__social-btn">
+                            <button type="button" className="login-page__social-btn" disabled>
                                 Microsoft
                             </button>
                         </div>

@@ -2,7 +2,9 @@ import { useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 
 const ManagerRoute = ({ children }) => {
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
+    const { isAuthenticated, user, isLoading } = useSelector((state) => state.auth);
+
+    if (isLoading) return null;
 
     if (!isAuthenticated || !user) {
         return <Navigate to="/login" replace />;

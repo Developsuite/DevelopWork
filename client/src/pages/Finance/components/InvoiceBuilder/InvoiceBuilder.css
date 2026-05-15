@@ -1,0 +1,772 @@
+.invoice-builder-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+}
+
+.invoice-builder-content {
+    background: var(--bg-primary);
+    width: 100%;
+    max-width: 1400px;
+    height: 90vh;
+    border-radius: 24px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUpFade 0.3s ease-out;
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.invoice-builder-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.invoice-builder-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.invoice-builder-header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.invoice-builder-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* LEFT PANEL: Form */
+.invoice-builder-form {
+    width: 500px;
+    border-right: 1px solid var(--border-color);
+    padding: 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    background: var(--bg-secondary);
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--bg-primary);
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.form-section h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.form-group input, .form-group select {
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Figtree', sans-serif;
+    transition: all 0.2s;
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px var(--primary-50);
+}
+
+/* Template Selector */
+.template-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.template-card {
+    padding: 16px;
+    border: 2px solid transparent;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.template-card:hover {
+    background: rgba(0,0,0,0.02);
+}
+
+.template-card.active {
+    border-color: var(--primary-500);
+    color: var(--primary-600);
+    background: var(--primary-50);
+}
+
+/* Line Items */
+.item-row {
+    display: grid;
+    grid-template-columns: 2fr 0.7fr 1.1fr 36px;
+    gap: 12px;
+    align-items: center;
+}
+
+.item-row input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Figtree', sans-serif;
+}
+
+.item-row input:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px var(--primary-50);
+}
+
+.add-item-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    color: var(--primary-600);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+    font-family: 'Figtree', sans-serif;
+}
+
+.add-item-btn:hover {
+    background: var(--primary-50);
+    border-color: var(--primary-200);
+}
+
+/* RIGHT PANEL: Preview */
+.invoice-builder-preview {
+    flex: 1;
+    background: #f1f5f9;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.invoice-preview-wrapper {
+    width: 210mm;
+    min-height: 297mm;
+    background: white;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    border-radius: 4px;
+}
+
+/* ========================================= */
+/*     TEMPLATE: MINIMAL — PREMIUM FIGTREE   */
+/* ========================================= */
+.inv-template-minimal {
+    padding: 64px;
+    font-family: 'Figtree', sans-serif;
+    color: #1e293b;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Top area: brand + invoice label */
+.inv-template-minimal .inv-brand-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 64px;
+}
+
+.inv-template-minimal .inv-brand-logo {
+    display: flex;
+    flex-direction: column;
+}
+
+.inv-template-minimal .inv-brand-logo .inv-company-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+}
+
+.inv-template-minimal .inv-brand-logo .inv-tagline {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.inv-template-minimal .inv-label-block {
+    text-align: right;
+}
+
+.inv-template-minimal .inv-label-block .inv-title {
+    font-size: 40px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.inv-template-minimal .inv-label-block .inv-number {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-top: 8px;
+}
+
+/* Meta strip */
+.inv-template-minimal .inv-meta-strip {
+    display: flex;
+    gap: 40px;
+    padding: 20px 0;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 48px;
+}
+
+.inv-template-minimal .inv-meta-strip .inv-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.inv-template-minimal .inv-meta-strip .inv-meta-item span:first-child {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.inv-template-minimal .inv-meta-strip .inv-meta-item span:last-child {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Addresses */
+.inv-template-minimal .inv-address-block {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 52px;
+}
+
+.inv-template-minimal .inv-address {
+    width: 45%;
+}
+
+.inv-template-minimal .inv-address h4 {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.inv-template-minimal .inv-address .inv-addr-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.inv-template-minimal .inv-address p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #475569;
+    white-space: pre-wrap;
+}
+
+/* Table */
+.inv-template-minimal .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 40px;
+}
+
+.inv-template-minimal .inv-table th {
+    text-align: left;
+    padding: 14px 0;
+    border-bottom: 2px solid #0f172a;
+    font-size: 10px;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+}
+
+.inv-template-minimal .inv-table th.right,
+.inv-template-minimal .inv-table td.right {
+    text-align: right;
+}
+
+.inv-template-minimal .inv-table td {
+    padding: 18px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+    color: #334155;
+    font-weight: 500;
+}
+
+/* Totals */
+.inv-template-minimal .inv-totals {
+    width: 280px;
+    margin-left: auto;
+}
+
+.inv-template-minimal .inv-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.inv-template-minimal .inv-total-row.grand {
+    border-top: 2px solid #0f172a;
+    padding-top: 16px;
+    margin-top: 8px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* Notes */
+.inv-template-minimal .inv-notes {
+    margin-top: auto;
+    padding-top: 48px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.inv-template-minimal .inv-notes h4 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.inv-template-minimal .inv-notes p {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.7;
+}
+
+/* Footer */
+.inv-template-minimal .inv-footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 10px;
+    color: #cbd5e1;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+
+/* ========================================= */
+/*     TEMPLATE: MODERN — PREMIUM FIGTREE    */
+/* ========================================= */
+.inv-template-modern {
+    padding: 0;
+    font-family: 'Figtree', sans-serif;
+    color: #1e293b;
+    position: relative;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Gradient accent bar */
+.inv-template-modern .inv-brand-strip {
+    height: 6px;
+    background: #4f46e5;
+    width: 100%;
+}
+
+/* Header block */
+.inv-template-modern .inv-header-bg {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 48px 60px;
+}
+
+.inv-template-modern .inv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.inv-template-modern .inv-logo-area {
+    display: flex;
+    flex-direction: column;
+}
+
+.inv-template-modern .inv-logo-area h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.5px;
+}
+
+.inv-template-modern .inv-logo-area .inv-tagline {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 4px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.inv-template-modern .inv-header-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.inv-template-modern .inv-header-badge .inv-badge-label {
+    background: rgba(255,255,255,0.1);
+    color: #a5b4fc;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.inv-template-modern .inv-header-badge .inv-badge-number {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 500;
+}
+
+/* Meta row under header */
+.inv-template-modern .inv-meta-row {
+    display: flex;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.inv-template-modern .inv-meta-row .inv-meta-cell {
+    flex: 1;
+    padding: 20px 24px;
+    border-right: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.inv-template-modern .inv-meta-row .inv-meta-cell:last-child {
+    border-right: none;
+}
+
+.inv-template-modern .inv-meta-row .inv-meta-cell span:first-child {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.inv-template-modern .inv-meta-row .inv-meta-cell span:last-child {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.inv-template-modern .inv-meta-row .inv-meta-cell.highlight span:last-child {
+    color: #6366f1;
+}
+
+/* Body */
+.inv-template-modern .inv-body {
+    padding: 48px 60px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Address cards */
+.inv-template-modern .inv-address-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 48px;
+}
+
+.inv-template-modern .inv-address {
+    padding: 28px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    background: #fafbfc;
+}
+
+.inv-template-modern .inv-address h4 {
+    font-size: 10px;
+    color: #6366f1;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+}
+
+.inv-template-modern .inv-address .inv-addr-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.inv-template-modern .inv-address p {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}
+
+/* Table */
+.inv-template-modern .inv-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+    margin-bottom: 40px;
+}
+
+.inv-template-modern .inv-table th {
+    text-align: left;
+    padding: 12px 20px;
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.inv-template-modern .inv-table td {
+    background: #f8fafc;
+    padding: 16px 20px;
+    font-size: 14px;
+    color: #0f172a;
+    font-weight: 500;
+}
+
+.inv-template-modern .inv-table td:first-child { border-radius: 12px 0 0 12px; }
+.inv-template-modern .inv-table td:last-child { border-radius: 0 12px 12px 0; }
+
+.inv-template-modern .inv-table th.right,
+.inv-template-modern .inv-table td.right { text-align: right; }
+
+/* Totals */
+.inv-template-modern .inv-footer-flex {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.inv-template-modern .inv-totals {
+    width: 320px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 28px 32px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.inv-template-modern .inv-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.inv-template-modern .inv-total-row.grand {
+    border-top: 2px solid #6366f1;
+    margin-top: 16px;
+    padding-top: 16px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #6366f1;
+}
+
+/* Notes */
+.inv-template-modern .inv-notes {
+    margin-top: 40px;
+    padding: 24px 28px;
+    background: #fafbfc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.inv-template-modern .inv-notes h4 {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #94a3b8;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+}
+
+.inv-template-modern .inv-notes p {
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.7;
+}
+
+/* Footer */
+.inv-template-modern .inv-footer {
+    margin-top: auto;
+    padding: 24px 60px;
+    text-align: center;
+    font-size: 10px;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Loading Overlay */
+.invoice-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 10;
+    font-weight: 600;
+    color: var(--primary-600);
+}
+
+/* Dark Mode Overrides for Invoice Builder */
+[data-theme="dark"] .invoice-builder-content {
+    background: var(--bg-primary);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .invoice-builder-form {
+    background: #0f172a;
+    border-right-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .form-section {
+    background: #1e293b;
+    border-color: rgba(255,255,255,0.05);
+}
+
+[data-theme="dark"] .form-group input, 
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .item-row input {
+    background: #0f172a;
+    border-color: rgba(255,255,255,0.1);
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .form-group input:focus, 
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .item-row input:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="dark"] .template-card {
+    background: #0f172a;
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .template-card:hover {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .template-card.active {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-500);
+    color: var(--primary-400);
+}
+
+[data-theme="dark"] .add-item-btn {
+    border-color: rgba(255,255,255,0.1);
+    color: var(--primary-400);
+}
+
+[data-theme="dark"] .add-item-btn:hover {
+    background: rgba(255,255,255,0.03);
+    border-color: var(--primary-500);
+}
+
+[data-theme="dark"] .invoice-builder-preview {
+    background: #020617;
+}
+
+[data-theme="dark"] .invoice-preview-wrapper {
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+[data-theme="dark"] .invoice-loading-overlay {
+    background: rgba(15, 23, 42, 0.9);
+}

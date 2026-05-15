@@ -1,18 +1,20 @@
 .login-page {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
     background: var(--bg-body);
+    overflow: hidden;
 }
 
 /* Left Panel - Branding */
 .login-page__brand {
     flex: 1;
+    height: 100%;
     background: linear-gradient(145deg, #001A4D 0%, var(--primary-700) 35%, var(--primary-500) 70%, var(--primary-400) 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 56px;
+    justify-content: flex-start;
+    padding: 15vh 48px 48px;
     color: white;
     position: relative;
     overflow: hidden;
@@ -51,16 +53,12 @@
     letter-spacing: -0.03em;
 }
 
-.login-page__brand-logo .logo-icon-lg {
-    width: 52px;
-    height: 52px;
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+.logo-img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    background: transparent;
+    padding: 0;
 }
 
 .login-page__brand-tagline {
@@ -106,12 +104,15 @@
 /* Right Panel - Form */
 .login-page__form-section {
     flex: 1;
+    height: 100%;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 48px;
+    justify-content: flex-start;
+    padding: 15vh 48px 48px;
     background: var(--bg-body);
     position: relative;
+    overflow-y: auto;
 }
 
 .login-page__theme-toggle {
@@ -143,13 +144,13 @@
 .login-page__form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 .login-page__field {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 4px;
 }
 
 .login-page__label {
@@ -353,6 +354,33 @@
     font-weight: 500;
     margin-bottom: 4px;
     animation: fadeInUp 0.3s ease;
+}
+
+/* Loading spinner */
+.spin-icon {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.login-page__submit:disabled,
+.login-page__social-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.login-page__submit:disabled:hover {
+    box-shadow: 0 4px 16px rgba(0, 85, 254, 0.25);
+}
+
+.login-page__submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 @media (max-width: 768px) {

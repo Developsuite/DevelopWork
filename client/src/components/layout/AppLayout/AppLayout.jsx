@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 import { Outlet } from 'react-router-dom';
-import Sidebar from '../Sidebar/Sidebar';
+import Sidebar from '../Sidebar/Sidebar.jsx';
 import TopBar from '../TopBar/TopBar';
 import ToastContainer from '../../common/Toast/Toast';
 import CreateProjectModal from '../../modals/CreateProjectModal/CreateProjectModal';

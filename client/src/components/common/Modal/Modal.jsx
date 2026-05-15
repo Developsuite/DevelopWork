@@ -20,9 +20,15 @@ const Modal = ({ isOpen, onClose, title, children, footer }) => {
 
     if (!isOpen) return null;
 
+    const handleOverlayClick = (e) => {
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
+
     return (
-        <div className="dw-modal-overlay" onClick={onClose}>
-            <div className="dw-modal-container glass-elevated" onClick={e => e.stopPropagation()}>
+        <div className="dw-modal-overlay" onMouseDown={handleOverlayClick}>
+            <div className="dw-modal-container glass-elevated">
                 <div className="dw-modal-header">
                     <h2 className="dw-modal-title">{title}</h2>
                     <button className="dw-modal-close" onClick={onClose}>

@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { resetPassword, clearError, clearResetSuccess } from '../../../store/slices/authSlice';
+import { Zap, AlertCircle, Loader2 } from 'lucide-react';
 import '../Login/Login.css';
 
 const ForgotPassword = () => {
+    const dispatch = useDispatch();
+    const { isLoading, error, resetSuccess } = useSelector((state) => state.auth);
     const [email, setEmail] = useState('');
-    const [sent, setSent] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        setSent(true);
+        dispatch(clearError());
+        dispatch(clearResetSuccess());
+        dispatch(resetPassword({ email }));
     };
 
     return (
@@ -28,12 +33,19 @@ const ForgotPassword = () => {
                 <div className="login-page__form-container">
                     <h1 className="login-page__form-title">Reset password</h1>
                     <p className="login-page__form-subtitle">
-                        {sent
+                        {resetSuccess
                             ? "Check your email for a reset link."
                             : "Enter your email and we'll send you a reset link."}
                     </p>
 
-                    {!sent ? (
+                    {error && (
+                        <div className="login-page__error">
+                            <AlertCircle size={14} />
+                            {error}
+                        </div>
+                    )}
+
+                    {!resetSuccess ? (
                         <form className="login-page__form" onSubmit={handleSubmit}>
                             <div className="login-page__field">
                                 <label className="login-page__label" htmlFor="reset-email">Email</label>
@@ -45,9 +57,16 @@ const ForgotPassword = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
+                                    disabled={isLoading}
                                 />
                             </div>
-                            <button type="submit" className="login-page__submit">Send Reset Link</button>
+                            <button type="submit" className="login-page__submit" disabled={isLoading}>
+                                {isLoading ? (
+                                    <><Loader2 size={16} className="spin-icon" /> Sending...</>
+                                ) : (
+                                    'Send Reset Link'
+                                )}
+                            </button>
                         </form>
                     ) : (
                         <div style={{ textAlign: 'center', padding: '24px 0' }}>

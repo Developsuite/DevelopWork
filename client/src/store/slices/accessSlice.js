@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 // Mock access data — which managers are assigned to which modules
 const initialState = {
     // Active modules the admin has enabled
-    activeModules: ['projects', 'hr', 'finance', 'leads', 'support', 'docs'],
+    activeModules: ['projects', 'hr', 'finance', 'leads', 'clients', 'docs'],
 
     // Access assignments: module -> list of managers with access
     accessList: [
@@ -27,29 +27,10 @@ const initialState = {
             assignedAt: '2026-03-10T14:30:00Z',
             status: 'active',
         },
-        {
-            id: 'access-3',
-            moduleKey: 'finance',
-            userId: 'user-3',
-            userName: 'Ali Hassan',
-            userEmail: 'ali@developwork.com',
-            role: 'manager',
-            assignedAt: '2026-03-12T09:00:00Z',
-            status: 'active',
-        },
-        {
-            id: 'access-4',
-            moduleKey: 'leads',
-            userId: 'user-4',
-            userName: 'Fatima Noor',
-            userEmail: 'fatima@developwork.com',
-            role: 'manager',
-            assignedAt: '2026-03-18T11:00:00Z',
-            status: 'active',
-        },
+
         {
             id: 'access-5',
-            moduleKey: 'support',
+            moduleKey: 'clients',
             userId: 'user-2',
             userName: 'Sarah Ahmed',
             userEmail: 'sarah@developwork.com',
@@ -83,8 +64,8 @@ const initialState = {
                     id: 'team-mgr-1',
                     name: 'Frontend Team',
                     members: [
-                        { id: 'mem-1', name: 'Usman Ali', email: 'usman@developwork.com', role: 'Developer', joinedAt: '2026-03-16T10:00:00Z' },
-                        { id: 'mem-2', name: 'Hina Tariq', email: 'hina@developwork.com', role: 'Designer', joinedAt: '2026-03-17T10:00:00Z' },
+                        { id: 'mem-1', userId: 'user-6', name: 'Usman Ali', email: 'usman@developwork.com', role: 'Developer', joinedAt: '2026-03-16T10:00:00Z' },
+                        { id: 'mem-2', userId: 'user-4', name: 'Fatima Noor', email: 'fatima@developwork.com', role: 'Developer', joinedAt: '2026-03-17T10:00:00Z' },
                     ],
                 },
             ],
@@ -108,25 +89,40 @@ const initialState = {
             ],
             createdAt: '2026-03-10T14:30:00Z',
         },
+
+    ],
+
+    // Full employee profiles (with assigned modules & teams)
+    employees: [
         {
-            id: 'mgr-3',
+            id: 'emp-1',
             userId: 'user-3',
             name: 'Ali Hassan',
             email: 'ali@developwork.com',
-            password: 'manager123',
-            assignedModule: 'finance',
-            teams: [],
-            createdAt: '2026-03-12T09:00:00Z',
+            password: 'employee123',
+            department: 'finance',
+            assignedManager: 'mgr-3',
+            assignedTeam: null,
         },
         {
-            id: 'mgr-4',
+            id: 'emp-2',
             userId: 'user-4',
             name: 'Fatima Noor',
             email: 'fatima@developwork.com',
-            password: 'manager123',
-            assignedModule: 'leads',
-            teams: [],
-            createdAt: '2026-03-18T11:00:00Z',
+            password: 'employee123',
+            department: 'projects',
+            assignedManager: 'mgr-1',
+            assignedTeam: 'team-mgr-1',
+        },
+        {
+            id: 'emp-3',
+            userId: 'user-6',
+            name: 'Usman Ali',
+            email: 'usman@developwork.com',
+            password: 'employee123',
+            department: 'projects',
+            assignedManager: 'mgr-1',
+            assignedTeam: 'team-mgr-1',
         },
     ],
 

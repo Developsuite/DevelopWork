@@ -64,9 +64,9 @@
   --priority-medium: #3B82F6;
   --priority-low: #94A3B8;
 
-  /* Background — soft cool gray base */
-  --bg-body: #EEF1F6;
-  --bg-primary: #F3F5F9;
+  /* Background — pure white base */
+  --bg-body: #FFFFFF;
+  --bg-primary: #FFFFFF;
   --bg-secondary: #FFFFFF;
   --bg-sidebar: rgba(255, 255, 255, 0.55);
   --bg-hover: rgba(0, 85, 254, 0.04);
@@ -81,8 +81,8 @@
   --text-link: #0055FE;
 
   /* Borders */
-  --border-light: rgba(255, 255, 255, 0.6);
-  --border-default: rgba(0, 0, 0, 0.06);
+  --border-light: rgba(0, 0, 0, 0.06);
+  --border-default: rgba(0, 0, 0, 0.08);
   --border-focus: #0055FE;
 
   /* Spacing Scale */

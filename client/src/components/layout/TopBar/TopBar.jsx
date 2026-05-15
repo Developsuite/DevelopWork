@@ -18,6 +18,7 @@ const TopBar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const sidebarOpen = useSelector((state) => state.ui.sidebarOpen);
+    const { user } = useSelector((state) => state.auth);
 
     const unreadCount = mockNotifications.filter((n) => !n.read).length;
 
@@ -110,8 +111,8 @@ const TopBar = () => {
                     <Settings size={19} />
                 </button>
                 <button className="topbar__profile" id="profile-btn" onClick={() => navigate('/settings')}>
-                    <Avatar name={mockUser.name} size="sm" />
-                    <span className="topbar__profile-name">{mockUser.name}</span>
+                    <Avatar name={user?.name || 'User'} size="sm" />
+                    <span className="topbar__profile-name">{user?.name || 'User'}</span>
                 </button>
             </div>
         </header>

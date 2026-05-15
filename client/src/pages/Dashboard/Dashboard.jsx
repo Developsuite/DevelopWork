@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { mockUser, mockBoards, mockNotifications } from '../../utils/mockData';
 import { BOARD_TYPES } from '../../utils/constants';
 import { formatRelativeTime } from '../../utils/helpers';
@@ -28,6 +29,7 @@ const boardTypeIcons = {
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const { user } = useSelector((state) => state.auth);
 
     const stats = [
         {
@@ -73,7 +75,7 @@ const Dashboard = () => {
             {/* Welcome Header */}
             <div className="dashboard__header">
                 <h1 className="dashboard__greeting">
-                    Good morning, <span>{mockUser.name.split(' ')[0]}</span> 👋
+                    Good morning, <span>{(user?.name || 'User').split(' ')[0]}</span> 👋
                 </h1>
                 <p className="dashboard__date">
                     {new Date().toLocaleDateString('en-US', {

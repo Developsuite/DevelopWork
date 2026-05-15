@@ -5,7 +5,7 @@
 .mgr-dash {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
 }
 
 /* ---- Hero Header ---- */
@@ -19,7 +19,48 @@
 .mgr-dash__hero-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
+    flex: 1;
+}
+
+.mgr-dash__greeting-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.mgr-dash__hero-card {
+    width: 110px;
+    height: 80px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+    margin-left: 20px;
+    box-shadow: var(--neo-shadow-sm);
+    position: relative;
+    padding: 0 10px;
+}
+
+.mgr-dash__hero-card-img {
+    width: 100%;
+    height: 90%;
+    object-fit: contain;
+    object-position: bottom;
+    transition: transform 0.3s ease;
+}
+
+.mgr-dash__hero-card:hover .mgr-dash__hero-card-img {
+    transform: scale(1.05);
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
 }
 
 .mgr-dash__title {

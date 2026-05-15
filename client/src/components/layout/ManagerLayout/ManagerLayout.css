@@ -6,6 +6,7 @@
     display: flex;
     min-height: 100vh;
     background: var(--bg-body);
+    scrollbar-gutter: stable;
 }
 
 /* ------- Sidebar ------- */
@@ -22,15 +23,46 @@
     left: 0;
     bottom: 0;
     z-index: 100;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.manager-sidebar.collapsed {
+    width: 72px;
 }
 
 .manager-sidebar__header {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 20px 18px 16px;
+    padding: 20px 14px 16px;
     border-bottom: 1px solid var(--border-light);
+    min-height: 77px;
+}
+
+.manager-sidebar__toggle {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.manager-sidebar__toggle:hover {
+    background: var(--primary-50);
+    color: var(--primary-600);
+}
+
+.manager-sidebar__module-badge.mini {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    margin: 0 auto;
 }
 
 .manager-sidebar__module-badge {
@@ -102,6 +134,12 @@
     width: 100%;
     text-align: left;
     font-family: var(--font-family);
+    overflow: hidden;
+}
+
+.manager-sidebar__nav-item.collapsed {
+    justify-content: center;
+    padding: 10px 0;
 }
 
 .manager-sidebar__nav-item:hover {
@@ -181,9 +219,19 @@
 .manager-layout__main {
     flex: 1;
     margin-left: 260px;
+    width: calc(100% - 260px);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow-x: hidden;
+    background: var(--bg-body);
+}
+
+.manager-layout__main.expanded {
+    margin-left: 72px;
+    width: calc(100% - 72px);
 }
 
 /* Top Bar */
@@ -261,6 +309,73 @@
     flex: 1;
     padding: 28px;
     overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Important for flex overflow */
+}
+
+@keyframes manager-content-fade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Sprint Board Optimization */
+.manager-layout__main.sprint-mode .manager-layout__content {
+    padding: 0;
+    overflow: hidden;
+    height: calc(100vh - 56px); /* Subtract TopBar height */
+    display: flex;
+    flex-direction: column;
+}
+
+.manager-layout__main.sprint-mode .manager-layout__content > * {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.manager-layout__main.sprint-mode .brd {
+    padding: 16px 20px;
+    max-width: none;
+    margin: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.manager-layout__main.sprint-mode .brd__kanban {
+    flex: 1;
+    height: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    padding-bottom: 20px; /* Space for horizontal scrollbar */
+}
+
+/* Custom Scrollbar for Kanban */
+.manager-layout__main.sprint-mode .brd__kanban::-webkit-scrollbar {
+    height: 8px;
+}
+.manager-layout__main.sprint-mode .brd__kanban::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.02);
+    border-radius: 10px;
+}
+.manager-layout__main.sprint-mode .brd__kanban::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+.manager-layout__main.sprint-mode .brd__kanban::-webkit-scrollbar-thumb:hover {
+    background: rgba(0,0,0,0.2);
 }
 
 /* ------- Responsive ------- */

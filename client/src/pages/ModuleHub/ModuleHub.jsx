@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
@@ -15,6 +15,7 @@ import {
 } from '../../store/slices/accessSlice';
 import { setCreateModalOpen } from '../../store/slices/projectSlice';
 import { DEPARTMENT_MODULES } from '../../utils/constants';
+import { managerService } from '../../services/managerService';
 import { mockMembers } from '../../utils/mockData';
 import Button from '../../components/common/Button/Button';
 import Avatar from '../../components/common/Avatar/Avatar';
@@ -72,11 +73,28 @@ const ModuleHub = () => {
         credentialsModal,
     } = useSelector((state) => state.access);
 
+    const [realManagers, setRealManagers] = useState([]);
+
+    useEffect(() => {
+        const loadManagers = async () => {
+            try {
+                const data = await managerService.getManagers();
+                setRealManagers(data);
+            } catch (err) {
+                console.error('Failed to load managers:', err);
+            }
+        };
+        loadManagers();
+    }, []);
+
     const [copied, setCopied] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteName, setInviteName] = useState('');
+    const [invitePassword, setInvitePassword] = useState('Manager@123');
     const [inviteModule, setInviteModule] = useState('');
+    const [isInviting, setIsInviting] = useState(false);
     const [selectedManager, setSelectedManager] = useState('');
     const [showManagerDropdown, setShowManagerDropdown] = useState(false);
 
@@ -155,17 +173,42 @@ const ModuleHub = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleSendInvite = () => {
-        if (!inviteEmail || !inviteModule) return;
-        dispatch(
-            addInvite({
-                moduleKey: inviteModule,
+    const handleSendInvite = async () => {
+        if (!inviteEmail || !inviteModule || !inviteName || !invitePassword) return;
+        setIsInviting(true);
+        try {
+            await managerService.inviteManager({
+                name: inviteName,
                 email: inviteEmail,
-            })
-        );
-        setInviteEmail('');
-        setInviteModule('');
-        dispatch(setInviteModalOpen(false));
+                password: invitePassword,
+                assignedModule: inviteModule
+            });
+            
+            // Trigger credentials modal
+            dispatch(
+                addManager({
+                    userId: 'new-manager',
+                    name: inviteName,
+                    email: inviteEmail,
+                    moduleKey: inviteModule,
+                })
+            );
+            
+            // Reload real managers
+            const data = await managerService.getManagers();
+            setRealManagers(data);
+            
+            setInviteEmail('');
+            setInviteName('');
+            setInvitePassword('Manager@123');
+            setInviteModule('');
+            dispatch(setInviteModalOpen(false));
+        } catch (error) {
+            console.error('Failed to invite manager:', error);
+            alert(`Error: ${error.message}`);
+        } finally {
+            setIsInviting(false);
+        }
     };
 
     const selectedModuleInfo = DEPARTMENT_MODULES.find(
@@ -177,8 +220,8 @@ const ModuleHub = () => {
             {/* Hero Header */}
             <div className="module-hub__hero">
                 <div className="module-hub__hero-content">
-                    <div className="module-hub__hero-badge glass-badge">
-                        <Zap size={14} />
+                    <div className="module-hub__hero-badge">
+                        <img src="/images/logo.png" alt="Logo" style={{ width: '14px', height: '14px', objectFit: 'contain' }} />
                         Command Center
                     </div>
                     <h1 className="module-hub__title">
@@ -189,8 +232,55 @@ const ModuleHub = () => {
                         workspace modules.
                     </p>
                 </div>
-                <div className="module-hub__hero-actions">
-                    <div className="module-hub__search glass-input-wrap">
+                <div className="module-hub__hero-image">
+                    <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200&h=400" alt="Office Building" />
+                </div>
+            </div>
+
+            {/* Stats Bar */}
+            <div className="module-hub__stats-bar">
+                <div className="module-hub__stat-item">
+                    <div className="module-hub__stat-icon-wrapper">
+                        <img src="/assets/stats/1.png" alt="Active Modules" className="module-hub__stat-image" />
+                    </div>
+                    <div>
+                        <div className="module-hub__stat-value">{DEPARTMENT_MODULES.length}</div>
+                        <div className="module-hub__stat-label">Active Modules</div>
+                    </div>
+                </div>
+                <div className="module-hub__stat-item">
+                    <div className="module-hub__stat-icon-wrapper">
+                        <img src="/assets/stats/2.png" alt="Assigned Managers" className="module-hub__stat-image" />
+                    </div>
+                    <div>
+                        <div className="module-hub__stat-value">{realManagers.length}</div>
+                        <div className="module-hub__stat-label">Assigned Managers</div>
+                    </div>
+                </div>
+                <div className="module-hub__stat-item">
+                    <div className="module-hub__stat-icon-wrapper">
+                        <img src="/assets/stats/3.png" alt="Pending Invites" className="module-hub__stat-image" />
+                    </div>
+                    <div>
+                        <div className="module-hub__stat-value">0</div>
+                        <div className="module-hub__stat-label">Pending Invites</div>
+                    </div>
+                </div>
+                <div className="module-hub__stat-item">
+                    <div className="module-hub__stat-icon-wrapper">
+                        <img src="/assets/stats/4.png" alt="Access Control" className="module-hub__stat-image" />
+                    </div>
+                    <div>
+                        <div className="module-hub__stat-value">RBAC</div>
+                        <div className="module-hub__stat-label">Access Control</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Controls Bar */}
+            <div className="module-hub__controls-bar">
+                <div className="module-hub__search-group">
+                    <div className="module-hub__search">
                         <Search size={16} />
                         <input
                             type="text"
@@ -199,15 +289,13 @@ const ModuleHub = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
+                    <select className="module-hub__filter">
+                        <option>All Modules</option>
+                    </select>
+                </div>
+                <div className="module-hub__hero-actions">
                     <Button
                         variant="primary"
-                        icon={Plus}
-                        onClick={() => dispatch(setCreateModalOpen(true))}
-                    >
-                        New Project
-                    </Button>
-                    <Button
-                        variant="ghost"
                         icon={UserPlus}
                         onClick={() => dispatch(setInviteModalOpen(true))}
                     >
@@ -216,138 +304,67 @@ const ModuleHub = () => {
                 </div>
             </div>
 
-            {/* Stats Bar */}
-            <div className="module-hub__stats-bar">
-                <div className="module-hub__stat-item glass-card">
-                    <LayoutGrid size={18} />
-                    <div>
-                        <div className="module-hub__stat-value">{activeModules.length}</div>
-                        <div className="module-hub__stat-label">Active Modules</div>
-                    </div>
-                </div>
-                <div className="module-hub__stat-item glass-card">
-                    <Users size={18} />
-                    <div>
-                        <div className="module-hub__stat-value">{accessList.length}</div>
-                        <div className="module-hub__stat-label">Assigned Managers</div>
-                    </div>
-                </div>
-                <div className="module-hub__stat-item glass-card">
-                    <Mail size={18} />
-                    <div>
-                        <div className="module-hub__stat-value">{pendingInvites.length}</div>
-                        <div className="module-hub__stat-label">Pending Invites</div>
-                    </div>
-                </div>
-                <div className="module-hub__stat-item glass-card">
-                    <Shield size={18} />
-                    <div>
-                        <div className="module-hub__stat-value">RBAC</div>
-                        <div className="module-hub__stat-label">Access Control</div>
-                    </div>
-                </div>
-            </div>
-
             {/* Module Cards Grid */}
             <div className="module-hub__grid">
                 {filteredModules.map((mod, index) => {
                     const Icon = iconMap[mod.icon] || FileText;
-                    const isActive = activeModules.includes(mod.key);
-                    const moduleAccess = getModuleAccess(mod.key);
-                    const moduleInvites = getModuleInvites(mod.key);
+                    const isActive = true; // Make all modules active for now
+                    const moduleAccess = realManagers.filter(m => m.assigned_module === mod.key);
+                    const moduleInvites = [];
 
                     return (
                         <div
                             key={mod.key}
-                            className={`module-hub__card glass-card ${isActive ? 'active' : 'inactive'}`}
+                            className={`module-hub__card ${isActive ? 'active' : 'inactive'}`}
                             onClick={() => handleModuleClick(mod)}
                             style={{
-                                '--module-color': mod.color,
-                                '--module-gradient': mod.gradient,
                                 animationDelay: `${index * 0.08}s`,
                             }}
                         >
-                            {/* Card Header */}
-                            <div className="module-hub__card-header">
-                                <div
-                                    className="module-hub__card-icon"
-                                    style={{ background: mod.gradient }}
-                                >
-                                    <Icon size={24} color="#fff" />
+                            {/* Card Banner */}
+                            <div className="module-hub__card-banner">
+                                <img src={mod.image} alt={mod.label} />
+                            </div>
+
+                            <div className="module-hub__card-content">
+                                {/* Card Body */}
+                                <div className="module-hub__card-body">
+                                    <h3 className="module-hub__card-title">{mod.label}</h3>
+                                    <p className="module-hub__card-desc">{mod.description}</p>
                                 </div>
-                                <div className="module-hub__card-actions">
-                                    <button
-                                        className="module-hub__access-btn"
-                                        onClick={(e) => handleOpenAccessManager(e, mod.key)}
-                                        title="Manage Access"
-                                    >
-                                        <Shield size={16} />
-                                    </button>
-                                    <button
-                                        className={`module-hub__toggle ${isActive ? 'on' : 'off'}`}
-                                        onClick={(e) => handleToggleModule(e, mod.key)}
-                                        title={isActive ? 'Deactivate' : 'Activate'}
-                                    >
-                                        {isActive ? (
-                                            <ToggleRight size={24} />
+
+                                {/* Card Footer */}
+                                <div className="module-hub__card-footer">
+                                    <div className="module-hub__card-managers">
+                                        {moduleAccess.length > 0 ? (
+                                            <>
+                                                <div className="module-hub__avatar-stack">
+                                                    {moduleAccess.slice(0, 3).map((access) => (
+                                                        <Avatar
+                                                            key={access.id}
+                                                            name={access.name}
+                                                            size="xs"
+                                                        />
+                                                    ))}
+                                                </div>
+                                                <span className="module-hub__manager-count">
+                                                    {moduleAccess.length} manager{moduleAccess.length !== 1 ? 's' : ''}
+                                                </span>
+                                            </>
                                         ) : (
-                                            <ToggleLeft size={24} />
+                                            <span className="module-hub__no-manager">No managers assigned</span>
                                         )}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Card Body */}
-                            <div className="module-hub__card-body">
-                                <h3 className="module-hub__card-title">{mod.label}</h3>
-                                <p className="module-hub__card-desc">{mod.description}</p>
-                            </div>
-
-                            {/* Card Footer */}
-                            <div className="module-hub__card-footer">
-                                <div className="module-hub__card-managers">
-                                    {moduleAccess.length > 0 ? (
-                                        <>
-                                            <div className="module-hub__avatar-stack">
-                                                {moduleAccess.slice(0, 3).map((access) => (
-                                                    <Avatar
-                                                        key={access.id}
-                                                        name={access.userName}
-                                                        size="xs"
-                                                    />
-                                                ))}
-                                                {moduleAccess.length > 3 && (
-                                                    <span className="module-hub__avatar-more">
-                                                        +{moduleAccess.length - 3}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="module-hub__manager-count">
-                                                {moduleAccess.length} manager{moduleAccess.length !== 1 ? 's' : ''}
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <span className="module-hub__no-manager">No managers assigned</span>
-                                    )}
-                                    {moduleInvites.length > 0 && (
-                                        <Badge variant="status" color="var(--warning)">
-                                            {moduleInvites.length} pending
-                                        </Badge>
-                                    )}
-                                </div>
-                                {isActive && (
+                                        {moduleInvites.length > 0 && (
+                                            <Badge variant="status" color="var(--warning)">
+                                                {moduleInvites.length} pending
+                                            </Badge>
+                                        )}
+                                    </div>
                                     <button className="module-hub__open-btn">
                                         Open <ArrowRight size={14} />
                                     </button>
-                                )}
-                            </div>
-
-                            {/* Inactive overlay */}
-                            {!isActive && (
-                                <div className="module-hub__inactive-overlay">
-                                    <span>Module Disabled</span>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     );
                 })}
@@ -584,9 +601,9 @@ const ModuleHub = () => {
                             <div className="module-hub__modal-title-group">
                                 <div
                                     className="module-hub__modal-icon"
-                                    style={{ background: 'linear-gradient(135deg, #0055FE, #3B82F6)' }}
+                                    style={{ background: 'transparent', boxShadow: 'none', padding: 0 }}
                                 >
-                                    <UserPlus size={20} color="#fff" />
+                                    <img src="/assets/stats/2.png" alt="Invite Manager" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
                                 </div>
                                 <div>
                                     <h2 className="module-hub__modal-title">
@@ -607,6 +624,16 @@ const ModuleHub = () => {
 
                         <div className="module-hub__invite-form">
                             <div className="module-hub__form-group">
+                                <label className="module-hub__form-label">Full Name</label>
+                                <input
+                                    type="text"
+                                    className="module-hub__invite-input glass-input"
+                                    placeholder="e.g. Ali Hassan"
+                                    value={inviteName}
+                                    onChange={(e) => setInviteName(e.target.value)}
+                                />
+                            </div>
+                            <div className="module-hub__form-group">
                                 <label className="module-hub__form-label">Email Address</label>
                                 <input
                                     type="email"
@@ -615,6 +642,16 @@ const ModuleHub = () => {
                                     value={inviteEmail}
                                     onChange={(e) => setInviteEmail(e.target.value)}
                                 />
+                            </div>
+                            <div className="module-hub__form-group">
+                                <label className="module-hub__form-label">Default Password</label>
+                                <input
+                                    type="text"
+                                    className="module-hub__invite-input glass-input"
+                                    value={invitePassword}
+                                    onChange={(e) => setInvitePassword(e.target.value)}
+                                />
+                                <p style={{fontSize:'11px', color:'var(--text-muted)', marginTop:'4px'}}>They will use this to login initially.</p>
                             </div>
                             <div className="module-hub__form-group">
                                 <label className="module-hub__form-label">Assign to Module</label>
@@ -638,8 +675,8 @@ const ModuleHub = () => {
                                 >
                                     Cancel
                                 </Button>
-                                <Button variant="primary" icon={Send} onClick={handleSendInvite}>
-                                    Send Invitation
+                                <Button variant="primary" icon={Send} onClick={handleSendInvite} disabled={isInviting}>
+                                    {isInviting ? 'Creating...' : 'Send Invitation'}
                                 </Button>
                             </div>
                         </div>

@@ -1,10 +1,14 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { restoreSession } from './store/slices/authSlice';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
+import EmployeeLayout from './components/layout/EmployeeLayout/EmployeeLayout';
+import AIChatbot from './components/common/AIChatbot/AIChatbot';
 import AdminRoute from './components/guards/AdminRoute';
 import ManagerRoute from './components/guards/ManagerRoute';
+import EmployeeRoute from './components/guards/EmployeeRoute';
 import Login from './pages/Auth/Login/Login';
 import Register from './pages/Auth/Register/Register';
 import ForgotPassword from './pages/Auth/ForgotPassword/ForgotPassword';
@@ -13,36 +17,81 @@ import HR from './pages/HR/HR';
 import Finance from './pages/Finance/Finance';
 import ModuleHub from './pages/ModuleHub/ModuleHub';
 import Onboarding from './pages/Onboarding/Onboarding';
+import Landing from './pages/Landing/Landing';
 import ProjectManagement from './pages/ProjectManagement/ProjectManagement';
 import Leads from './pages/Leads/Leads';
-import Support from './pages/Support/Support';
+import Clients from './pages/Clients/Clients';
 import Docs from './pages/Docs/Docs';
 import ManagerDashboard from './pages/ManagerDashboard/ManagerDashboard';
+import EmployeeDashboard from './pages/EmployeeDashboard/EmployeeDashboard';
 import Settings from './pages/Settings/Settings';
 import NotFound from './pages/NotFound/NotFound';
+import { Loader2 } from 'lucide-react';
 
 function App() {
+  const dispatch = useDispatch();
   const theme = useSelector((state) => state.ui.theme);
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, isLoading } = useSelector((state) => state.auth);
 
   // Apply theme attribute to <html> element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Restore Supabase session on app load
+  useEffect(() => {
+    dispatch(restoreSession());
+  }, [dispatch]);
+
   // Smart redirect for root path based on role
   const getRootRedirect = () => {
-    if (!isAuthenticated || !user) return '/login';
+    if (!isAuthenticated || !user) return '/landing';
     if (user.role === 'manager' && user.assignedModule) {
       return `/manager/${user.assignedModule}`;
+    }
+    if (user.role === 'employee') {
+      return '/employee/dashboard';
     }
     return '/modules';
   };
 
+  // Fallback: if loading takes more than 3 seconds, force it to stop
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        // Force loading to complete - user will be redirected to login
+        dispatch({ type: 'auth/restoreSession/fulfilled', payload: null });
+      }
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [isLoading, dispatch]);
+
+  // Show a loading spinner while restoring session
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: '#0a0a14',
+        color: '#e0e0e0',
+        flexDirection: 'column',
+        gap: '16px',
+      }}>
+        <Loader2 size={32} style={{ animation: 'spin 1s linear infinite' }} />
+        <span style={{ fontSize: '14px', opacity: 0.6 }}>Loading DevelopWork...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   return (
     <BrowserRouter>
+      {isAuthenticated && user && <AIChatbot />}
       <Routes>
-        {/* Public Auth Routes */}
+        {/* Public Routes */}
+        <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -56,15 +105,23 @@ function App() {
           <Route path="/finance" element={<Finance />} />
           <Route path="/projects" element={<ProjectManagement />} />
           <Route path="/leads" element={<Leads />} />
-          <Route path="/support" element={<Support />} />
+          <Route path="/clients" element={<Clients />} />
           <Route path="/docs" element={<Docs />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
 
         {/* Manager Routes — module-specific dashboard */}
         <Route element={<ManagerRoute><ManagerLayout /></ManagerRoute>}>
+          <Route path="/manager/projects/sprint" element={<Board />} />
           <Route path="/manager/:moduleKey" element={<ManagerDashboard />} />
+          <Route path="/manager/:moduleKey/settings" element={<Settings />} />
           <Route path="/manager/:moduleKey/*" element={<ManagerDashboard />} />
+        </Route>
+
+        {/* Employee Routes */}
+        <Route element={<EmployeeRoute><EmployeeLayout /></EmployeeRoute>}>
+          <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+          <Route path="/employee/settings" element={<Settings />} />
         </Route>
 
         {/* Redirects & Fallback */}

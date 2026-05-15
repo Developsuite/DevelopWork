@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
     Home,
@@ -30,6 +31,7 @@ const iconMap = {
 const IconRail = ({ activeModule, onModuleChange }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user } = useSelector((state) => state.auth);
 
     const handleModuleClick = (mod) => {
         onModuleChange(mod.key);
@@ -94,7 +96,7 @@ const IconRail = ({ activeModule, onModuleChange }) => {
                     <span className="icon-rail__label">Settings</span>
                 </button>
                 <div className="icon-rail__avatar">
-                    <Avatar name={mockUser.name} size="sm" />
+                    <Avatar name={user?.name || 'User'} size="sm" />
                 </div>
             </div>
         </div>
