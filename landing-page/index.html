@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grovia – Strategy and Growth for Modern Teams</title>
+  <meta name="description" content="Grovia partners with startups and small businesses to streamline operations, elevate team performance, and build a foundation for lasting success.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo" id="nav-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect width="28" height="28" rx="8" fill="#2563EB"/>
+          <path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Grovia</span>
+      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#blog">Blog</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="#" class="nav-link-login" id="nav-login">Log in</a>
+        <a href="#" class="btn btn-primary btn-sm" id="nav-cta">Get started</a>
+      </div>
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero-section">
+    <div class="hero-container">
+      <div class="hero-main">
+        <!-- Left: Heading + CTA -->
+        <div class="hero-content" id="hero-content">
+          <div class="hero-heading">
+            <h1 id="hero-title">
+              <span class="heading-line">Strategy and</span>
+              <span class="heading-line">growth for</span>
+              <span class="heading-line heading-highlight">modern teams</span>
+            </h1>
+            <p class="hero-subtitle" id="hero-subtitle">
+              Grovia partners with startups to streamline operations, elevate team performance, and build a foundation for lasting success.
+            </p>
+          </div>
+          <div class="hero-buttons" id="hero-buttons">
+            <a href="#" class="btn btn-primary btn-lg" id="btn-get-started">
+              <span>Get started</span>
+              <span class="btn-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </span>
+            </a>
+            <a href="#" class="btn btn-outline btn-lg" id="btn-contact">Contact us</a>
+          </div>
+        </div>
+
+        <!-- Right: Widget Card -->
+        <div class="hero-ui" id="hero-ui">
+          <div class="widget-card" id="widget-card">
+            <!-- Widget Header -->
+            <div class="widget-header">
+              <span class="widget-title">Customers</span>
+              <div class="widget-sort">
+                <span>Sort by Newest</span>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="2 4 5 7 8 4"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- Customer List -->
+            <div class="widget-list">
+              <!-- Customer 1 - Highlighted -->
+              <div class="customer-row customer-highlighted" id="customer-1">
+                <div class="customer-avatar">
+                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=64&h=64&fit=crop&crop=face" alt="Maggie Johnson">
+                </div>
+                <div class="customer-info">
+                  <span class="customer-name">Maggie Johnson</span>
+                  <span class="customer-company">Oasis Organic Inc.</span>
+                </div>
+                <div class="customer-actions">
+                  <button class="action-icon" aria-label="Edit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                    </svg>
+                  </button>
+                  <button class="action-icon" aria-label="Mail">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                  </button>
+                  <button class="action-icon" aria-label="More">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+                    </svg>
+                  </button>
+                  <button class="action-icon" aria-label="Info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Customer 2 -->
+              <div class="customer-row" id="customer-2">
+                <div class="customer-avatar">
+                  <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face" alt="Chris Friedkly">
+                </div>
+                <div class="customer-info">
+                  <span class="customer-name">Chris Friedkly</span>
+                  <span class="customer-company">Supermarket Villanova</span>
+                </div>
+              </div>
+
+              <!-- Customer 3 -->
+              <div class="customer-row" id="customer-3">
+                <div class="customer-avatar">
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=64&h=64&fit=crop&crop=face" alt="Gael Harry">
+                </div>
+                <div class="customer-info">
+                  <span class="customer-name">Gael Harry</span>
+                  <span class="customer-company">New York Finest Fruits</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Widget Footer -->
+            <div class="widget-footer">
+              <a href="#" class="widget-link" id="widget-all-customers">
+                <span>All customers</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trusted By Section -->
+  <section class="trusted-section" id="trusted-section">
+    <div class="trusted-container">
+      <p class="trusted-label">Trusted by leading companies worldwide</p>
+      <div class="trusted-logos">
+        <div class="logo-item">
+          <svg width="120" height="32" viewBox="0 0 120 32"><text x="0" y="24" font-family="Inter" font-weight="700" font-size="18" fill="#c4c4c4">Notion</text></svg>
+        </div>
+        <div class="logo-item">
+          <svg width="120" height="32" viewBox="0 0 120 32"><text x="0" y="24" font-family="Inter" font-weight="700" font-size="18" fill="#c4c4c4">Slack</text></svg>
+        </div>
+        <div class="logo-item">
+          <svg width="120" height="32" viewBox="0 0 120 32"><text x="0" y="24" font-family="Inter" font-weight="700" font-size="18" fill="#c4c4c4">Stripe</text></svg>
+        </div>
+        <div class="logo-item">
+          <svg width="120" height="32" viewBox="0 0 120 32"><text x="0" y="24" font-family="Inter" font-weight="700" font-size="18" fill="#c4c4c4">Vercel</text></svg>
+        </div>
+        <div class="logo-item">
+          <svg width="120" height="32" viewBox="0 0 120 32"><text x="0" y="24" font-family="Inter" font-weight="700" font-size="18" fill="#c4c4c4">Linear</text></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section" id="features">
+    <div class="features-container">
+      <div class="section-header">
+        <span class="section-tag">Features</span>
+        <h2 class="section-title" id="features-title">Everything you need to scale</h2>
+        <p class="section-subtitle">Powerful tools designed to help your team work smarter, not harder.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card" id="feature-1">
+          <div class="feature-icon feature-icon-blue">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>
+            </svg>
+          </div>
+          <h3>Advanced Analytics</h3>
+          <p>Get deep insights into your team's performance with real-time dashboards and custom reports.</p>
+        </div>
+        <div class="feature-card" id="feature-2">
+          <div class="feature-icon feature-icon-green">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3>Team Collaboration</h3>
+          <p>Seamless communication tools that keep your entire team aligned and productive.</p>
+        </div>
+        <div class="feature-card" id="feature-3">
+          <div class="feature-icon feature-icon-purple">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h3>Enterprise Security</h3>
+          <p>Bank-grade encryption and compliance features to keep your data safe and secure.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section" id="cta-section">
+    <div class="cta-container">
+      <div class="cta-card">
+        <h2 id="cta-title">Ready to transform your business?</h2>
+        <p>Join thousands of teams already using Grovia to accelerate their growth.</p>
+        <div class="cta-buttons">
+          <a href="#" class="btn btn-white btn-lg" id="cta-get-started">
+            <span>Start free trial</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </a>
+          <a href="#" class="btn btn-outline-white btn-lg" id="cta-contact">Talk to sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer" id="footer">
+    <div class="footer-container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#" class="nav-logo">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect width="28" height="28" rx="8" fill="#2563EB"/>
+              <path d="M8 14L12 18L20 10" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Grovia</span>
+          </a>
+          <p class="footer-desc">Strategy and growth solutions for modern teams building the future.</p>
+        </div>
+        <div class="footer-links-group">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="#">Features</a>
+            <a href="#">Pricing</a>
+            <a href="#">Integrations</a>
+            <a href="#">Changelog</a>
+          </div>
+          <div class="footer-col">
+            <h4>Company</h4>
+            <a href="#">About</a>
+            <a href="#">Blog</a>
+            <a href="#">Careers</a>
+            <a href="#">Contact</a>
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="#">Privacy</a>
+            <a href="#">Terms</a>
+            <a href="#">Security</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 Grovia. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

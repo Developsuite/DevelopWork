@@ -308,7 +308,7 @@ const ModuleHub = () => {
             <div className="module-hub__grid">
                 {filteredModules.map((mod, index) => {
                     const Icon = iconMap[mod.icon] || FileText;
-                    const isActive = true; // Make all modules active for now
+                    const isActive = activeModules.includes(mod.key);
                     const moduleAccess = realManagers.filter(m => m.assigned_module === mod.key);
                     const moduleInvites = [];
 
@@ -323,7 +323,27 @@ const ModuleHub = () => {
                         >
                             {/* Card Banner */}
                             <div className="module-hub__card-banner">
-                                <img src={mod.image} alt={mod.label} />
+                                <img src={mod.image} alt={mod.label} style={{ filter: isActive ? 'none' : 'grayscale(100%) opacity(0.5)' }} />
+                                <button 
+                                    className="module-hub__toggle-btn"
+                                    onClick={(e) => handleToggleModule(e, mod.key)}
+                                    title={isActive ? "Disable Module" : "Enable Module"}
+                                    style={{
+                                        position: 'absolute',
+                                        top: '12px',
+                                        right: '12px',
+                                        background: 'rgba(0,0,0,0.4)',
+                                        border: 'none',
+                                        borderRadius: '20px',
+                                        padding: '4px',
+                                        display: 'flex',
+                                        cursor: 'pointer',
+                                        backdropFilter: 'blur(4px)',
+                                        transition: 'all 0.2s ease',
+                                    }}
+                                >
+                                    {isActive ? <ToggleRight size={24} color="#00C875" /> : <ToggleLeft size={24} color="#fff" />}
+                                </button>
                             </div>
 
                             <div className="module-hub__card-content">
@@ -360,8 +380,16 @@ const ModuleHub = () => {
                                             </Badge>
                                         )}
                                     </div>
-                                    <button className="module-hub__open-btn">
-                                        Open <ArrowRight size={14} />
+                                    <button 
+                                        className={`module-hub__open-btn ${!isActive ? 'disabled' : ''}`}
+                                        disabled={!isActive}
+                                        style={{ opacity: isActive ? 1 : 0.5, cursor: isActive ? 'pointer' : 'not-allowed' }}
+                                    >
+                                        {isActive ? (
+                                            <>Open <ArrowRight size={14} /></>
+                                        ) : (
+                                            'Disabled'
+                                        )}
                                     </button>
                                 </div>
                             </div>

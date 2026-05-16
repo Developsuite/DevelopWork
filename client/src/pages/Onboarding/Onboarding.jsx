@@ -161,17 +161,10 @@ const Onboarding = () => {
     const handleContinue = () => {
         if (!canContinue()) return;
         if (isLastStep) {
-            // Save selected modules and go to next step
-            const validModules = ['projects', 'hr', 'finance', 'leads', 'support', 'docs'];
-            const selectedModules = (selections.modules || []).filter((m) =>
-                validModules.includes(m)
-            );
-            if (selectedModules.length > 0) {
-                dispatch(setActiveModules(selectedModules));
-            }
+            // We are no longer restricting modules based on onboarding choices.
+            // All modules remain active by default for a better user experience.
             
             // If user isn't logged in, send them to register with their onboarding info
-            // In a real app, you'd pass this state to register
             navigate(user ? '/modules' : '/register');
         } else {
             setCurrentStep((prev) => prev + 1);

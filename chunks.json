@@ -1,0 +1,1 @@
+﻿"[{\"AllowMultiple\":false,\"EndLine\":103,\"ReplacementContent\":\"    docs: [\\n        { label: \u0027All Documents\u0027, path: \u0027/docs\u0027, icon: FileText, id: \u0027docs-all\u0027, expandable: true, children: [\\n            { isFolder: true, label: \u0027Starred\u0027, icon: Star, children: [\n\u003ctruncated 14016 bytes\u003e"
