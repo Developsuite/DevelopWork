@@ -94,16 +94,8 @@ function App() {
     return '/modules';
   };
 
-  // Fallback: if loading takes more than 3 seconds, force it to stop
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (isLoading) {
-        // Force loading to complete - user will be redirected to login
-        dispatch({ type: 'auth/restoreSession/fulfilled', payload: null });
-      }
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [isLoading, dispatch]);
+    // Removed the 3-second aggressive timeout. If Supabase is cold-starting, 
+    // it can take up to 5-10 seconds to restore the session or login.
 
   // Show a loading spinner while restoring session
   if (isLoading) {
