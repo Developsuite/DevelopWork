@@ -108,7 +108,7 @@ END;
 $$;
 
 -- 4. Update the handle_new_user trigger to assign tenant_id
-CREATE OR REPLACE FUNCTION handle_new_user()
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
   v_tenant_id UUID;
@@ -123,7 +123,7 @@ BEGIN
     v_tenant_id := NEW.id;
   END IF;
 
-  INSERT INTO profiles (id, name, email, role, tenant_id)
+  INSERT INTO public.profiles (id, name, email, role, tenant_id)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
@@ -133,4 +133,4 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
