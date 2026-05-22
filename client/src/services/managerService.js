@@ -168,4 +168,10 @@ export const managerService = {
         if (error) throw error;
         return data;
     },
+
+    // Delete a user entirely from the system (requires Admin)
+    async removeUser(userId) {
+        const { error } = await supabase.rpc('delete_user', { target_user_id: userId });
+        if (error) throw error;
+    },
 };

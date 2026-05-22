@@ -634,14 +634,24 @@ const Settings = () => {
                                                     <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'2px'}}>{e.email}</div>
                                                 </div>
                                             </div>
-                                            <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
-                                                <div style={{fontSize:'13px', color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'6px'}}>
-                                                    <User size={14} /> Employee
+                                                <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
+                                                    <div style={{fontSize:'13px', color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'6px'}}>
+                                                        <User size={14} /> Employee
+                                                    </div>
+                                                    <button className="brd__icon-btn danger" onClick={async () => {
+                                                        if (!window.confirm(`Are you sure you want to completely remove ${e.name}? They will lose all access.`)) return;
+                                                        try {
+                                                            await managerService.removeUser(e.id);
+                                                            dispatch(addToast({ title: 'Deleted', message: `${e.name} has been removed from the system.`, type: 'info' }));
+                                                            loadData();
+                                                        } catch(err) {
+                                                            dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
+                                                        }
+                                                    }} title="Remove Employee"><Trash2 size={14}/></button>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
                             )}
                         </div>
                     )}
