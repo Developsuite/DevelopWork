@@ -9,7 +9,7 @@ const AIChatbot = () => {
     const { user } = useSelector((state) => state.auth);
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { role: 'assistant', content: `Hi ${user?.name?.split(' ')[0]}! I'm Zappy, your DevelopWork AI Assistant. I can help you find projects, check tasks, or fetch team details. How can I help?` }
+        { role: 'assistant', content: `Hi ${user?.name ? user.name.split(' ')[0] : 'there'}! I'm Zappy, your DevelopWork AI Assistant. I can help you find projects, check tasks, or fetch team details. How can I help?` }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);

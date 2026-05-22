@@ -61,7 +61,7 @@ const EmployeeDashboard = () => {
             <div className="employee-dashboard__welcome glass-card">
                 <div className="employee-dashboard__welcome-left">
                     <div className="employee-dashboard__welcome-text">
-                        <h1>Welcome back, {user?.name?.split(' ')[0] || 'Team Member'}!</h1>
+                        <h1>Welcome back, {user?.name ? user.name.split(' ')[0] : 'Team Member'}!</h1>
                         <p>Here's what's happening with your projects today.</p>
                     </div>
                     <div className="employee-dashboard__stats-row">

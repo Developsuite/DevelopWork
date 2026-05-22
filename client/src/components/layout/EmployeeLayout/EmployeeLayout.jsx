@@ -134,7 +134,7 @@ const EmployeeLayout = () => {
                         </div>
                         <div className="employee-topbar__user">
                             <Avatar name={user?.name || 'E'} src={user?.avatar} size="xs" />
-                            <span>{user?.name?.split(' ')[0]}</span>
+                            <span>{user?.name ? user.name.split(' ')[0] : 'User'}</span>
                         </div>
                     </div>
                 </header>

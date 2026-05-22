@@ -257,7 +257,7 @@ const ManagerLayout = () => {
                         </div>
                         <div className="manager-topbar__user">
                             <Avatar name={user?.name || 'M'} src={user?.avatar} size="xs" />
-                            <span>{user?.name?.split(' ')[0]}</span>
+                            <span>{user?.name ? user.name.split(' ')[0] : 'User'}</span>
                         </div>
                     </div>
                 </header>
