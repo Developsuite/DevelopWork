@@ -41,8 +41,9 @@ function App() {
 
   // Restore Supabase session on app load and listen for auth state changes
   useEffect(() => {
-    dispatch(restoreSession());
-
+    // Removed dispatch(restoreSession()) because calling getSession concurrently with 
+    // onAuthStateChange causes a known deadlock in Supabase, leading to infinite loading.
+    
     const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
       console.log('[Auth] State change event:', event);
       if (session) {
