@@ -44,15 +44,20 @@ export const managerService = {
     // 3. Update their profile to role=manager with assigned_module
     // 4. Restore admin session
     async inviteManager({ name, email, password, assignedModule }) {
-        // Step 1: Save current admin session
+        // Step 1: Save current admin session and get tenant_id
         const { data: { session: adminSession } } = await supabase.auth.getSession();
+        let tenantId = null;
+        if (adminSession) {
+            const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).single();
+            tenantId = profile?.tenant_id;
+        }
 
         // Step 2: Create auth user via Supabase signUp
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: { name },
+                data: { name, tenant_id: tenantId, role: 'manager' },
             },
         });
         if (authError) throw authError;
@@ -89,11 +94,16 @@ export const managerService = {
     // Invite a new employee
     async inviteEmployee({ name, email, password }) {
         const { data: { session: adminSession } } = await supabase.auth.getSession();
+        let tenantId = null;
+        if (adminSession) {
+            const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).single();
+            tenantId = profile?.tenant_id;
+        }
 
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: { name } },
+            options: { data: { name, tenant_id: tenantId, role: 'employee' } },
         });
         if (authError) throw authError;
 
