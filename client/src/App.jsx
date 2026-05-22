@@ -41,45 +41,55 @@ function App() {
 
   // Restore Supabase session on app load and listen for auth state changes
   useEffect(() => {
-    // Removed dispatch(restoreSession()) because calling getSession concurrently with 
-    // onAuthStateChange causes a known deadlock in Supabase, leading to infinite loading.
-    
-    const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] State change event:', event);
-      if (session) {
-        try {
-          const profile = await authService.getProfile(session.user.id);
-          dispatch(setUser({
-            id: profile.id,
-            _id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            role: profile.role,
-            assignedModule: profile.assigned_module,
-            department: profile.department,
-            avatar: profile.avatar_url,
-            phone: profile.phone,
-            location: profile.location,
-            jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
-            bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
-          }));
-        } catch (err) {
-          console.error('[Auth] Failed to load profile for session user:', err);
-          dispatch(setUser({
-            id: session.user.id,
-            _id: session.user.id,
-            name: session.user.user_metadata?.name || session.user.email.split('@')[0],
-            email: session.user.email,
-            role: 'employee',
-          }));
+    let subscription = null;
+
+    // 1. Explicitly restore session first to avoid Strict Mode missed events
+    dispatch(restoreSession()).finally(() => {
+      // 2. Attach listener ONLY after initial session is restored to avoid Supabase deadlock
+      const { data } = authService.onAuthStateChange(async (event, session) => {
+        console.log('[Auth] State change event:', event);
+        
+        // Skip INITIAL_SESSION since restoreSession already handles the initial load
+        if (event === 'INITIAL_SESSION') return;
+
+        if (session) {
+          try {
+            const profile = await authService.getProfile(session.user.id);
+            dispatch(setUser({
+              id: profile.id,
+              _id: profile.id,
+              name: profile.name,
+              email: profile.email,
+              role: profile.role,
+              assignedModule: profile.assigned_module,
+              department: profile.department,
+              avatar: profile.avatar_url,
+              phone: profile.phone,
+              location: profile.location,
+              jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
+              bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
+            }));
+          } catch (err) {
+            console.error('[Auth] Failed to load profile for session user:', err);
+            dispatch(setUser({
+              id: session.user.id,
+              _id: session.user.id,
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+              email: session.user.email,
+              role: 'employee',
+            }));
+          }
+        } else {
+          dispatch(setUser(null));
         }
-      } else {
-        dispatch(setUser(null));
-      }
+      });
+      subscription = data.subscription;
     });
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, [dispatch]);
 
