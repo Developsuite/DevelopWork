@@ -5,6 +5,7 @@ import { addToast } from '../../store/slices/uiSlice';
 import { projectService } from '../../services/projectService';
 import { clientsService } from '../../services/clientsService';
 import { managerService } from '../../services/managerService';
+import { isEmpty, isPositiveNumber } from '../../utils/validation';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import Modal from '../../components/common/Modal/Modal';
@@ -412,6 +413,14 @@ const ProjectManagement = () => {
     );
 
     const handleCreateProject = async () => {
+        if (isEmpty(projectForm.name)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Project name is required.', type: 'warning' }));
+            return;
+        }
+        if (projectForm.amount && !isPositiveNumber(projectForm.amount)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Budget amount must be a positive number.', type: 'warning' }));
+            return;
+        }
         try {
             const payload = {
                 name: projectForm.name,
@@ -456,8 +465,8 @@ const ProjectManagement = () => {
 
     // --- TASK CRUD ---
     const handleCreateTask = async () => {
-        if (!taskForm.title || !taskForm.project_id) {
-            dispatch(addToast({ title: 'Validation', message: 'Task title and project are required.', type: 'error' }));
+        if (isEmpty(taskForm.title) || isEmpty(taskForm.project_id)) {
+            dispatch(addToast({ title: 'Validation', message: 'Task title and project are required.', type: 'warning' }));
             return;
         }
         try {

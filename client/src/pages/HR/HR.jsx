@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import { useDispatch } from 'react-redux';
 import { hrService } from '../../services/hrService';
 import { financeService } from '../../services/financeService';
+import { isValidEmail, isEmpty, isPositiveNumber } from '../../utils/validation';
 import { useSearchParams } from 'react-router-dom';
 import Button from '../../components/common/Button/Button';
 import Avatar from '../../components/common/Avatar/Avatar';
@@ -233,7 +234,18 @@ const HR = () => {
     };
 
     const handleSaveEmployee = async () => {
-        if (!formData.name) return;
+        if (isEmpty(formData.name)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Employee name is required.', type: 'warning' }));
+            return;
+        }
+        if (formData.email && !isValidEmail(formData.email)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
+        if (!isPositiveNumber(formData.salary)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Salary must be a positive number.', type: 'warning' }));
+            return;
+        }
         try {
             const skills = formData.skills ? (Array.isArray(formData.skills) ? formData.skills : formData.skills.split(',').map(s => s.trim())) : [];
             if (editId) {
@@ -377,7 +389,11 @@ const HR = () => {
             dispatch(addToast({ title: 'Validation Error', message: 'Please select an employee.', type: 'error' }));
             return;
         }
-        
+        const rating = parseInt(performanceFormData.rating);
+        if (isNaN(rating) || rating < 1 || rating > 5) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Rating must be between 1 and 5.', type: 'warning' }));
+            return;
+        }
         const reviewData = {
             employee_id: performanceFormData.employeeId,
             employee_name: performanceFormData.name,
@@ -432,6 +448,10 @@ const HR = () => {
     };
 
     const handleSavePayroll = async () => {
+        if (!isPositiveNumber(payrollFormData.salary) || !isPositiveNumber(payrollFormData.bonus) || !isPositiveNumber(payrollFormData.deductions)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Payroll values must be positive numbers.', type: 'warning' }));
+            return;
+        }
         try {
             await hrService.updateEmployee(editId, {
                 salary: parseFloat(payrollFormData.salary) || 0,

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { signUpWithEmail, signInWithGoogle, clearError, clearSignUpSuccess } from '../../../store/slices/authSlice';
+import { isValidEmail, isEmpty, isValidPassword } from '../../../utils/validation';
 import { LayoutDashboard, Users, BarChart3, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import '../Login/Login.css';
 
@@ -33,7 +34,15 @@ const Register = () => {
         e.preventDefault();
         setLocalError('');
 
-        if (form.password.length < 6) {
+        if (isEmpty(form.name) || isEmpty(form.email) || isEmpty(form.password)) {
+            setLocalError('All fields are required.');
+            return;
+        }
+        if (!isValidEmail(form.email)) {
+            setLocalError('Please enter a valid email address.');
+            return;
+        }
+        if (!isValidPassword(form.password)) {
             setLocalError('Password must be at least 6 characters.');
             return;
         }

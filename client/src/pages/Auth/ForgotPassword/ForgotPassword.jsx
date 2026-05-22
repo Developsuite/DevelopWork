@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword, clearError, clearResetSuccess } from '../../../store/slices/authSlice';
+import { addToast } from '../../../store/slices/toastSlice';
+import { isValidEmail } from '../../../utils/validation';
 import { Zap, AlertCircle, Loader2 } from 'lucide-react';
 import '../Login/Login.css';
 
@@ -12,6 +14,10 @@ const ForgotPassword = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        if (!isValidEmail(email)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
         dispatch(clearError());
         dispatch(clearResetSuccess());
         dispatch(resetPassword({ email }));

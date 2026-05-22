@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { openItemDrawer, closeItemDrawer, addToast } from '../../store/slices/uiSlice';
 import { projectService } from '../../services/projectService';
+import { isEmpty } from '../../utils/validation';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import Modal from '../../components/common/Modal/Modal';
@@ -109,8 +110,8 @@ const Board = () => {
 
     // --- CRUD Handlers ---
     const handleCreateTask = async () => {
-        if (!taskForm.title) {
-            dispatch(addToast({ title: 'Validation', message: 'Task title is required.', type: 'error' }));
+        if (isEmpty(taskForm.title)) {
+            dispatch(addToast({ title: 'Validation', message: 'Task title is required.', type: 'warning' }));
             return;
         }
         try {

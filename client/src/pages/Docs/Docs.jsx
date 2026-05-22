@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { addToast } from '../../store/slices/uiSlice';
 import { docsService } from '../../services/docsService';
+import { isEmpty } from '../../utils/validation';
 import Button from '../../components/common/Button/Button';
 import Badge from '../../components/common/Badge/Badge';
 import Avatar from '../../components/common/Avatar/Avatar';
@@ -167,7 +168,10 @@ const Docs = () => {
     };
 
     const handleCreateFolder = async () => {
-        if (!newFolderName.trim()) return;
+        if (isEmpty(newFolderName)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Folder name is required.', type: 'warning' }));
+            return;
+        }
         try {
             await docsService.createFolder(newFolderName);
             await loadFolders();
@@ -350,7 +354,10 @@ const Docs = () => {
     };
 
     const handleSaveDoc = async () => {
-        if (!formData.title) return;
+        if (isEmpty(formData.title)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Document title is required.', type: 'warning' }));
+            return;
+        }
         try {
             if (editingDocId) {
                 await docsService.updateDocument(editingDocId, {

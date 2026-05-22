@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { addToast } from '../../store/slices/uiSlice';
 import { leadsService } from '../../services/leadsService';
 import { clientsService } from '../../services/clientsService';
+import { isValidEmail, isEmpty, isPositiveNumber } from '../../utils/validation';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
@@ -93,6 +94,18 @@ const Leads = () => {
     };
 
     const handleAddLead = async () => {
+        if (isEmpty(leadFormData.name)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Lead name is required.', type: 'warning' }));
+            return;
+        }
+        if (leadFormData.email && !isValidEmail(leadFormData.email)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
+        if (leadFormData.value && !isPositiveNumber(leadFormData.value)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Value must be a positive number.', type: 'warning' }));
+            return;
+        }
         try {
             if (editMode) {
                 await leadsService.updateLead(selectedLead.id, {
@@ -138,6 +151,14 @@ const Leads = () => {
     };
 
     const handleAddContact = async () => {
+        if (isEmpty(contactFormData.name)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Contact name is required.', type: 'warning' }));
+            return;
+        }
+        if (contactFormData.email && !isValidEmail(contactFormData.email)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
         try {
             await leadsService.createContact(contactFormData);
             await loadContacts();

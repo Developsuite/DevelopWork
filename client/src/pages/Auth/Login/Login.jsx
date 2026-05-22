@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { signInWithEmail, signInWithGoogle, clearError } from '../../../store/slices/authSlice';
+import { addToast } from '../../../store/slices/toastSlice';
+import { isValidEmail } from '../../../utils/validation';
 import ThemeToggle from '../../../components/common/ThemeToggle/ThemeToggle';
 import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle, Loader2 } from 'lucide-react';
 import './Login.css';
@@ -33,6 +35,14 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!email || !password) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter both email and password.', type: 'warning' }));
+            return;
+        }
+        if (!isValidEmail(email)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
         dispatch(signInWithEmail({ email, password }));
     };
 

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { addToast } from '../../store/slices/uiSlice';
 import { clientsService } from '../../services/clientsService';
 import { projectService } from '../../services/projectService';
+import { isValidEmail, isEmpty } from '../../utils/validation';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import Modal from '../../components/common/Modal/Modal';
@@ -114,6 +115,14 @@ const Clients = () => {
     const handleViewClient = (client) => { setSelectedClient(client); setIsDetailModalOpen(true); };
 
     const handleSaveClient = async () => {
+        if (isEmpty(formData.name)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Client name is required.', type: 'warning' }));
+            return;
+        }
+        if (formData.email && !isValidEmail(formData.email)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
         try {
             if (editMode && selectedClient) {
                 await clientsService.updateClient(selectedClient.id, {

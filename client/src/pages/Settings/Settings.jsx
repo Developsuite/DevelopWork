@@ -9,6 +9,7 @@ import Modal from '../../components/common/Modal/Modal';
 import { mockUser } from '../../utils/mockData';
 import { authService } from '../../services/authService';
 import { managerService } from '../../services/managerService';
+import { isValidEmail, isEmpty, isValidPassword } from '../../utils/validation';
 import { DEPARTMENT_MODULES } from '../../utils/constants';
 import {
     User,
@@ -193,6 +194,10 @@ const Settings = () => {
 
     const handleUpdateProfile = async () => {
         if (!user) return;
+        if (isEmpty(profileForm.name)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Name is required.', type: 'warning' }));
+            return;
+        }
         setProfileLoading(true);
         const userId = user._id || user.id;
         try {
@@ -687,8 +692,16 @@ const Settings = () => {
                             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                                 <Button variant="ghost" onClick={() => setIsInviteModalOpen(false)} fullWidth>Cancel</Button>
                                 <Button variant="primary" onClick={async () => {
-                                    if (!inviteForm.name || !inviteForm.email || !inviteForm.password) {
+                                    if (isEmpty(inviteForm.name) || isEmpty(inviteForm.email) || isEmpty(inviteForm.password)) {
                                         dispatch(addToast({ title: 'Validation', message: 'All fields are required.', type: 'error' }));
+                                        return;
+                                    }
+                                    if (!isValidEmail(inviteForm.email)) {
+                                        dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+                                        return;
+                                    }
+                                    if (!isValidPassword(inviteForm.password)) {
+                                        dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 6 characters.', type: 'warning' }));
                                         return;
                                     }
                                     setInviteLoading(true);
@@ -761,8 +774,16 @@ const Settings = () => {
                             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                                 <Button variant="ghost" onClick={() => setIsInviteEmployeeModalOpen(false)} fullWidth>Cancel</Button>
                                 <Button variant="primary" onClick={async () => {
-                                    if (!inviteEmployeeForm.name || !inviteEmployeeForm.email || !inviteEmployeeForm.password) {
+                                    if (isEmpty(inviteEmployeeForm.name) || isEmpty(inviteEmployeeForm.email) || isEmpty(inviteEmployeeForm.password)) {
                                         dispatch(addToast({ title: 'Validation', message: 'All fields are required.', type: 'error' }));
+                                        return;
+                                    }
+                                    if (!isValidEmail(inviteEmployeeForm.email)) {
+                                        dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+                                        return;
+                                    }
+                                    if (!isValidPassword(inviteEmployeeForm.password)) {
+                                        dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 6 characters.', type: 'warning' }));
                                         return;
                                     }
                                     setInviteLoading(true);

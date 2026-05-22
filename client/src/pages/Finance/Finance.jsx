@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { addToast } from '../../store/slices/uiSlice';
 import { financeService } from '../../services/financeService';
+import { isEmpty, isPositiveNumber } from '../../utils/validation';
 import Button from '../../components/common/Button/Button';
 import Badge from '../../components/common/Badge/Badge';
 import Modal from '../../components/common/Modal/Modal';
@@ -253,7 +254,14 @@ const Finance = () => {
     };
 
     const handleSaveTransaction = async () => {
-        if (!formData.description) return;
+        if (isEmpty(formData.description)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Description is required.', type: 'warning' }));
+            return;
+        }
+        if (!isPositiveNumber(formData.amount)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Amount must be a positive number.', type: 'warning' }));
+            return;
+        }
         
         const txData = {
             type: formData.type || 'expense',
@@ -372,7 +380,14 @@ const Finance = () => {
 
 
     const handleSaveExpense = async () => {
-        if (!expenseFormData.description || !expenseFormData.amount) return;
+        if (isEmpty(expenseFormData.description)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Description is required.', type: 'warning' }));
+            return;
+        }
+        if (!isPositiveNumber(expenseFormData.amount)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Amount must be a positive number.', type: 'warning' }));
+            return;
+        }
         
         const expData = {
             reason: expenseFormData.description,
