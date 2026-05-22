@@ -10,7 +10,21 @@ export const signInWithEmail = createAsyncThunk(
     async ({ email, password }, { rejectWithValue }) => {
         try {
             const data = await authService.signInWithEmail(email, password);
-            const profile = await authService.getProfile(data.user.id);
+            let profile;
+            try {
+                profile = await authService.getProfile(data.user.id);
+            } catch (err) {
+                console.warn('[Auth] Failed to get profile during sign in, using fallback:', err.message);
+                // Return fallback if profile doesn't exist
+                return {
+                    id: data.user.id,
+                    _id: data.user.id,
+                    name: data.user.user_metadata?.name || email.split('@')[0],
+                    email: email,
+                    role: 'employee',
+                };
+            }
+            
             return {
                 id: profile.id,
                 _id: profile.id,
@@ -95,21 +109,33 @@ export const restoreSession = createAsyncThunk(
         try {
             const session = await authService.getSession();
             if (!session) return null;
-            const profile = await authService.getProfile(session.user.id);
-            return {
-                id: profile.id,
-                _id: profile.id,
-                name: profile.name,
-                email: profile.email,
-                role: profile.role,
-                assignedModule: profile.assigned_module,
-                department: profile.department,
-                avatar: profile.avatar_url,
-                phone: profile.phone,
-                location: profile.location,
-                jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
-                bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
-            };
+            
+            try {
+                const profile = await authService.getProfile(session.user.id);
+                return {
+                    id: profile.id,
+                    _id: profile.id,
+                    name: profile.name,
+                    email: profile.email,
+                    role: profile.role,
+                    assignedModule: profile.assigned_module,
+                    department: profile.department,
+                    avatar: profile.avatar_url,
+                    phone: profile.phone,
+                    location: profile.location,
+                    jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
+                    bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
+                };
+            } catch (err) {
+                console.warn('[Auth] Failed to get profile during session restore, using fallback:', err.message);
+                return {
+                    id: session.user.id,
+                    _id: session.user.id,
+                    name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+                    email: session.user.email,
+                    role: 'employee',
+                };
+            }
         } catch {
             return null;
         }
