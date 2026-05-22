@@ -96,7 +96,7 @@ const IconRail = ({ activeModule, onModuleChange }) => {
                     <span className="icon-rail__label">Settings</span>
                 </button>
                 <div className="icon-rail__avatar">
-                    <Avatar name={user?.name || 'User'} size="sm" />
+                    <Avatar name={user?.name || 'User'} src={user?.avatar} size="sm" />
                 </div>
             </div>
         </div>

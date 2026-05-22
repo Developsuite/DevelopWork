@@ -111,7 +111,7 @@ const TopBar = () => {
                     <Settings size={19} />
                 </button>
                 <button className="topbar__profile" id="profile-btn" onClick={() => navigate('/settings')}>
-                    <Avatar name={user?.name || 'User'} size="sm" />
+                    <Avatar name={user?.name || 'User'} src={user?.avatar} size="sm" />
                     <span className="topbar__profile-name">{user?.name || 'User'}</span>
                 </button>
             </div>

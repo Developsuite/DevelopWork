@@ -90,6 +90,15 @@ export const authService = {
         return data;
     },
 
+    // Update user password
+    async updatePassword(newPassword) {
+        const { data, error } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+        if (error) throw error;
+        return data;
+    },
+
     // Listen for auth state changes
     onAuthStateChange(callback) {
         return supabase.auth.onAuthStateChange(callback);

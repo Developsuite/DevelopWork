@@ -3,7 +3,14 @@ import { createSlice } from '@reduxjs/toolkit';
 // Mock access data — which managers are assigned to which modules
 const initialState = {
     // Active modules the admin has enabled
-    activeModules: ['projects', 'hr', 'finance', 'leads', 'clients', 'docs'],
+    activeModules: (() => {
+        try {
+            const saved = typeof window !== 'undefined' ? localStorage.getItem('dw-active-modules') : null;
+            return saved ? JSON.parse(saved) : ['projects', 'hr', 'finance', 'leads', 'clients', 'docs'];
+        } catch (e) {
+            return ['projects', 'hr', 'finance', 'leads', 'clients', 'docs'];
+        }
+    })(),
 
     // Access assignments: module -> list of managers with access
     accessList: [
@@ -162,9 +169,19 @@ const accessSlice = createSlice({
             } else {
                 state.activeModules.push(moduleKey);
             }
+            try {
+                localStorage.setItem('dw-active-modules', JSON.stringify(state.activeModules));
+            } catch (e) {
+                console.error('Failed to save active modules:', e);
+            }
         },
         setActiveModules: (state, action) => {
             state.activeModules = action.payload;
+            try {
+                localStorage.setItem('dw-active-modules', JSON.stringify(state.activeModules));
+            } catch (e) {
+                console.error('Failed to save active modules:', e);
+            }
         },
         addAccess: (state, action) => {
             state.accessList.push({

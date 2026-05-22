@@ -105,11 +105,20 @@ const Sidebar = () => {
     const activeModules = useSelector((state) => state.access.activeModules);
     const { user } = useSelector((state) => state.auth);
 
+    const [wsName, setWsName] = useState(() => localStorage.getItem('dw-workspace-name') || 'DevelopWork');
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [selectedModule, setSelectedModule] = useState(null);
     const [expandedItems, setExpandedItems] = useState(['docs-all']);
     const [dynamicSubPages, setDynamicSubPages] = useState(moduleSubPages);
     const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleWsUpdate = () => {
+            setWsName(localStorage.getItem('dw-workspace-name') || 'DevelopWork');
+        };
+        window.addEventListener('workspaceUpdate', handleWsUpdate);
+        return () => window.removeEventListener('workspaceUpdate', handleWsUpdate);
+    }, []);
 
     // Fetch dynamic content for specific modules
     useEffect(() => {
@@ -327,7 +336,7 @@ const Sidebar = () => {
                             <img src="/images/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </div>
                         <div className="workspace-switcher__info">
-                            <div className="workspace-switcher__name">DevelopWork</div>
+                            <div className="workspace-switcher__name">{wsName}</div>
                         </div>
                         <ChevronDown size={14} className="workspace-switcher__chevron" />
                     </button>
@@ -449,7 +458,7 @@ const Sidebar = () => {
                         }}
                         title="View Profile Settings"
                     >
-                        <Avatar name={user?.name || 'Admin'} size="sm" />
+                        <Avatar name={user?.name || 'Admin'} src={user?.avatar} size="sm" />
                         <div style={{ overflow: 'hidden' }}>
                             <div style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name}</div>
                             <div style={{ fontSize: '11px', opacity: 0.6 }}>Workspace Admin</div>

@@ -74,8 +74,7 @@ const Landing = () => {
             <div className="landing-hero__content" id="landing-hero-content">
               <div className="landing-hero__heading">
                 <h1 id="landing-hero-title">
-                  <span className="landing-hero__line">Strategy and</span>
-                  <span className="landing-hero__line">growth for</span>
+                  <span className="landing-hero__line">Strategy and growth for</span>
                   <span className="landing-hero__line landing-hero__highlight">modern teams</span>
                 </h1>
                 <p className="landing-hero__subtitle" id="landing-hero-subtitle">

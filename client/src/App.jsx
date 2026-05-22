@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { restoreSession } from './store/slices/authSlice';
+import { restoreSession, setUser } from './store/slices/authSlice';
+import { authService } from './services/authService';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
 import EmployeeLayout from './components/layout/EmployeeLayout/EmployeeLayout';
@@ -38,9 +39,47 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Restore Supabase session on app load
+  // Restore Supabase session on app load and listen for auth state changes
   useEffect(() => {
     dispatch(restoreSession());
+
+    const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
+      console.log('[Auth] State change event:', event);
+      if (session) {
+        try {
+          const profile = await authService.getProfile(session.user.id);
+          dispatch(setUser({
+            id: profile.id,
+            _id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role,
+            assignedModule: profile.assigned_module,
+            department: profile.department,
+            avatar: profile.avatar_url,
+            phone: profile.phone,
+            location: profile.location,
+            jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
+            bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
+          }));
+        } catch (err) {
+          console.error('[Auth] Failed to load profile for session user:', err);
+          dispatch(setUser({
+            id: session.user.id,
+            _id: session.user.id,
+            name: session.user.user_metadata?.name || session.user.email.split('@')[0],
+            email: session.user.email,
+            role: 'employee',
+          }));
+        }
+      } else {
+        dispatch(setUser(null));
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, [dispatch]);
 
   // Smart redirect for root path based on role

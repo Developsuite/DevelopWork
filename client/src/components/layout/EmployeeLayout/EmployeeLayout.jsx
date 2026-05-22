@@ -27,6 +27,16 @@ const EmployeeLayout = () => {
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
 
+    const [wsName, setWsName] = useState(() => localStorage.getItem('dw-workspace-name') || 'DevelopWork');
+
+    useEffect(() => {
+        const handleWsUpdate = () => {
+            setWsName(localStorage.getItem('dw-workspace-name') || 'DevelopWork');
+        };
+        window.addEventListener('workspaceUpdate', handleWsUpdate);
+        return () => window.removeEventListener('workspaceUpdate', handleWsUpdate);
+    }, []);
+
     const handleLogout = async () => {
         if (!window.confirm('Are you sure you want to log out?')) return;
         try {
@@ -48,7 +58,7 @@ const EmployeeLayout = () => {
                         <img src="/images/logo.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
                     </div>
                     <div className="employee-sidebar__brand">
-                        <div className="employee-sidebar__brand-name">DevelopWork</div>
+                        <div className="employee-sidebar__brand-name">{wsName}</div>
                         <div className="employee-sidebar__brand-role">Employee Portal</div>
                     </div>
                 </div>
@@ -95,7 +105,7 @@ const EmployeeLayout = () => {
                         style={{ cursor: 'pointer' }}
                         title="View Profile Settings"
                     >
-                        <Avatar name={user?.name || 'Employee'} size="sm" />
+                        <Avatar name={user?.name || 'Employee'} src={user?.avatar} size="sm" />
                         <div className="employee-sidebar__user-info">
                             <div className="employee-sidebar__user-name">{user?.name}</div>
                             <div className="employee-sidebar__user-dept">{user?.department || 'Staff'}</div>
@@ -122,7 +132,7 @@ const EmployeeLayout = () => {
                             <span>{user?.department || 'Employee'}</span>
                         </div>
                         <div className="employee-topbar__user">
-                            <Avatar name={user?.name || 'E'} size="xs" />
+                            <Avatar name={user?.name || 'E'} src={user?.avatar} size="xs" />
                             <span>{user?.name?.split(' ')[0]}</span>
                         </div>
                     </div>

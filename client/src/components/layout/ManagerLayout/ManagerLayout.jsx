@@ -217,7 +217,7 @@ const ManagerLayout = () => {
                         style={{ cursor: 'pointer' }}
                         title="View Profile Settings"
                     >
-                        <Avatar name={user?.name || 'M'} size={isCollapsed ? "xs" : "sm"} />
+                        <Avatar name={user?.name || 'M'} src={user?.avatar} size={isCollapsed ? "xs" : "sm"} />
                         {!isCollapsed && (
                             <div className="manager-sidebar__user-info">
                                 <div className="manager-sidebar__user-name">{user?.name}</div>
@@ -256,7 +256,7 @@ const ManagerLayout = () => {
                             <span>{moduleInfo?.label}</span>
                         </div>
                         <div className="manager-topbar__user">
-                            <Avatar name={user?.name || 'M'} size="xs" />
+                            <Avatar name={user?.name || 'M'} src={user?.avatar} size="xs" />
                             <span>{user?.name?.split(' ')[0]}</span>
                         </div>
                     </div>

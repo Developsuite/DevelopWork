@@ -12,6 +12,7 @@ export const signInWithEmail = createAsyncThunk(
             const data = await authService.signInWithEmail(email, password);
             const profile = await authService.getProfile(data.user.id);
             return {
+                id: profile.id,
                 _id: profile.id,
                 name: profile.name,
                 email: profile.email,
@@ -21,6 +22,8 @@ export const signInWithEmail = createAsyncThunk(
                 avatar: profile.avatar_url,
                 phone: profile.phone,
                 location: profile.location,
+                jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
+                bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
             };
         } catch (error) {
             return rejectWithValue(error.message);
@@ -40,6 +43,7 @@ export const signUpWithEmail = createAsyncThunk(
                 try {
                     const profile = await authService.getProfile(data.user.id);
                     return {
+                        id: profile.id,
                         _id: profile.id,
                         name: profile.name,
                         email: profile.email,
@@ -49,11 +53,14 @@ export const signUpWithEmail = createAsyncThunk(
                         avatar: profile.avatar_url,
                         phone: profile.phone,
                         location: profile.location,
+                        jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
+                        bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
                         autoLoggedIn: true,
                     };
                 } catch {
                     // Profile trigger might be slow — return basic info from auth
                     return {
+                        id: data.user.id,
                         _id: data.user.id,
                         name: name,
                         email: email,
@@ -90,6 +97,7 @@ export const restoreSession = createAsyncThunk(
             if (!session) return null;
             const profile = await authService.getProfile(session.user.id);
             return {
+                id: profile.id,
                 _id: profile.id,
                 name: profile.name,
                 email: profile.email,
@@ -99,6 +107,8 @@ export const restoreSession = createAsyncThunk(
                 avatar: profile.avatar_url,
                 phone: profile.phone,
                 location: profile.location,
+                jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
+                bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
             };
         } catch {
             return null;
@@ -187,6 +197,18 @@ const authSlice = createSlice({
                 state.error = null;
             })
             .addCase(signInWithEmail.rejected, (state, action) => {
+                state.isLoading = false;
+                state.error = action.payload;
+            })
+            // Sign In with Google
+            .addCase(signInWithGoogle.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(signInWithGoogle.fulfilled, (state) => {
+                state.isLoading = false;
+            })
+            .addCase(signInWithGoogle.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload;
             })

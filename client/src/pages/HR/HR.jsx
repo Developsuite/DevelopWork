@@ -365,6 +365,7 @@ const HR = () => {
     }, [loadReviews]);
 
     const [performanceFormData, setPerformanceFormData] = useState({
+        employeeId: '',
         name: '',
         rating: 5,
         feedback: '',
@@ -372,9 +373,13 @@ const HR = () => {
     });
 
     const handleSavePerformanceReview = async () => {
-        if (!performanceFormData.name) return;
+        if (!performanceFormData.employeeId) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please select an employee.', type: 'error' }));
+            return;
+        }
         
         const reviewData = {
+            employee_id: performanceFormData.employeeId,
             employee_name: performanceFormData.name,
             rating: parseInt(performanceFormData.rating),
             feedback: performanceFormData.feedback,
@@ -406,6 +411,7 @@ const HR = () => {
         e.stopPropagation();
         setEditId(review.id);
         setPerformanceFormData({
+            employeeId: review.employee_id || '',
             name: review.name,
             rating: review.rating,
             feedback: review.feedback,
@@ -964,7 +970,7 @@ const HR = () => {
                     <div className="hr-section__header">
                         <h2>Performance Reviews</h2>
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <Button variant="ghost" size="sm" icon={Plus} onClick={() => { setEditId(null); setPerformanceFormData({ name: '', rating: 5, feedback: '', goals: '' }); setIsPerformanceModalOpen(true); }}>New Review</Button>
+                            <Button variant="ghost" size="sm" icon={Plus} onClick={() => { setEditId(null); setPerformanceFormData({ employeeId: '', name: '', rating: 5, feedback: '', goals: '' }); setIsPerformanceModalOpen(true); }}>New Review</Button>
                             <Button variant="ghost" size="sm" icon={TrendingUp} onClick={() => dispatch(addToast({ title: 'Performance Stats', message: 'Generating company-wide performance report...', type: 'info' }))}>Full Report</Button>
                         </div>
                     </div>
@@ -1310,7 +1316,7 @@ const HR = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setIsPerformanceModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSavePerformanceReview} disabled={!performanceFormData.name}>Save Review</Button>
+                        <Button variant="primary" onClick={handleSavePerformanceReview} disabled={!performanceFormData.employeeId}>Save Review</Button>
                     </>
                 }
             >
@@ -1319,12 +1325,20 @@ const HR = () => {
                         <label className="dw-form-label">Employee Name</label>
                         <select
                             className="dw-form-input"
-                            value={performanceFormData.name}
-                            onChange={e => setPerformanceFormData({ ...performanceFormData, name: e.target.value })}
+                            value={performanceFormData.employeeId || ''}
+                            onChange={e => {
+                                const empId = e.target.value;
+                                const emp = employees.find(x => x.id === empId);
+                                setPerformanceFormData({
+                                    ...performanceFormData,
+                                    employeeId: empId,
+                                    name: emp ? emp.name : ''
+                                });
+                            }}
                         >
                             <option value="" disabled>Select an Employee...</option>
                             {employees.map(emp => (
-                                <option key={emp.id} value={emp.name}>{emp.name} - {emp.role}</option>
+                                <option key={emp.id} value={emp.id}>{emp.name} - {emp.role}</option>
                             ))}
                         </select>
                     </div>

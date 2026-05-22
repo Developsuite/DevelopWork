@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { addToast } from '../../store/slices/uiSlice';
+import { addToast, setTheme } from '../../store/slices/uiSlice';
+import { toggleModule } from '../../store/slices/accessSlice';
+import { updateUser } from '../../store/slices/authSlice';
 import Button from '../../components/common/Button/Button';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Modal from '../../components/common/Modal/Modal';
@@ -28,15 +30,110 @@ import {
     Copy,
     ShieldCheck,
     KeyRound,
+    FileText,
 } from 'lucide-react';
 import './Settings.css';
+
+const moduleIconMap = {
+    projects: LayoutGrid,
+    hr: User,
+    finance: CreditCard,
+    leads: Globe,
+    clients: Users,
+    docs: FileText,
+};
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [showPassword, setShowPassword] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [securityLoading, setSecurityLoading] = useState(false);
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
+    const activeModules = useSelector((state) => state.access.activeModules);
     const dispatch = useDispatch();
+
+    const handleToggleModule = (moduleKey) => {
+        dispatch(toggleModule(moduleKey));
+    };
+
+    const handleUpdateSecurity = async () => {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            dispatch(addToast({ title: 'Validation Error', message: 'All password fields are required.', type: 'error' }));
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            dispatch(addToast({ title: 'Validation Error', message: 'New passwords do not match.', type: 'error' }));
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 6 characters.', type: 'error' }));
+            return;
+        }
+
+        setSecurityLoading(true);
+        try {
+            if (!user?.email) {
+                throw new Error('User email not found. Please log in again.');
+            }
+
+            // Attempt login to verify current password
+            await authService.signInWithEmail(user.email, currentPassword);
+
+            // Update the password
+            await authService.updatePassword(newPassword);
+
+            dispatch(addToast({ title: 'Success', message: 'Password updated successfully.', type: 'success' }));
+            
+            // Clear fields
+            setCurrentPassword('');
+            setNewPassword('');
+            setConfirmPassword('');
+        } catch (err) {
+            console.error('Password update failed:', err);
+            dispatch(addToast({ title: 'Error', message: err.message || 'Failed to update password.', type: 'error' }));
+        } finally {
+            setSecurityLoading(false);
+        }
+    };
+
+    // Workspace state
+    const [workspaceName, setWorkspaceName] = useState(() => localStorage.getItem('dw-workspace-name') || 'DevelopWork');
+    const [workspaceUrl, setWorkspaceUrl] = useState(() => localStorage.getItem('dw-workspace-url') || 'main');
+    const [workspaceLanguage, setWorkspaceLanguage] = useState(() => localStorage.getItem('dw-workspace-lang') || 'en');
+    const [selectedTheme, setSelectedTheme] = useState(theme || 'light');
+
+    // Keep selectedTheme synchronized if theme state changes externally
+    useEffect(() => {
+        if (theme) {
+            setSelectedTheme(theme);
+        }
+    }, [theme]);
+
+    const handleSelectTheme = (newTheme) => {
+        setSelectedTheme(newTheme);
+        dispatch(setTheme(newTheme)); // Instant visual preview
+    };
+
+    const handleUpdateWorkspace = () => {
+        try {
+            localStorage.setItem('dw-workspace-name', workspaceName);
+            localStorage.setItem('dw-workspace-url', workspaceUrl);
+            localStorage.setItem('dw-workspace-lang', workspaceLanguage);
+            dispatch(setTheme(selectedTheme));
+            
+            // Dispatch event to sync other components (like Sidebar)
+            window.dispatchEvent(new Event('workspaceUpdate'));
+            
+            dispatch(addToast({ title: 'Success', message: 'Workspace settings updated successfully.', type: 'success' }));
+        } catch (err) {
+            dispatch(addToast({ title: 'Error', message: 'Failed to update workspace settings.', type: 'error' }));
+        }
+    };
 
     // Manager management state
     const [managers, setManagers] = useState([]);
@@ -54,9 +151,10 @@ const Settings = () => {
     const [profileForm, setProfileForm] = useState({
         name: user?.name || '',
         email: user?.email || '',
-        jobTitle: 'Product Lead', // Default for now
-        location: 'Pakistan',     // Default for now
-        bio: 'Building the future of work management.' // Default for now
+        jobTitle: user?.jobTitle || 'Product Lead',
+        location: user?.location || 'Pakistan',
+        bio: user?.bio || 'Building the future of work management.',
+        avatar: user?.avatar || null
     });
     const [profileLoading, setProfileLoading] = useState(false);
 
@@ -65,22 +163,82 @@ const Settings = () => {
             setProfileForm(prev => ({
                 ...prev,
                 name: user.name || '',
-                email: user.email || ''
+                email: user.email || '',
+                jobTitle: user.jobTitle || 'Product Lead',
+                location: user.location || 'Pakistan',
+                bio: user.bio || 'Building the future of work management.',
+                avatar: user.avatar || null
             }));
         }
     }, [user]);
 
+    const handleAvatarChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 800 * 1024) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Image size must be less than 800KB.', type: 'error' }));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setProfileForm(prev => ({
+                ...prev,
+                avatar: reader.result
+            }));
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleUpdateProfile = async () => {
         if (!user) return;
         setProfileLoading(true);
+        const userId = user._id || user.id;
         try {
-            await authService.updateProfile(user.id, {
+            // Attempt to update all profile fields on Supabase.
+            // Fallback gracefully to updating only name/location/avatar if bio/job_title columns are not in DB.
+            let updatedData;
+            const updates = {
                 name: profileForm.name,
-                // Add other fields if they exist in your schema
-            });
+                location: profileForm.location,
+                avatar_url: profileForm.avatar,
+            };
+
+            try {
+                updatedData = await authService.updateProfile(userId, {
+                    ...updates,
+                    job_title: profileForm.jobTitle,
+                    bio: profileForm.bio,
+                });
+            } catch (dbErr) {
+                console.warn('DB columns job_title/bio might be missing, falling back:', dbErr);
+                
+                // Save missing columns locally
+                localStorage.setItem(`dw-profile-job-title-${userId}`, profileForm.jobTitle);
+                localStorage.setItem(`dw-profile-bio-${userId}`, profileForm.bio);
+                
+                updatedData = await authService.updateProfile(userId, updates);
+                
+                updatedData = {
+                    ...updatedData,
+                    job_title: profileForm.jobTitle,
+                    bio: profileForm.bio,
+                };
+            }
+
+            // Sync updated profile to Redux user store
+            dispatch(updateUser({
+                name: updatedData.name,
+                location: updatedData.location,
+                avatar: updatedData.avatar_url || profileForm.avatar,
+                jobTitle: updatedData.job_title || profileForm.jobTitle,
+                bio: updatedData.bio || profileForm.bio,
+            }));
+
             dispatch(addToast({ title: 'Success', message: 'Profile updated successfully.', type: 'success' }));
         } catch (err) {
-            dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
+            dispatch(addToast({ title: 'Error', message: err.message || 'Failed to update profile.', type: 'error' }));
         } finally {
             setProfileLoading(false);
         }
@@ -140,9 +298,22 @@ const Settings = () => {
                             <h2 className="settings-section-title">Public Profile</h2>
                             
                             <div className="profile-upload">
-                                <Avatar name={profileForm.name} size="xl" />
+                                <Avatar name={profileForm.name} src={profileForm.avatar} size="xl" />
                                 <div className="profile-upload-info">
-                                    <Button variant="ghost" size="sm">Change Avatar</Button>
+                                    <input 
+                                        type="file" 
+                                        id="avatar-file-input" 
+                                        accept="image/*" 
+                                        style={{ display: 'none' }} 
+                                        onChange={handleAvatarChange} 
+                                    />
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => document.getElementById('avatar-file-input').click()}
+                                    >
+                                        Change Avatar
+                                    </Button>
                                     <p className="field-hint">JPG, GIF or PNG. Max size of 800K</p>
                                 </div>
                             </div>
@@ -209,9 +380,9 @@ const Settings = () => {
                                 <Button variant="ghost" onClick={() => setProfileForm({
                                     name: user?.name || '',
                                     email: user?.email || '',
-                                    jobTitle: 'Product Lead',
-                                    location: 'Pakistan',
-                                    bio: 'Building the future of work management.'
+                                    jobTitle: user?.jobTitle || 'Product Lead',
+                                    location: user?.location || 'Pakistan',
+                                    bio: user?.bio || 'Building the future of work management.'
                                 })}>Cancel</Button>
                             </div>
                         </div>
@@ -224,20 +395,31 @@ const Settings = () => {
                             <div className="settings-grid">
                                 <div className="settings-field">
                                     <label>Workspace Name</label>
-                                    <input type="text" defaultValue="DevelopWork" />
+                                    <input 
+                                        type="text" 
+                                        value={workspaceName} 
+                                        onChange={(e) => setWorkspaceName(e.target.value)} 
+                                    />
                                 </div>
                                 <div className="settings-field">
                                     <label>Workspace URL</label>
                                     <div className="input-group">
                                         <span className="input-prefix">developwork.com/</span>
-                                        <input type="text" defaultValue="main" />
+                                        <input 
+                                            type="text" 
+                                            value={workspaceUrl} 
+                                            onChange={(e) => setWorkspaceUrl(e.target.value)} 
+                                        />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="settings-field">
                                 <label>Language</label>
-                                <select defaultValue="en">
+                                <select 
+                                    value={workspaceLanguage} 
+                                    onChange={(e) => setWorkspaceLanguage(e.target.value)}
+                                >
                                     <option value="en">English (US)</option>
                                     <option value="uk">English (UK)</option>
                                     <option value="es">Spanish</option>
@@ -249,22 +431,31 @@ const Settings = () => {
 
                             <h3 className="settings-subsection-title">Appearance</h3>
                             <div className="theme-selector">
-                                <div className={`theme-option ${theme === 'light' ? 'selected' : ''}`}>
+                                <div 
+                                    className={`theme-option ${selectedTheme === 'light' ? 'selected' : ''}`}
+                                    onClick={() => handleSelectTheme('light')}
+                                >
                                     <div className="theme-preview light" />
                                     <span>Light</span>
                                 </div>
-                                <div className={`theme-option ${theme === 'dark' ? 'selected' : ''}`}>
+                                <div 
+                                    className={`theme-option ${selectedTheme === 'dark' ? 'selected' : ''}`}
+                                    onClick={() => handleSelectTheme('dark')}
+                                >
                                     <div className="theme-preview dark" />
                                     <span>Dark</span>
                                 </div>
-                                <div className={`theme-option ${theme === 'glass' ? 'selected' : ''}`}>
+                                <div 
+                                    className={`theme-option ${selectedTheme === 'glass' ? 'selected' : ''}`}
+                                    onClick={() => handleSelectTheme('glass')}
+                                >
                                     <div className="theme-preview glass" />
                                     <span>Glass</span>
                                 </div>
                             </div>
 
                             <div className="settings-actions">
-                                <Button variant="primary">Update Workspace</Button>
+                                <Button variant="primary" onClick={handleUpdateWorkspace}>Update Workspace</Button>
                             </div>
                         </div>
                     )}
@@ -276,7 +467,12 @@ const Settings = () => {
                             <div className="settings-field full-width">
                                 <label>Current Password</label>
                                 <div className="input-with-action">
-                                    <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" />
+                                    <input 
+                                        type={showPassword ? 'text' : 'password'} 
+                                        placeholder="••••••••" 
+                                        value={currentPassword} 
+                                        onChange={(e) => setCurrentPassword(e.target.value)} 
+                                    />
                                     <button onClick={() => setShowPassword(!showPassword)}>
                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
@@ -286,11 +482,21 @@ const Settings = () => {
                             <div className="settings-grid">
                                 <div className="settings-field">
                                     <label>New Password</label>
-                                    <input type="password" placeholder="••••••••" />
+                                    <input 
+                                        type="password" 
+                                        placeholder="••••••••" 
+                                        value={newPassword} 
+                                        onChange={(e) => setNewPassword(e.target.value)} 
+                                    />
                                 </div>
                                 <div className="settings-field">
                                     <label>Confirm New Password</label>
-                                    <input type="password" placeholder="••••••••" />
+                                    <input 
+                                        type="password" 
+                                        placeholder="••••••••" 
+                                        value={confirmPassword} 
+                                        onChange={(e) => setConfirmPassword(e.target.value)} 
+                                    />
                                 </div>
                             </div>
 
@@ -306,7 +512,9 @@ const Settings = () => {
                             </div>
 
                             <div className="settings-actions">
-                                <Button variant="primary">Update Security</Button>
+                                <Button variant="primary" onClick={handleUpdateSecurity} disabled={securityLoading}>
+                                    {securityLoading ? 'Updating...' : 'Update Security'}
+                                </Button>
                             </div>
                         </div>
                     )}
@@ -317,25 +525,29 @@ const Settings = () => {
                             <p className="settings-section-hint">Enable or disable modules for your workspace.</p>
                             
                             <div className="module-settings-list">
-                                {[
-                                    { name: 'Project Management', enabled: true, icon: LayoutGrid },
-                                    { name: 'Human Resources', enabled: true, icon: User },
-                                    { name: 'Finance', enabled: true, icon: CreditCard },
-                                    { name: 'CRM & Leads', enabled: false, icon: Globe },
-                                    { name: 'Customer Support', enabled: true, icon: Bell },
-                                ].map((mod) => (
-                                    <div key={mod.name} className="module-setting-item">
-                                        <div className="module-setting-info">
-                                            <div className="module-setting-icon">
-                                                <mod.icon size={18} />
+                                {DEPARTMENT_MODULES.map((mod) => {
+                                    const isEnabled = activeModules.includes(mod.key);
+                                    const IconComponent = moduleIconMap[mod.key] || LayoutGrid;
+                                    return (
+                                        <div key={mod.key} className="module-setting-item">
+                                            <div className="module-setting-info">
+                                                <div className="module-setting-icon" style={{ color: mod.color }}>
+                                                    <IconComponent size={18} />
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{mod.label}</span>
+                                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{mod.description}</span>
+                                                </div>
                                             </div>
-                                            <span>{mod.name}</span>
+                                            <div 
+                                                className={`module-toggle ${isEnabled ? 'active' : ''}`}
+                                                onClick={() => handleToggleModule(mod.key)}
+                                            >
+                                                <div className="toggle-thumb" />
+                                            </div>
                                         </div>
-                                        <div className={`module-toggle ${mod.enabled ? 'active' : ''}`}>
-                                            <div className="toggle-thumb" />
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
@@ -599,7 +811,7 @@ const Settings = () => {
                         </div>
                         <div className="dw-form-group">
                             <label className="dw-form-label">New Module Assignment</label>
-                            <select className="dw-form-input" defaultValue={editingManager.assigned_module} id="edit-module-select">
+                            <select key={editingManager.id} className="dw-form-input" defaultValue={editingManager.assigned_module || editingManager.assignedModule} id="edit-module-select">
                                 {DEPARTMENT_MODULES.map(m => (
                                     <option key={m.key} value={m.key}>{m.label}</option>
                                 ))}

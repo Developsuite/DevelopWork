@@ -235,6 +235,7 @@
     height: 130px;
     overflow: hidden;
     border-radius: 14px;
+    position: relative;
 }
 
 .module-hub__card-banner img {
