@@ -17,7 +17,7 @@ export const projectService = {
     async getById(id) {
         const { data, error } = await supabase
             .from('projects')
-            .select('*, project_members(user_id, role, profiles(name, avatar_url))')
+            .select('*, project_members(user_id, role, profiles!project_members_user_id_fkey(name, avatar_url))')
             .eq('id', id)
             .single();
         if (error) throw error;
@@ -212,7 +212,7 @@ export const projectService = {
     async getComments(taskId) {
         const { data, error } = await supabase
             .from('task_comments')
-            .select('*, profiles:user_id(name, avatar_url)')
+            .select('*, profiles:profiles!task_comments_user_id_fkey(name, avatar_url)')
             .eq('task_id', taskId)
             .order('created_at', { ascending: true });
         if (error) throw error;
@@ -223,7 +223,7 @@ export const projectService = {
         const { data, error } = await supabase
             .from('task_comments')
             .insert(comment)
-            .select('*, profiles:user_id(name, avatar_url)')
+            .select('*, profiles:profiles!task_comments_user_id_fkey(name, avatar_url)')
             .single();
         if (error) throw error;
         return data;
@@ -250,7 +250,7 @@ export const projectService = {
     async getMembers(projectId) {
         const { data, error } = await supabase
             .from('project_members')
-            .select('*, profiles:user_id(id, name, email, avatar_url, department)')
+            .select('*, profiles:profiles!project_members_user_id_fkey(id, name, email, avatar_url, department)')
             .eq('project_id', projectId);
         if (error) throw error;
         return data;
