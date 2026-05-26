@@ -10,11 +10,12 @@ const AddTaskModal = () => {
     const dispatch = useDispatch();
     const isOpen = useSelector((state) => state.ui.modals.addTask);
     const projectList = useSelector((state) => state.project.projects);
-    
+    const employees = mockMembers.filter(m => m.role === 'employee');
+
     const [formData, setFormData] = useState({
         title: '',
         projectId: projectList[0]?.id || '',
-        assignee: 'Abbas Khan',
+        assignee: employees[0]?.name || '',
         dueDate: new Date().toISOString().split('T')[0],
         priority: 'Medium'
     });
@@ -37,7 +38,7 @@ const AddTaskModal = () => {
         setFormData({
             title: '',
             projectId: projectList[0]?.id || '',
-            assignee: 'Abbas Khan',
+            assignee: employees[0]?.name || '',
             dueDate: new Date().toISOString().split('T')[0],
             priority: 'Medium'
         });
@@ -89,7 +90,7 @@ const AddTaskModal = () => {
                             value={formData.assignee}
                             onChange={e => setFormData({ ...formData, assignee: e.target.value })}
                         >
-                            {mockMembers.map(m => (
+                            {employees.map(m => (
                                 <option key={m._id} value={m.name}>{m.name}</option>
                             ))}
                         </select>
