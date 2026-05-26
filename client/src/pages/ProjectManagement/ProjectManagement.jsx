@@ -674,7 +674,7 @@ const ProjectManagement = () => {
                         <label className="dw-form-label">Assign To</label>
                         <select className="dw-form-input" value={taskForm.assignee_id} onChange={e => setTaskForm({...taskForm, assignee_id: e.target.value})}>
                             <option value="">Unassigned</option>
-                            {teamMembers.map(m => (
+                            {teamMembers.filter(m => m.role === 'employee').map(m => (
                                 <option key={m.id} value={m.id}>{m.name} ({m.email})</option>
                             ))}
                         </select>
