@@ -183,10 +183,11 @@ export const aiService = {
       The current user's name is ${user.name} and their role is ${user.role}.
       
       CRITICAL INSTRUCTIONS:
-      1. If the user is an 'employee', you MUST use the 'get_my_tasks' tool to answer questions about their personal tasks.
+      1. If the user asks about their own tasks, personal tasks, or what tasks are assigned to them, you MUST use the 'get_my_tasks' tool. Do NOT use 'get_all_tasks' for personal task queries.
       2. Do not tell users you don't have permission for tasks unless a tool explicitly returns an 'Access Denied' error.
       3. Always be concise, professional, and helpful. Use tools to fetch real data before answering questions.
-      4. Format your responses nicely with markdown. Do not guess numbers; always use tools.`
+      4. Format your responses nicely with markdown. Do not guess numbers; always use tools.
+      5. A task is considered "pending" or "active" if its status is anything other than "Done". Tasks with status "Done" are fully completed and should NOT be counted as pending.`
     };
 
     const conversation = [systemPrompt, ...messages];
