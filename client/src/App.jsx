@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { setUser } from './store/slices/authSlice';
+import { restoreSession, setUser } from './store/slices/authSlice';
 import { authService } from './services/authService';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
@@ -39,13 +39,18 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Listen for auth state changes (handles both initial load and updates)
+  // Restore session and listen for auth state changes
   useEffect(() => {
     let isMounted = true;
 
+    // 1. Explicitly restore session to guarantee we don't get stuck loading
+    dispatch(restoreSession());
+
+    // 2. Synchronously attach listener for future events (avoids memory leaks)
     const { data } = authService.onAuthStateChange(async (event, session) => {
       console.log('[Auth] State change event:', event);
       if (!isMounted) return;
+      if (event === 'INITIAL_SESSION') return; // Handled by restoreSession
 
       if (session) {
         try {
