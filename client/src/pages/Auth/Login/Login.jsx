@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { signInWithEmail, signInWithGoogle, clearError } from '../../../store/slices/authSlice';
-import { addToast } from '../../../store/slices/toastSlice';
+import { addToast } from '../../../store/slices/uiSlice';
 import { isValidEmail } from '../../../utils/validation';
 import ThemeToggle from '../../../components/common/ThemeToggle/ThemeToggle';
 import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle, Loader2 } from 'lucide-react';

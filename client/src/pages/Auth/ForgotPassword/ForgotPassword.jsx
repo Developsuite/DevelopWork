@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword, clearError, clearResetSuccess } from '../../../store/slices/authSlice';
-import { addToast } from '../../../store/slices/toastSlice';
+import { addToast } from '../../../store/slices/uiSlice';
 import { isValidEmail } from '../../../utils/validation';
 import { Zap, AlertCircle, Loader2 } from 'lucide-react';
 import '../Login/Login.css';

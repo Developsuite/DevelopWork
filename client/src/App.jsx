@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { restoreSession, setUser } from './store/slices/authSlice';
+import { setUser } from './store/slices/authSlice';
 import { authService } from './services/authService';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
@@ -39,22 +39,18 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Restore Supabase session on app load and listen for auth state changes
+  // Listen for auth state changes (handles both initial load and updates)
   useEffect(() => {
-    let subscription = null;
+    let isMounted = true;
 
-    // 1. Explicitly restore session first to avoid Strict Mode missed events
-    dispatch(restoreSession()).finally(() => {
-      // 2. Attach listener ONLY after initial session is restored to avoid Supabase deadlock
-      const { data } = authService.onAuthStateChange(async (event, session) => {
-        console.log('[Auth] State change event:', event);
-        
-        // Skip INITIAL_SESSION since restoreSession already handles the initial load
-        if (event === 'INITIAL_SESSION') return;
+    const { data } = authService.onAuthStateChange(async (event, session) => {
+      console.log('[Auth] State change event:', event);
+      if (!isMounted) return;
 
-        if (session) {
-          try {
-            const profile = await authService.getProfile(session.user.id);
+      if (session) {
+        try {
+          const profile = await authService.getProfile(session.user.id);
+          if (isMounted) {
             dispatch(setUser({
               id: profile.id,
               _id: profile.id,
@@ -69,8 +65,10 @@ function App() {
               jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
               bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
             }));
-          } catch (err) {
-            console.error('[Auth] Failed to load profile for session user:', err);
+          }
+        } catch (err) {
+          console.error('[Auth] Failed to load profile for session user:', err);
+          if (isMounted) {
             dispatch(setUser({
               id: session.user.id,
               _id: session.user.id,
@@ -79,16 +77,18 @@ function App() {
               role: 'employee',
             }));
           }
-        } else {
+        }
+      } else {
+        if (isMounted) {
           dispatch(setUser(null));
         }
-      });
-      subscription = data.subscription;
+      }
     });
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
+      isMounted = false;
+      if (data && data.subscription) {
+        data.subscription.unsubscribe();
       }
     };
   }, [dispatch]);

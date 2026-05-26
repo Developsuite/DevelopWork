@@ -29,6 +29,21 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
 
     useEffect(() => {
         if (isOpen) {
+            // Reset state to generate a new invoice number and clear form
+            setInvoiceData(prev => ({
+                ...prev,
+                invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`,
+                date: new Date().toISOString().split('T')[0],
+                dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                clientName: '',
+                clientAddress: '',
+                notes: 'Thank you for your business. Please process payment within 14 days.',
+            }));
+            setItems([
+                { id: 1, description: 'Website Redesign', quantity: 1, price: 4500 },
+                { id: 2, description: 'Monthly Retainer - May', quantity: 1, price: 1200 }
+            ]);
+
             const loadClients = async () => {
                 try {
                     const data = await clientsService.getClients();
