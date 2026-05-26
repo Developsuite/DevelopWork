@@ -42,6 +42,7 @@ function App() {
   // Restore session and listen for auth state changes
   useEffect(() => {
     let isMounted = true;
+    let lastToken = null; // Used to deduplicate events
 
     // 1. Explicitly restore session to guarantee we don't get stuck loading
     dispatch(restoreSession());
@@ -51,6 +52,16 @@ function App() {
       console.log('[Auth] State change event:', event);
       if (!isMounted) return;
       if (event === 'INITIAL_SESSION') return; // Handled by restoreSession
+
+      // Deduplicate continuous SIGNED_IN events to prevent infinite network requests
+      const currentToken = session?.access_token;
+      if (event === 'SIGNED_IN') {
+        if (currentToken === lastToken) {
+          console.log('[Auth] Ignored duplicate SIGNED_IN event');
+          return;
+        }
+        lastToken = currentToken;
+      }
 
       if (session) {
         try {
