@@ -757,6 +757,157 @@
 [data-theme="dark"] .cl__tag--unpaid { background: rgba(239, 68, 68, 0.12); }
 [data-theme="dark"] .cl__tag--partial { background: rgba(245, 158, 11, 0.12); }
 
+/* ═══════════════════════════════════════════
+   BILLING STATUS UI
+   ═══════════════════════════════════════════ */
+
+.cl__billing-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.cl__billing-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.cl__billing-summary-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.cl__billing-summary-card h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cl__billing-summary-card .amount {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -1px;
+}
+
+.cl__billing-summary-card.outstanding .amount { color: var(--danger); }
+.cl__billing-summary-card.paid .amount { color: var(--success); }
+
+.cl__billing-table-wrapper {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.cl__billing-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cl__billing-table th {
+    text-align: left;
+    padding: 16px 24px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.cl__billing-table td {
+    padding: 20px 24px;
+    font-size: 14px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.cl__billing-table tbody tr {
+    transition: background 0.2s;
+}
+
+.cl__billing-table tbody tr:hover {
+    background: var(--bg-secondary);
+}
+
+.cl__billing-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.cl__billing-amount {
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.cl__billing-amount.pending { color: var(--danger); }
+.cl__billing-amount.success { color: var(--success); }
+
+.cl__billing-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    max-width: 200px;
+}
+
+.cl__billing-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+}
+
+.cl__billing-progress-fill.paid { background: var(--success); }
+.cl__billing-progress-fill.unpaid { background: var(--danger); }
+
+.cl__billing-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.cl__billing-actions {
+    display: flex;
+    gap: 8px;
+}
+
+[data-theme="dark"] .cl__billing-summary-card,
+[data-theme="dark"] .cl__billing-table-wrapper {
+    background: rgba(255,255,255,0.02);
+    border-color: rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .cl__billing-table th {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .cl__billing-table td {
+    border-color: rgba(255,255,255,0.04);
+}
+
+[data-theme="dark"] .cl__billing-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
 
 /* ═══════════════════════════════════════════
    RESPONSIVE

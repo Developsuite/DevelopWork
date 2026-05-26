@@ -173,7 +173,100 @@ const Clients = () => {
         { id: 'billing', label: 'Outstanding', icon: DollarSign },
     ];
 
-    const totalRevenue = clients.reduce((sum, c) => sum + c.projects.reduce((s, p) => s + p.amount, 0), 0);
+    const renderBilling = () => {
+        const totalRevenue = clients.reduce((sum, c) => sum + c.projects.reduce((s, p) => s + (p.amount || 0), 0), 0);
+        const totalPaid = clients.filter(c => c.payment === 'Paid').reduce((sum, c) => sum + c.projects.reduce((s, p) => s + (p.amount || 0), 0), 0);
+        const totalOutstanding = clients.filter(c => c.payment !== 'Paid').reduce((sum, c) => sum + c.projects.reduce((s, p) => s + (p.amount || 0), 0), 0);
+
+        return (
+            <div className="cl__billing-overview">
+                <div className="cl__billing-summary-grid">
+                    <div className="cl__billing-summary-card">
+                        <h4>Total Revenue</h4>
+                        <div className="amount">${totalRevenue.toLocaleString()}</div>
+                    </div>
+                    <div className="cl__billing-summary-card paid">
+                        <h4>Total Paid</h4>
+                        <div className="amount">${totalPaid.toLocaleString()}</div>
+                    </div>
+                    <div className="cl__billing-summary-card outstanding">
+                        <h4>Outstanding Balance</h4>
+                        <div className="amount">${totalOutstanding.toLocaleString()}</div>
+                    </div>
+                </div>
+
+                <div className="cl__billing-table-wrapper">
+                    <table className="cl__billing-table">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Total Budget</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredClients.length === 0 && <tr><td colSpan={5} style={{textAlign:'center', padding:'40px'}}>No billing records found.</td></tr>}
+                            {filteredClients.map(client => {
+                                const clientTotal = client.projects.reduce((s, p) => s + (p.amount || 0), 0);
+                                if (clientTotal === 0 && client.payment === 'Unpaid') return null;
+                                
+                                let paidPct = 0;
+                                if (client.payment === 'Paid') paidPct = 100;
+                                else if (client.payment === 'Partial') paidPct = 50;
+
+                                return (
+                                    <tr key={client.id}>
+                                        <td>
+                                            <div className="cl__table-user">
+                                                <Avatar name={client.name} size="sm" />
+                                                <div>
+                                                    <span className="cl__table-name">{client.name}</span>
+                                                    <span className="cl__table-email">{client.company}</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className={`cl__billing-amount ${client.payment === 'Paid' ? 'success' : 'pending'}`}>
+                                                ${clientTotal.toLocaleString()}
+                                            </div>
+                                        </td>
+                                        <td>{renderTag(client.payment)}</td>
+                                        <td>
+                                            <div className="cl__billing-progress">
+                                                <div className="cl__billing-progress-bar">
+                                                    <div className="cl__billing-progress-fill paid" style={{width: `${paidPct}%`}}></div>
+                                                    <div className="cl__billing-progress-fill unpaid" style={{width: `${100 - paidPct}%`}}></div>
+                                                </div>
+                                                <div className="cl__billing-progress-labels">
+                                                    <span>{paidPct}% Paid</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="cl__billing-actions">
+                                                <Button variant="ghost" size="sm" onClick={() => {
+                                                    setEditMode(true);
+                                                    setSelectedClient(client);
+                                                    setFormData({
+                                                        name: client.name, company: client.company, email: client.email,
+                                                        phone: client.phone, address: client.address, status: client.status,
+                                                        payment: client.payment_status, notes: client.notes || ''
+                                                    });
+                                                    setIsAddModalOpen(true);
+                                                }}>Update Payment</Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="cl">
@@ -267,7 +360,7 @@ const Clients = () => {
 
             {/* Content */}
             <div className="cl__content">
-                {activeTab !== 'projects' ? (
+                {activeTab === 'billing' ? renderBilling() : activeTab === 'all' ? (
                     <>
                         {filteredClients.length === 0 && (
                             <div className="cl__empty">
