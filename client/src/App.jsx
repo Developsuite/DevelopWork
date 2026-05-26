@@ -39,72 +39,64 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Restore session and listen for auth state changes
+  // Restore Supabase session on app load and listen for auth state changes
   useEffect(() => {
     let isMounted = true;
-    let lastToken = null; // Used to deduplicate events
+    let subscription = null;
 
-    // 1. Explicitly restore session to guarantee we don't get stuck loading
-    dispatch(restoreSession());
+    // 1. Explicitly restore session first to avoid Strict Mode missed events
+    dispatch(restoreSession()).finally(() => {
+      if (!isMounted) return; // Safely prevent memory leaks if component unmounted
 
-    // 2. Synchronously attach listener for future events (avoids memory leaks)
-    const { data } = authService.onAuthStateChange(async (event, session) => {
-      console.log('[Auth] State change event:', event);
-      if (!isMounted) return;
-      if (event === 'INITIAL_SESSION') return; // Handled by restoreSession
+      // 2. Attach listener ONLY after initial session is restored to avoid Supabase deadlock
+      const { data } = authService.onAuthStateChange(async (event, session) => {
+        console.log('[Auth] State change event:', event);
+        
+        // Skip INITIAL_SESSION since restoreSession already handles the initial load
+        if (event === 'INITIAL_SESSION') return;
 
-      // Deduplicate continuous SIGNED_IN events to prevent infinite network requests
-      const currentToken = session?.access_token;
-      if (event === 'SIGNED_IN') {
-        if (currentToken === lastToken) {
-          console.log('[Auth] Ignored duplicate SIGNED_IN event');
-          return;
-        }
-        lastToken = currentToken;
-      }
-
-      if (session) {
-        try {
-          const profile = await authService.getProfile(session.user.id);
-          if (isMounted) {
-            dispatch(setUser({
-              id: profile.id,
-              _id: profile.id,
-              name: profile.name,
-              email: profile.email,
-              role: profile.role,
-              assignedModule: profile.assigned_module,
-              department: profile.department,
-              avatar: profile.avatar_url,
-              phone: profile.phone,
-              location: profile.location,
-              jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
-              bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
-            }));
+        if (session) {
+          try {
+            const profile = await authService.getProfile(session.user.id);
+            if (isMounted) {
+              dispatch(setUser({
+                id: profile.id,
+                _id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                role: profile.role,
+                assignedModule: profile.assigned_module,
+                department: profile.department,
+                avatar: profile.avatar_url,
+                phone: profile.phone,
+                location: profile.location,
+                jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
+                bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
+              }));
+            }
+          } catch (err) {
+            console.error('[Auth] Failed to load profile for session user:', err);
+            if (isMounted) {
+              dispatch(setUser({
+                id: session.user.id,
+                _id: session.user.id,
+                name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                email: session.user.email,
+                role: 'employee',
+              }));
+            }
           }
-        } catch (err) {
-          console.error('[Auth] Failed to load profile for session user:', err);
-          if (isMounted) {
-            dispatch(setUser({
-              id: session.user.id,
-              _id: session.user.id,
-              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-              email: session.user.email,
-              role: 'employee',
-            }));
-          }
+        } else {
+          if (isMounted) dispatch(setUser(null));
         }
-      } else {
-        if (isMounted) {
-          dispatch(setUser(null));
-        }
-      }
+      });
+      subscription = data.subscription;
     });
 
     return () => {
       isMounted = false;
-      if (data && data.subscription) {
-        data.subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
       }
     };
   }, [dispatch]);
