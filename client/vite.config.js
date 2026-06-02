@@ -9,8 +9,7 @@ export default defineConfig({
       usePolling: true,
     },
     hmr: {
-      overlay: false,
-      timeout: 120000,
+      overlay: false
     }
   }
 })
