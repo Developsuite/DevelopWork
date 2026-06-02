@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { restoreSession, setUser } from './store/slices/authSlice';
 import { authService } from './services/authService';
+import { supabase } from './lib/supabase';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
 import EmployeeLayout from './components/layout/EmployeeLayout/EmployeeLayout';
@@ -33,11 +34,79 @@ function App() {
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.ui.theme);
   const { user, isAuthenticated, isLoading } = useSelector((state) => state.auth);
+  const lastVisibleTime = useRef(Date.now());
 
   // Apply theme attribute to <html> element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Keep Supabase session alive across tab switches and idle periods.
+  // Browsers throttle timers in background tabs, which can prevent
+  // Supabase's internal autoRefreshToken from firing. This effect:
+  //   1. Refreshes the session when the tab becomes visible again
+  //   2. Refreshes the session when the window regains focus
+  //   3. Runs a keepalive every 4 minutes as a safety net
+  useEffect(() => {
+    const refreshSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.warn('[Auth] Session refresh failed:', error.message);
+          return;
+        }
+        if (data?.session) {
+          // Force a token refresh to ensure we have a fresh access token
+          const { error: refreshError } = await supabase.auth.refreshSession();
+          if (refreshError) {
+            console.warn('[Auth] Token refresh failed:', refreshError.message);
+          } else {
+            console.log('[Auth] Session refreshed successfully');
+          }
+        }
+      } catch (err) {
+        console.warn('[Auth] Session refresh error:', err);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const elapsed = Date.now() - lastVisibleTime.current;
+        // Refresh if the tab was hidden for more than 30 seconds
+        if (elapsed > 30_000) {
+          console.log(`[Auth] Tab refocused after ${Math.round(elapsed / 1000)}s — refreshing session`);
+          refreshSession();
+        }
+      } else {
+        lastVisibleTime.current = Date.now();
+      }
+    };
+
+    const handleWindowFocus = () => {
+      const elapsed = Date.now() - lastVisibleTime.current;
+      if (elapsed > 30_000) {
+        console.log('[Auth] Window refocused — refreshing session');
+        refreshSession();
+      }
+    };
+
+    // Keepalive: refresh every 4 minutes to prevent stale connections
+    const keepaliveInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Auth] Keepalive — refreshing session');
+        refreshSession();
+      }
+    }, 4 * 60 * 1000);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+      clearInterval(keepaliveInterval);
+    };
+  }, []);
 
   // Restore Supabase session on app load and listen for auth state changes
   useEffect(() => {
