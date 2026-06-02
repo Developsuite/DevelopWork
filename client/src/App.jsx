@@ -124,6 +124,15 @@ function App() {
         // Skip INITIAL_SESSION since restoreSession already handles the initial load
         if (event === 'INITIAL_SESSION') return;
 
+        // ONLY clear user on an explicit sign-out. Transient null sessions
+        // (caused by browser timer throttling during idle/background tabs
+        // preventing Supabase's internal token refresh) must NOT kick the
+        // user out — that was causing the "everything breaks after 1 min" bug.
+        if (event === 'SIGNED_OUT') {
+          if (isMounted) dispatch(setUser(null));
+          return;
+        }
+
         if (session) {
           try {
             const profile = await authService.getProfile(session.user.id);
@@ -155,9 +164,9 @@ function App() {
               }));
             }
           }
-        } else {
-          if (isMounted) dispatch(setUser(null));
         }
+        // If session is null but event is NOT SIGNED_OUT, ignore it.
+        // This is a transient state (e.g. token refresh in progress).
       });
       subscription = data.subscription;
     });
