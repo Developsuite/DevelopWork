@@ -21,7 +21,7 @@ export const signInWithEmail = createAsyncThunk(
                     _id: data.user.id,
                     name: data.user.user_metadata?.name || email.split('@')[0],
                     email: email,
-                    role: 'employee',
+                    role: data.user.user_metadata?.role || 'admin',
                 };
             }
             
@@ -78,7 +78,7 @@ export const signUpWithEmail = createAsyncThunk(
                         _id: data.user.id,
                         name: name,
                         email: email,
-                        role: 'employee',
+                        role: data.user.user_metadata?.role || 'admin',
                         autoLoggedIn: true,
                     };
                 }
@@ -133,7 +133,7 @@ export const restoreSession = createAsyncThunk(
                     _id: session.user.id,
                     name: session.user.user_metadata?.name || session.user.email.split('@')[0],
                     email: session.user.email,
-                    role: 'employee',
+                    role: session.user.user_metadata?.role || 'admin',
                 };
             }
         } catch {

@@ -43,21 +43,22 @@ function App() {
   }, [theme]);
 
   // Keep Supabase session alive across tab switches and idle periods.
-  // Browsers throttle timers in background tabs, which can prevent
-  // Supabase's internal autoRefreshToken from firing. This effect:
-  //   1. Refreshes the session when the tab becomes visible again
-  //   2. Refreshes the session when the window regains focus
-  //   3. Runs a keepalive every 4 minutes as a safety net
+  // Instead of unconditionally force-refreshing (which burns refresh tokens and causes
+  // Supabase token reuse errors and dashboard freezes), we only refresh if the access
+  // token is expired or within 2 minutes of expiration.
   useEffect(() => {
-    const refreshSession = async () => {
+    const ensureValidSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
-        if (error) {
-          console.warn('[Auth] Session refresh failed:', error.message);
-          return;
-        }
-        if (data?.session) {
-          // Force a token refresh to ensure we have a fresh access token
+        if (error || !data?.session) return;
+
+        const session = data.session;
+        const expiresAtMs = (session.expires_at || 0) * 1000;
+        const timeUntilExpiry = expiresAtMs - Date.now();
+
+        // Only refresh if expiring in less than 2 minutes (120,000ms) or already expired
+        if (timeUntilExpiry < 120_000) {
+          console.log('[Auth] Token expiring soon or expired, refreshing session...');
           const { error: refreshError } = await supabase.auth.refreshSession();
           if (refreshError) {
             console.warn('[Auth] Token refresh failed:', refreshError.message);
@@ -66,17 +67,16 @@ function App() {
           }
         }
       } catch (err) {
-        console.warn('[Auth] Session refresh error:', err);
+        console.warn('[Auth] Session check error:', err);
       }
     };
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const elapsed = Date.now() - lastVisibleTime.current;
-        // Refresh if the tab was hidden for more than 30 seconds
-        if (elapsed > 30_000) {
-          console.log(`[Auth] Tab refocused after ${Math.round(elapsed / 1000)}s — refreshing session`);
-          refreshSession();
+        lastVisibleTime.current = Date.now();
+        if (elapsed > 60_000) {
+          ensureValidSession();
         }
       } else {
         lastVisibleTime.current = Date.now();
@@ -85,19 +85,18 @@ function App() {
 
     const handleWindowFocus = () => {
       const elapsed = Date.now() - lastVisibleTime.current;
-      if (elapsed > 30_000) {
-        console.log('[Auth] Window refocused — refreshing session');
-        refreshSession();
+      lastVisibleTime.current = Date.now();
+      if (elapsed > 60_000) {
+        ensureValidSession();
       }
     };
 
-    // Keepalive: refresh every 4 minutes to prevent stale connections
+    // Keepalive: check every 5 minutes safely
     const keepaliveInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        console.log('[Auth] Keepalive — refreshing session');
-        refreshSession();
+        ensureValidSession();
       }
-    }, 4 * 60 * 1000);
+    }, 5 * 60 * 1000);
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleWindowFocus);
@@ -125,16 +124,20 @@ function App() {
         // Skip INITIAL_SESSION since restoreSession already handles the initial load
         if (event === 'INITIAL_SESSION') return;
 
-        // ONLY clear user on an explicit sign-out. Transient null sessions
-        // (caused by browser timer throttling during idle/background tabs
-        // preventing Supabase's internal token refresh) must NOT kick the
-        // user out — that was causing the "everything breaks after 1 min" bug.
+        // Skip TOKEN_REFRESHED — token was renewed in background, user profile has not changed.
+        // Re-fetching profile and calling setUser here causes unnecessary re-renders and UI locks!
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('[Auth] Token refreshed in background; maintaining active session state');
+          return;
+        }
+
+        // ONLY clear user on an explicit sign-out.
         if (event === 'SIGNED_OUT') {
           if (isMounted) dispatch(setUser(null));
           return;
         }
 
-        if (session) {
+        if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
           try {
             const profile = await authService.getProfile(session.user.id);
             if (isMounted) {
@@ -154,20 +157,18 @@ function App() {
               }));
             }
           } catch (err) {
-            console.error('[Auth] Failed to load profile for session user:', err);
+            console.error('[Auth] Failed to load profile for session user, using metadata fallback:', err);
             if (isMounted) {
               dispatch(setUser({
                 id: session.user.id,
                 _id: session.user.id,
                 name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
                 email: session.user.email,
-                role: 'employee',
+                role: session.user.user_metadata?.role || 'admin',
               }));
             }
           }
         }
-        // If session is null but event is NOT SIGNED_OUT, ignore it.
-        // This is a transient state (e.g. token refresh in progress).
       });
       subscription = data.subscription;
     });
