@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { subscribeToAuthStateChanges } from '../lib/authStateSubscription';
 
 // ========================
 // AUTH SERVICE
@@ -99,8 +100,8 @@ export const authService = {
         return data;
     },
 
-    // Listen for auth state changes
+    // Listen for auth state changes (deferred execution to prevent lock deadlocks)
     onAuthStateChange(callback) {
-        return supabase.auth.onAuthStateChange(callback);
+        return subscribeToAuthStateChanges(supabase.auth, callback);
     },
 };

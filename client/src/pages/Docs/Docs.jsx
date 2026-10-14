@@ -1401,7 +1401,7 @@ const Docs = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSaveDoc} disabled={!formData.title}>Create Document</Button>
+                        <Button variant="primary" onClick={handleSaveDoc}>Create Document</Button>
                     </>
                 }
             >
@@ -1437,7 +1437,7 @@ const Docs = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setIsFolderModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleCreateFolder} disabled={!newFolderName.trim()}>Create Folder</Button>
+                        <Button variant="primary" onClick={handleCreateFolder}>Create Folder</Button>
                     </>
                 }
             >

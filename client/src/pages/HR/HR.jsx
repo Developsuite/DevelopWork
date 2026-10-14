@@ -242,8 +242,8 @@ const HR = () => {
             dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
             return;
         }
-        if (!isPositiveNumber(formData.salary)) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Salary must be a positive number.', type: 'warning' }));
+        if (formData.salary && parseInt(formData.salary) < 0) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Salary cannot be negative.', type: 'warning' }));
             return;
         }
         try {
@@ -1035,7 +1035,7 @@ const HR = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSaveEmployee} disabled={!formData.name}>
+                        <Button variant="primary" onClick={handleSaveEmployee}>
                             {editId ? "Update Employee" : "Add Employee"}
                         </Button>
                     </>

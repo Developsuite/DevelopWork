@@ -1004,7 +1004,7 @@ const Finance = () => {
                 footer={
                     <>
                         <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                        <Button variant="primary" onClick={handleSaveTransaction} disabled={!formData.description}>Add Transaction</Button>
+                        <Button variant="primary" onClick={handleSaveTransaction}>Add Transaction</Button>
                     </>
                 }
             >

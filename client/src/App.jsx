@@ -112,12 +112,13 @@ function App() {
   useEffect(() => {
     let isMounted = true;
     let subscription = null;
+    let authRevision = 0;
 
     // 1. Explicitly restore session first to avoid Strict Mode missed events
     dispatch(restoreSession()).finally(() => {
       if (!isMounted) return; // Safely prevent memory leaks if component unmounted
 
-      // 2. Attach listener ONLY after initial session is restored to avoid Supabase deadlock
+      // authService defers this handler until Supabase releases its session lock.
       const { data } = authService.onAuthStateChange(async (event, session) => {
         console.log('[Auth] State change event:', event);
         
@@ -133,14 +134,16 @@ function App() {
 
         // ONLY clear user on an explicit sign-out.
         if (event === 'SIGNED_OUT') {
+          authRevision += 1;
           if (isMounted) dispatch(setUser(null));
           return;
         }
 
         if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+          const revision = ++authRevision;
           try {
             const profile = await authService.getProfile(session.user.id);
-            if (isMounted) {
+            if (isMounted && revision === authRevision) {
               dispatch(setUser({
                 id: profile.id,
                 _id: profile.id,
@@ -158,7 +161,7 @@ function App() {
             }
           } catch (err) {
             console.error('[Auth] Failed to load profile for session user, using metadata fallback:', err);
-            if (isMounted) {
+            if (isMounted && revision === authRevision) {
               dispatch(setUser({
                 id: session.user.id,
                 _id: session.user.id,
@@ -175,6 +178,7 @@ function App() {
 
     return () => {
       isMounted = false;
+      authRevision += 1;
       if (subscription) {
         subscription.unsubscribe();
       }
