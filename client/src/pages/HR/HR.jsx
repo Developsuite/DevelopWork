@@ -127,28 +127,34 @@ const HR = () => {
 
     const [draggedEmpId, setDraggedEmpId] = useState(null);
 
-    const isDescendant = (parentName, childName) => {
+    const isDescendant = (parentName, childName, visited = new Set()) => {
+        if (!parentName || !childName) return false;
+        const p = parentName.toLowerCase().trim();
+        const c = childName.toLowerCase().trim();
+        if (p === c) return true;
+        if (visited.has(p)) return false;
+        visited.add(p);
+
         const directSubordinates = employees.filter(emp => {
-            const m = emp.manager ? emp.manager.toLowerCase() : '';
-            const p = parentName ? parentName.toLowerCase() : '';
-            // Check if manager field matches parent name or if it matches a role of a parent
-            return m === p || employees.some(e => e.name.toLowerCase() === p && e.role.toLowerCase() === m);
+            if (!emp.name || emp.name.toLowerCase().trim() === p) return false;
+            const m = emp.manager ? emp.manager.toLowerCase().trim() : '';
+            return m === p || employees.some(e => e.name.toLowerCase().trim() === p && e.role && e.role.toLowerCase().trim() === m);
         });
-        if (directSubordinates.some(emp => emp.name === childName)) return true;
-        return directSubordinates.some(emp => isDescendant(emp.name, childName));
+        if (directSubordinates.some(emp => emp.name && emp.name.toLowerCase().trim() === c)) return true;
+        return directSubordinates.some(emp => isDescendant(emp.name, childName, visited));
     };
 
     const handleDragStart = (e, empId) => {
         e.stopPropagation();
         setDraggedEmpId(empId);
-        e.dataTransfer.setData('empId', empId);
+        e.dataTransfer.setData('empId', String(empId));
     };
 
     const handleDrop = async (e, targetManagerName) => {
         e.preventDefault();
         e.stopPropagation();
-        const empId = parseInt(e.dataTransfer.getData('empId'));
-        const sourceEmp = employees.find(emp => emp.id === empId);
+        const rawEmpId = e.dataTransfer.getData('empId');
+        const sourceEmp = employees.find(emp => String(emp.id) === String(rawEmpId));
         
         if (!sourceEmp || sourceEmp.name === targetManagerName) return;
         
@@ -160,12 +166,12 @@ const HR = () => {
 
         // Optimistic UI update
         setEmployees(prev => prev.map(emp => 
-            emp.id === empId ? { ...emp, manager: targetManagerName } : emp
+            String(emp.id) === String(sourceEmp.id) ? { ...emp, manager: targetManagerName } : emp
         ));
 
         // Persist to backend
         try {
-            await hrService.updateEmployee(empId, { manager: targetManagerName });
+            await hrService.updateEmployee(sourceEmp.id, { manager: targetManagerName });
             dispatch(addToast({ 
                 title: 'Hierarchy Updated', 
                 message: `${sourceEmp.name} now reports to ${targetManagerName}`, 
@@ -567,26 +573,58 @@ const HR = () => {
         }
     };
 
+    const isCeoRole = (r) => {
+        const role = (r || '').toLowerCase().trim();
+        return role === 'ceo' || role.startsWith('ceo ') || role.includes('chief executive');
+    };
+
     const managerSuggestions = Array.from(new Set([
         'CEO',
-        ...employees.filter(e => e.is_manager).map(e => e.role)
+        ...employees.filter(e => e.is_manager || isCeoRole(e.role)).map(e => e.role),
+        ...employees.map(e => e.name)
     ].filter(Boolean)));
 
-    const renderOrgNode = (parentName, parentRole) => {
+    const renderOrgNode = (parentName, parentRole, parentId = '__root__', visited = new Set()) => {
+        const hasCeo = employees.some(e => isCeoRole(e.role));
+
         const subordinates = employees.filter(emp => {
-            const m = emp.manager ? emp.manager.toLowerCase() : '';
-            const pName = parentName ? parentName.toLowerCase() : '';
-            const pRole = parentRole ? parentRole.toLowerCase() : '';
-            
-            // Match if manager string equals parent's name OR parent's role
+            // Prevent cycles and multiple rendering
+            if (visited.has(emp.id)) return false;
+
+            // Never self-report
+            if (emp.id === parentId) return false;
+            if (parentName && emp.name && emp.name.toLowerCase().trim() === parentName.toLowerCase().trim()) return false;
+
+            const m = (emp.manager || '').toLowerCase().trim();
+            const pName = (parentName || '').toLowerCase().trim();
+            const pRole = (parentRole || '').toLowerCase().trim();
+
+            // 1. Root level (under CEO Office)
+            if (parentId === '__root__' || pName === 'ceo office' || (pName === 'ceo' && parentId === '__root__')) {
+                if (hasCeo) {
+                    return isCeoRole(emp.role);
+                } else {
+                    return !m || m === 'ceo' || m === 'ceo office' || m === 'none';
+                }
+            }
+
+            // 2. Under a CEO employee
+            if (isCeoRole(parentRole)) {
+                if (pName && m === pName) return true;
+                if (m === 'ceo' || m === 'ceo office' || m === 'none' || !m) return true;
+                if (pRole && m === pRole) return true;
+                const managerExists = employees.some(e => 
+                    e.name.toLowerCase().trim() === m || 
+                    (e.role && e.role.toLowerCase().trim() === m)
+                );
+                if (!managerExists) return true;
+                return false;
+            }
+
+            // 3. Standard hierarchy match
             if (pName && m === pName) return true;
             if (pRole && m === pRole) return true;
-            
-            // Special case for root CEO
-            if (pName === 'ceo' || pRole === 'ceo') {
-                return employees.some(e => e.name.toLowerCase() === m && e.role.toLowerCase() === 'ceo');
-            }
-            
+
             return false;
         });
 
@@ -594,25 +632,30 @@ const HR = () => {
 
         return (
             <div className="hr-org-children">
-                {subordinates.map(emp => (
-                    <div key={emp.id} className="hr-org-node">
-                        <div 
-                            className={`hr-org-card ${draggedEmpId === emp.id ? 'dragging' : ''}`}
-                            onClick={() => handleViewEmployee(emp)}
-                            draggable="true"
-                            onDragStart={(e) => handleDragStart(e, emp.id)}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, emp.name)}
-                        >
-                            <img src={getEmployeeVector(emp)} alt="" className="hr-org-card__icon" />
-                            <div className="hr-org-card__content">
-                                <div className="hr-org-card__name">{emp.name}</div>
-                                <div className="hr-org-card__role">{emp.role}</div>
+                {subordinates.map(emp => {
+                    const nextVisited = new Set(visited);
+                    nextVisited.add(emp.id);
+
+                    return (
+                        <div key={emp.id} className="hr-org-node">
+                            <div 
+                                className={`hr-org-card ${draggedEmpId === emp.id ? 'dragging' : ''}`}
+                                onClick={() => handleViewEmployee(emp)}
+                                draggable="true"
+                                onDragStart={(e) => handleDragStart(e, emp.id)}
+                                onDragOver={handleDragOver}
+                                onDrop={(e) => handleDrop(e, emp.name)}
+                            >
+                                <img src={getEmployeeVector(emp)} alt="" className="hr-org-card__icon" />
+                                <div className="hr-org-card__content">
+                                    <div className="hr-org-card__name">{emp.name}</div>
+                                    <div className="hr-org-card__role">{emp.role}</div>
+                                </div>
                             </div>
+                            {renderOrgNode(emp.name, emp.role, emp.id, nextVisited)}
                         </div>
-                        {renderOrgNode(emp.name, emp.role)}
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         );
     };
@@ -767,7 +810,7 @@ const HR = () => {
                                         <div className="hr-org-card__role">Management</div>
                                     </div>
                                 </div>
-                                {renderOrgNode('CEO', 'CEO')}
+                                {renderOrgNode('CEO Office', 'Management', '__root__')}
                             </div>
                         </div>
                     </div>
