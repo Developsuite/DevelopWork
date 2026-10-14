@@ -90,6 +90,7 @@ const ModuleHub = () => {
     const [copied, setCopied] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteName, setInviteName] = useState('');
     const [invitePassword, setInvitePassword] = useState('Manager@123');
@@ -98,11 +99,20 @@ const ModuleHub = () => {
     const [selectedManager, setSelectedManager] = useState('');
     const [showManagerDropdown, setShowManagerDropdown] = useState(false);
 
-    const filteredModules = DEPARTMENT_MODULES.filter(
-        (mod) =>
+    const filteredModules = DEPARTMENT_MODULES.filter((mod) => {
+        const matchesQuery =
             mod.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            mod.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+            mod.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const isActive = activeModules.includes(mod.key);
+
+        if (statusFilter === 'active') {
+            return matchesQuery && isActive;
+        }
+        if (statusFilter === 'inactive') {
+            return matchesQuery && !isActive;
+        }
+        return matchesQuery;
+    });
 
     const getModuleAccess = (moduleKey) => {
         return accessList.filter((a) => a.moduleKey === moduleKey);
@@ -278,17 +288,50 @@ const ModuleHub = () => {
             <div className="module-hub__controls-bar">
                 <div className="module-hub__search-group">
                     <div className="module-hub__search">
-                        <Search size={16} />
+                        <Search size={16} className="module-hub__search-icon" />
                         <input
                             type="text"
+                            className="module-hub__search-input"
                             placeholder="Search modules..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') setSearchQuery('');
+                            }}
                         />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="module-hub__search-clear"
+                                onClick={() => setSearchQuery('')}
+                                title="Clear search"
+                                aria-label="Clear search"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
                     </div>
-                    <select className="module-hub__filter">
-                        <option>All Modules</option>
+                    <select
+                        className="module-hub__filter"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">All Modules ({DEPARTMENT_MODULES.length})</option>
+                        <option value="active">Active ({activeModules.length})</option>
+                        <option value="inactive">Disabled ({DEPARTMENT_MODULES.length - activeModules.length})</option>
                     </select>
+                    {(searchQuery || statusFilter !== 'all') && (
+                        <button
+                            type="button"
+                            className="module-hub__reset-filters"
+                            onClick={() => {
+                                setSearchQuery('');
+                                setStatusFilter('all');
+                            }}
+                        >
+                            Reset
+                        </button>
+                    )}
                 </div>
                 <div className="module-hub__hero-actions">
                     <Button
@@ -302,98 +345,121 @@ const ModuleHub = () => {
             </div>
 
             {/* Module Cards Grid */}
-            <div className="module-hub__grid">
-                {filteredModules.map((mod, index) => {
-                    const Icon = iconMap[mod.icon] || FileText;
-                    const isActive = activeModules.includes(mod.key);
-                    const moduleAccess = realManagers.filter(m => m.assigned_module === mod.key);
-                    const moduleInvites = [];
+            {filteredModules.length > 0 ? (
+                <div className="module-hub__grid">
+                    {filteredModules.map((mod, index) => {
+                        const Icon = iconMap[mod.icon] || FileText;
+                        const isActive = activeModules.includes(mod.key);
+                        const moduleAccess = realManagers.filter(m => m.assigned_module === mod.key);
+                        const moduleInvites = [];
 
-                    return (
-                        <div
-                            key={mod.key}
-                            className={`module-hub__card ${isActive ? 'active' : 'inactive'}`}
-                            onClick={() => handleModuleClick(mod)}
-                            style={{
-                                animationDelay: `${index * 0.08}s`,
-                            }}
-                        >
-                            {/* Card Banner */}
-                            <div className="module-hub__card-banner">
-                                <img src={mod.image} alt={mod.label} style={{ filter: isActive ? 'none' : 'grayscale(100%) opacity(0.5)' }} />
-                                <button 
-                                    className="module-hub__toggle-btn"
-                                    onClick={(e) => handleToggleModule(e, mod.key)}
-                                    title={isActive ? "Disable Module" : "Enable Module"}
-                                    style={{
-                                        position: 'absolute',
-                                        top: '12px',
-                                        right: '12px',
-                                        background: 'rgba(0,0,0,0.4)',
-                                        border: 'none',
-                                        borderRadius: '20px',
-                                        padding: '4px',
-                                        display: 'flex',
-                                        cursor: 'pointer',
-                                        backdropFilter: 'blur(4px)',
-                                        transition: 'all 0.2s ease',
-                                    }}
-                                >
-                                    {isActive ? <ToggleRight size={24} color="#00C875" /> : <ToggleLeft size={24} color="#fff" />}
-                                </button>
-                            </div>
-
-                            <div className="module-hub__card-content">
-                                {/* Card Body */}
-                                <div className="module-hub__card-body">
-                                    <h3 className="module-hub__card-title">{mod.label}</h3>
-                                    <p className="module-hub__card-desc">{mod.description}</p>
-                                </div>
-
-                                {/* Card Footer */}
-                                <div className="module-hub__card-footer">
-                                    <div className="module-hub__card-managers">
-                                        {moduleAccess.length > 0 ? (
-                                            <>
-                                                <div className="module-hub__avatar-stack">
-                                                    {moduleAccess.slice(0, 3).map((access) => (
-                                                        <Avatar
-                                                            key={access.id}
-                                                            name={access.name}
-                                                            size="xs"
-                                                        />
-                                                    ))}
-                                                </div>
-                                                <span className="module-hub__manager-count">
-                                                    {moduleAccess.length} manager{moduleAccess.length !== 1 ? 's' : ''}
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className="module-hub__no-manager">No managers assigned</span>
-                                        )}
-                                        {moduleInvites.length > 0 && (
-                                            <Badge variant="status" color="var(--warning)">
-                                                {moduleInvites.length} pending
-                                            </Badge>
-                                        )}
-                                    </div>
+                        return (
+                            <div
+                                key={mod.key}
+                                className={`module-hub__card ${isActive ? 'active' : 'inactive'}`}
+                                onClick={() => handleModuleClick(mod)}
+                                style={{
+                                    animationDelay: `${index * 0.08}s`,
+                                }}
+                            >
+                                {/* Card Banner */}
+                                <div className="module-hub__card-banner">
+                                    <img src={mod.image} alt={mod.label} style={{ filter: isActive ? 'none' : 'grayscale(100%) opacity(0.5)' }} />
                                     <button 
-                                        className={`module-hub__open-btn ${!isActive ? 'disabled' : ''}`}
-                                        disabled={!isActive}
-                                        style={{ opacity: isActive ? 1 : 0.5, cursor: isActive ? 'pointer' : 'not-allowed' }}
+                                        className="module-hub__toggle-btn"
+                                        onClick={(e) => handleToggleModule(e, mod.key)}
+                                        title={isActive ? "Disable Module" : "Enable Module"}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '12px',
+                                            right: '12px',
+                                            background: 'rgba(0,0,0,0.4)',
+                                            border: 'none',
+                                            borderRadius: '20px',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            cursor: 'pointer',
+                                            backdropFilter: 'blur(4px)',
+                                            transition: 'all 0.2s ease',
+                                        }}
                                     >
-                                        {isActive ? (
-                                            <>Open <ArrowRight size={14} /></>
-                                        ) : (
-                                            'Disabled'
-                                        )}
+                                        {isActive ? <ToggleRight size={24} color="#00C875" /> : <ToggleLeft size={24} color="#fff" />}
                                     </button>
                                 </div>
+
+                                <div className="module-hub__card-content">
+                                    {/* Card Body */}
+                                    <div className="module-hub__card-body">
+                                        <h3 className="module-hub__card-title">{mod.label}</h3>
+                                        <p className="module-hub__card-desc">{mod.description}</p>
+                                    </div>
+
+                                    {/* Card Footer */}
+                                    <div className="module-hub__card-footer">
+                                        <div className="module-hub__card-managers">
+                                            {moduleAccess.length > 0 ? (
+                                                <>
+                                                    <div className="module-hub__avatar-stack">
+                                                        {moduleAccess.slice(0, 3).map((access) => (
+                                                            <Avatar
+                                                                key={access.id}
+                                                                name={access.name}
+                                                                size="xs"
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                    <span className="module-hub__manager-count">
+                                                        {moduleAccess.length} manager{moduleAccess.length !== 1 ? 's' : ''}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="module-hub__no-manager">No managers assigned</span>
+                                            )}
+                                            {moduleInvites.length > 0 && (
+                                                <Badge variant="status" color="var(--warning)">
+                                                    {moduleInvites.length} pending
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <button 
+                                            className={`module-hub__open-btn ${!isActive ? 'disabled' : ''}`}
+                                            disabled={!isActive}
+                                            style={{ opacity: isActive ? 1 : 0.5, cursor: isActive ? 'pointer' : 'not-allowed' }}
+                                        >
+                                            {isActive ? (
+                                                <>Open <ArrowRight size={14} /></>
+                                            ) : (
+                                                'Disabled'
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    );
-                })}
-            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="module-hub__empty-state-search">
+                    <div className="module-hub__empty-icon-wrap">
+                        <Search size={28} />
+                    </div>
+                    <h3 className="module-hub__empty-title">No modules found</h3>
+                    <p className="module-hub__empty-subtitle">
+                        No modules match &ldquo;{searchQuery}&rdquo;
+                        {statusFilter !== 'all' ? ` in ${statusFilter} modules` : ''}.
+                    </p>
+                    <button
+                        type="button"
+                        className="module-hub__empty-btn"
+                        onClick={() => {
+                            setSearchQuery('');
+                            setStatusFilter('all');
+                        }}
+                    >
+                        Clear search & filters
+                    </button>
+                </div>
+            )}
 
             {/* Access Manager Modal */}
             {accessManagerOpen && selectedModuleInfo && (

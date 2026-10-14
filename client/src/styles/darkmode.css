@@ -212,6 +212,23 @@
     box-shadow: 0 0 0 3px rgba(0, 85, 254, 0.18);
 }
 
+/* Prevent nested search input focus bleed into search bar containers */
+[data-theme="dark"] .module-hub__search input,
+[data-theme="dark"] .module-hub__search input:focus,
+[data-theme="dark"] .module-hub__search-input,
+[data-theme="dark"] .module-hub__search-input:focus,
+[data-theme="dark"] .fin-search input,
+[data-theme="dark"] .fin-search input:focus,
+[data-theme="dark"] .doc-search input,
+[data-theme="dark"] .doc-search input:focus,
+[data-theme="dark"] .topbar__search input,
+[data-theme="dark"] .topbar__search input:focus {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
 /* ============================================
    Navigation & Sidebar Items
    ============================================ */

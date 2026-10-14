@@ -48,6 +48,36 @@ const HR = () => {
     const [editId, setEditId] = useState(null);
     const [deleteConfig, setDeleteConfig] = useState({ id: null, type: '', name: '' });
     const [payrollFormData, setPayrollFormData] = useState({ salary: 0, bonus: 0, deductions: 0, name: '' });
+    const [activeContact, setActiveContact] = useState({});
+
+    const handleContactClick = (e, emp, type) => {
+        e.stopPropagation();
+        const current = activeContact[emp.id];
+        const nextType = current === type ? null : type;
+        setActiveContact(prev => ({ ...prev, [emp.id]: nextType }));
+
+        if (nextType === 'email') {
+            if (emp.email) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(emp.email);
+                }
+                dispatch(addToast({ title: 'Email Address', message: `${emp.email} (copied to clipboard)`, type: 'success' }));
+            } else {
+                dispatch(addToast({ title: 'No Email', message: `No email address registered for ${emp.name}.`, type: 'info' }));
+            }
+        } else if (nextType === 'phone') {
+            if (emp.phone) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(emp.phone);
+                }
+                dispatch(addToast({ title: 'Phone Number', message: `${emp.phone} (copied to clipboard)`, type: 'success' }));
+            } else {
+                dispatch(addToast({ title: 'No Phone', message: `No phone number registered for ${emp.name}.`, type: 'info' }));
+            }
+        } else if (nextType === 'manager') {
+            dispatch(addToast({ title: 'Reports To', message: `${emp.name} reports to ${emp.manager || 'CEO'}`, type: 'info' }));
+        }
+    };
     
     // Org Chart Panning State
     const orgChartRef = useRef(null);
@@ -900,15 +930,71 @@ const HR = () => {
 
                                     {/* Divider + Contact Actions */}
                                     <div className="hr-employee-card__footer">
-                                        <button className="hr-employee-card__action-btn" title={emp.email} onClick={(e) => e.stopPropagation()}>
-                                            <Mail size={14} />
-                                        </button>
-                                        <button className="hr-employee-card__action-btn" title={emp.phone} onClick={(e) => e.stopPropagation()}>
-                                            <Phone size={14} />
-                                        </button>
-                                        <button className="hr-employee-card__action-btn" title={`Manager: ${emp.manager}`} onClick={(e) => e.stopPropagation()}>
-                                            <Users size={14} />
-                                        </button>
+                                        <div className="hr-employee-card__action-row">
+                                            <button 
+                                                type="button"
+                                                className={`hr-employee-card__action-btn ${activeContact[emp.id] === 'email' ? 'active' : ''}`} 
+                                                title={emp.email ? `Email: ${emp.email}` : 'No email provided'} 
+                                                onClick={(e) => handleContactClick(e, emp, 'email')}
+                                            >
+                                                <Mail size={14} />
+                                                <span className="hr-employee-card__tooltip">{emp.email || 'No email'}</span>
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                className={`hr-employee-card__action-btn ${activeContact[emp.id] === 'phone' ? 'active' : ''}`} 
+                                                title={emp.phone ? `Phone: ${emp.phone}` : 'No phone provided'} 
+                                                onClick={(e) => handleContactClick(e, emp, 'phone')}
+                                            >
+                                                <Phone size={14} />
+                                                <span className="hr-employee-card__tooltip">{emp.phone || 'No phone'}</span>
+                                            </button>
+                                            <button 
+                                                type="button"
+                                                className={`hr-employee-card__action-btn ${activeContact[emp.id] === 'manager' ? 'active' : ''}`} 
+                                                title={`Reports to: ${emp.manager || 'CEO'}`} 
+                                                onClick={(e) => handleContactClick(e, emp, 'manager')}
+                                            >
+                                                <Users size={14} />
+                                                <span className="hr-employee-card__tooltip">Manager: {emp.manager || 'CEO'}</span>
+                                            </button>
+                                        </div>
+
+                                        {activeContact[emp.id] && (
+                                            <div 
+                                                className="hr-employee-card__contact-pill" 
+                                                title="Click to copy / contact"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (activeContact[emp.id] === 'email' && emp.email) {
+                                                        window.location.href = `mailto:${emp.email}`;
+                                                    } else if (activeContact[emp.id] === 'phone' && emp.phone) {
+                                                        window.location.href = `tel:${emp.phone}`;
+                                                    } else if (activeContact[emp.id] === 'manager') {
+                                                        handleTabChange('org');
+                                                    }
+                                                }}
+                                            >
+                                                {activeContact[emp.id] === 'email' && (
+                                                    <>
+                                                        <Mail size={12} />
+                                                        <span>{emp.email || 'No email provided'}</span>
+                                                    </>
+                                                )}
+                                                {activeContact[emp.id] === 'phone' && (
+                                                    <>
+                                                        <Phone size={12} />
+                                                        <span>{emp.phone || 'No phone provided'}</span>
+                                                    </>
+                                                )}
+                                                {activeContact[emp.id] === 'manager' && (
+                                                    <>
+                                                        <Users size={12} />
+                                                        <span>Reports to: {emp.manager || 'CEO'}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -922,6 +1008,7 @@ const HR = () => {
                                         <th>Department</th>
                                         <th>Type</th>
                                         <th>Status</th>
+                                        <th>Contact</th>
                                         <th>Location</th>
                                         <th>Manager</th>
                                         <th style={{ width: '80px' }}>Actions</th>
@@ -953,6 +1040,26 @@ const HR = () => {
                                                 <span className="hr-employee-card__dept" style={{ marginBottom: 0, color: statusColors[emp.status], background: `color-mix(in srgb, ${statusColors[emp.status]} 15%, transparent)` }}>
                                                     {emp.status}
                                                 </span>
+                                            </td>
+                                            <td>
+                                                <div style={{ display: 'flex', gap: '6px' }}>
+                                                    <button 
+                                                        type="button" 
+                                                        className="hr-icon-btn" 
+                                                        title={emp.email ? `Email: ${emp.email}` : 'No email'} 
+                                                        onClick={(e) => handleContactClick(e, emp, 'email')}
+                                                    >
+                                                        <Mail size={13} />
+                                                    </button>
+                                                    <button 
+                                                        type="button" 
+                                                        className="hr-icon-btn" 
+                                                        title={emp.phone ? `Phone: ${emp.phone}` : 'No phone'} 
+                                                        onClick={(e) => handleContactClick(e, emp, 'phone')}
+                                                    >
+                                                        <Phone size={13} />
+                                                    </button>
+                                                </div>
                                             </td>
                                             <td>{emp.location}</td>
                                             <td>{emp.manager}</td>
