@@ -438,7 +438,8 @@
 }
 
 [data-theme="dark"] .module-hub__inactive-overlay span {
-    background: rgba(24, 28, 40, 0.8);
+    background: #0E0F14;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ============================================
