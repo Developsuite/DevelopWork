@@ -80,10 +80,166 @@
 .hr-section { padding: 24px; margin-bottom: 24px; }
 .hr-section__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .hr-section__header h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
-.hr-filters { display: flex; gap: 12px; align-items: center; }
-.hr-search { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); }
-.hr-search input { border: none; background: none; font-size: 13px; color: var(--text-primary); outline: none; width: 180px; }
-.hr-section select { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; background: var(--bg-primary); color: var(--text-primary); }
+.hr-filters { 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+    flex-wrap: wrap; 
+}
+
+/* View Toggle (Grid / List) */
+.hr-view-toggle {
+    display: flex;
+    align-items: center;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.hr-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.hr-view-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.hr-view-btn.active {
+    background: var(--primary-500);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0, 85, 254, 0.3);
+}
+
+/* Search Bar */
+.hr-search { 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    padding: 7px 12px; 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px; 
+    background: var(--bg-secondary);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    width: 250px;
+}
+
+.hr-search:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.hr-search:focus-within {
+    border-color: #0055FE;
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 3px rgba(0, 85, 254, 0.18);
+}
+
+.hr-search__icon {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+}
+
+.hr-search:focus-within .hr-search__icon {
+    color: #579BFC;
+}
+
+.hr-search input { 
+    border: none !important; 
+    background: transparent !important; 
+    font-size: 13px; 
+    color: var(--text-primary) !important; 
+    outline: none !important; 
+    box-shadow: none !important;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 1.4;
+    font-family: inherit;
+}
+
+.hr-search input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.85;
+}
+
+.hr-search input:focus,
+.hr-search input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.hr-search__clear {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+}
+
+.hr-search__clear:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+}
+
+/* Department & Month Selectors */
+.hr-dept-select,
+.hr-month-select { 
+    padding: 7px 12px; 
+    border: 1px solid var(--border-color); 
+    border-radius: 8px; 
+    font-size: 13px; 
+    background: var(--bg-secondary); 
+    color: var(--text-primary);
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    height: 36px;
+}
+
+.hr-dept-select:hover,
+.hr-month-select:hover {
+    border-color: rgba(255, 255, 255, 0.16);
+}
+
+.hr-dept-select:focus,
+.hr-month-select:focus {
+    border-color: #0055FE;
+    box-shadow: 0 0 0 3px rgba(0, 85, 254, 0.18);
+}
+
+.hr-dept-select option,
+.hr-month-select option {
+    background: #0E0F14;
+    color: #F1F3F9;
+}
 
 /* Org Chart — Recursive Tree Layout */
 .hr-org-chart { 
@@ -233,6 +389,40 @@
 [data-theme="dark"] .hr-org-children::before,
 [data-theme="dark"] .hr-org-node:not(:only-child)::after {
     background: rgba(255,255,255,0.1);
+}
+
+[data-theme="dark"] .hr-search {
+    background: #0C0D12;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .hr-search:focus-within {
+    background: #0E0F14;
+    border-color: #0055FE;
+    box-shadow: 0 0 0 3px rgba(0, 85, 254, 0.2);
+}
+
+[data-theme="dark"] .hr-view-toggle {
+    background: #0C0D12;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .hr-view-btn.active {
+    background: #0055FE;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .hr-dept-select,
+[data-theme="dark"] .hr-month-select {
+    background: #0C0D12;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #F1F3F9;
+}
+
+[data-theme="dark"] .hr-dept-select:focus,
+[data-theme="dark"] .hr-month-select:focus {
+    border-color: #0055FE;
+    box-shadow: 0 0 0 3px rgba(0, 85, 254, 0.2);
 }
 
 /* Employee Cards */

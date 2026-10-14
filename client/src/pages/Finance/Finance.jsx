@@ -661,7 +661,7 @@ const Finance = () => {
 
     return (
         <div className="finance-dashboard">
-            <div className="page-header" style={{ padding: '24px 40px 16px 40px' }}>
+            <div className="page-header">
                 <div className="page-header__info">
                     <h1>Finance Dashboard</h1>
                     <p>Manage your company finances and expenses securely</p>

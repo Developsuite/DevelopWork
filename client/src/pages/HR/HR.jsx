@@ -13,7 +13,7 @@ import Modal from '../../components/common/Modal/Modal';
 import { addToast } from '../../store/slices/uiSlice';
 import {
     Users, UserPlus, Calendar, Clock, TrendingUp, Award, Briefcase, DollarSign,
-    FileText, Search, MoreVertical, Mail, Phone, MapPin, Star, Check, X, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Download
+    FileText, Search, MoreVertical, Mail, Phone, MapPin, Star, Check, X, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Download, LayoutGrid, List
 } from 'lucide-react';
 import hr1 from '../../assets/hr/1.png';
 import hr2 from '../../assets/hr/2.png';
@@ -737,7 +737,7 @@ const HR = () => {
 
     return (
         <div className="hr-dashboard">
-            <div className="page-header" style={{ padding: '24px 40px 16px 40px' }}>
+            <div className="page-header">
                 <div className="page-header__info">
                     <h1>Human Resources</h1>
                     <p>Manage your workforce, payroll, and performance</p>
@@ -823,22 +823,46 @@ const HR = () => {
                     <div className="hr-section__header">
                         <h2>Employee Directory</h2>
                         <div className="hr-filters">
-                            <Button variant="ghost" size="sm" icon={Download} onClick={handleExportDirectory} style={{ marginRight: '12px' }}>Export CSV</Button>
-                            <div className="view-toggle" style={{ display: 'flex', border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden', marginRight: '12px' }}>
+                            <Button variant="ghost" size="sm" icon={Download} onClick={handleExportDirectory}>Export CSV</Button>
+                            <div className="hr-view-toggle">
                                 <button 
+                                    type="button"
+                                    className={`hr-view-btn ${viewType === 'grid' ? 'active' : ''}`}
                                     onClick={() => setViewType('grid')}
-                                    style={{ padding: '8px 12px', background: viewType === 'grid' ? 'var(--primary-50)' : 'transparent', border: 'none', cursor: 'pointer', color: viewType === 'grid' ? 'var(--primary-600)' : 'var(--text-muted)' }}
+                                    title="Grid View"
                                 >
-                                    Grid
+                                    <LayoutGrid size={14} />
+                                    <span>Grid</span>
                                 </button>
                                 <button 
+                                    type="button"
+                                    className={`hr-view-btn ${viewType === 'list' ? 'active' : ''}`}
                                     onClick={() => setViewType('list')}
-                                    style={{ padding: '8px 12px', background: viewType === 'list' ? 'var(--primary-50)' : 'transparent', border: 'none', borderLeft: '1px solid var(--border-color)', cursor: 'pointer', color: viewType === 'list' ? 'var(--primary-600)' : 'var(--text-muted)' }}
+                                    title="List View"
                                 >
-                                    List
+                                    <List size={14} />
+                                    <span>List</span>
                                 </button>
                             </div>
-                            <div className="hr-search"><Search size={16} /><input type="text" placeholder="Search employees..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+                            <div className="hr-search">
+                                <Search size={15} className="hr-search__icon" />
+                                <input 
+                                    type="text" 
+                                    placeholder="Search employees..." 
+                                    value={searchQuery} 
+                                    onChange={e => setSearchQuery(e.target.value)} 
+                                />
+                                {searchQuery && (
+                                    <button 
+                                        type="button" 
+                                        className="hr-search__clear" 
+                                        onClick={() => setSearchQuery('')}
+                                        title="Clear search"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                )}
+                            </div>
                             <select className="hr-dept-select" value={selectedDepartment} onChange={e => setSelectedDepartment(e.target.value)}>
                                 {departments.map(d => <option key={d} value={d}>{d === 'all' ? 'All Departments' : d}</option>)}
                             </select>
