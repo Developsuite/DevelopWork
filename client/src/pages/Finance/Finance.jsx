@@ -898,8 +898,8 @@ const Finance = () => {
 
             {/* === INVOICES === */}
             {activeTab === 'invoices' && (
-                <div className="fin-section">
-                    <div className="fin-section__header">
+                <div className="fin-invoices-wrap">
+                    <div className="fin-invoices-header">
                         <h2>Invoices</h2>
                         <Button variant="primary" size="sm" icon={Plus} onClick={() => setIsInvoiceBuilderOpen(true)}>Create Invoice</Button>
                     </div>
