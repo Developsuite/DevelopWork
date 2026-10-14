@@ -141,7 +141,13 @@ const ProjectManagement = () => {
         let newProgress = Math.max(0, Math.min(100, Math.round((x / width) * 100)));
         
         draggingProgressRef.current = { id: projectId, rect, progress: newProgress };
-        setProjectList(prev => prev.map(p => p.id === projectId ? { ...p, progress: newProgress } : p));
+        setProjectList(prev => prev.map(p => {
+            if (p.id !== projectId) return p;
+            const updated = { ...p, progress: newProgress };
+            if (newProgress === 100) updated.status = 'Completed';
+            else if (p.status === 'Completed' && newProgress < 100) updated.status = 'In Progress';
+            return updated;
+        }));
     };
 
     const handleGlobalMouseMove = useCallback((e) => {
@@ -153,7 +159,13 @@ const ProjectManagement = () => {
         
         if (draggingProgressRef.current.progress !== newProgress) {
             draggingProgressRef.current.progress = newProgress;
-            setProjectList(prev => prev.map(p => p.id === id ? { ...p, progress: newProgress } : p));
+            setProjectList(prev => prev.map(p => {
+                if (p.id !== id) return p;
+                const updated = { ...p, progress: newProgress };
+                if (newProgress === 100) updated.status = 'Completed';
+                else if (p.status === 'Completed' && newProgress < 100) updated.status = 'In Progress';
+                return updated;
+            }));
         }
     }, []);
 
@@ -163,12 +175,20 @@ const ProjectManagement = () => {
             draggingProgressRef.current = null;
             
             try {
-                await projectService.update(id, { progress });
+                const updates = { progress };
+                const currentProj = projectList.find(p => p.id === id);
+                if (progress === 100) {
+                    updates.status = 'Completed';
+                } else if (currentProj?.status === 'Completed' && progress < 100) {
+                    updates.status = 'In Progress';
+                }
+                await projectService.update(id, updates);
+                setProjectList(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
             } catch (err) {
                 dispatch(addToast({ title: 'Error', message: 'Failed to update progress.', type: 'error' }));
             }
         }
-    }, [dispatch]);
+    }, [dispatch, projectList]);
 
     useEffect(() => {
         window.addEventListener('mousemove', handleGlobalMouseMove);
@@ -181,21 +201,57 @@ const ProjectManagement = () => {
 
     // --- OVERVIEW VIEW ---
     const renderOverview = () => {
-        const activeCount = projectList.filter(p => p.status === 'In Progress').length;
-        const doneTasks = tasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
-        const completionPct = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
+        const totalProjects = projectList.length;
+        const completedProjects = projectList.filter(p => p.status === 'Completed').length;
+        const activeProjects = projectList.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
+        const onHoldProjects = projectList.filter(p => p.status === 'On Hold').length;
         const atRisk = projectList.filter(p => p.due_date && new Date(p.due_date) < new Date() && p.status !== 'Completed').length;
+        
+        const doneTasks = tasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
+
+        // Completion percentage: accurately factor in project progress/completion and task progress
+        const projectAvgProgress = totalProjects > 0
+            ? Math.round(projectList.reduce((acc, p) => acc + (p.status === 'Completed' ? 100 : (p.progress || 0)), 0) / totalProjects)
+            : 0;
+
+        const taskProgress = tasks.length > 0
+            ? Math.round((doneTasks / tasks.length) * 100)
+            : 0;
+
+        const completionPct = tasks.length > 0 && totalProjects > 0
+            ? Math.round((projectAvgProgress + taskProgress) / 2)
+            : (totalProjects > 0 ? projectAvgProgress : (tasks.length > 0 ? taskProgress : 0));
 
         const stats = [
-            { label: 'Active Projects', value: activeCount || projectList.length, img: '/assets/project/new/1.png', change: `${projectList.length} total` },
-            { label: 'Total Tasks', value: tasks.length, img: '/assets/project/new/2.png', change: `${doneTasks} done` },
-            { label: 'Completion', value: `${completionPct}%`, img: '/assets/project/new/3.png', change: `+${completionPct > 0 ? completionPct : 0}%` },
-            { label: 'At Risk', value: atRisk, img: '/assets/project/new/4.png', change: atRisk > 0 ? `-${atRisk}` : '+0' },
+            { 
+                label: 'Active Projects', 
+                value: activeProjects, 
+                img: '/assets/project/new/1.png', 
+                change: completedProjects > 0 ? `${completedProjects} of ${totalProjects} completed` : `${totalProjects} total` 
+            },
+            { 
+                label: 'Total Tasks', 
+                value: tasks.length, 
+                img: '/assets/project/new/2.png', 
+                change: `${doneTasks} done` 
+            },
+            { 
+                label: 'Completion', 
+                value: `${completionPct}%`, 
+                img: '/assets/project/new/3.png', 
+                change: `+${completionPct}%` 
+            },
+            { 
+                label: 'At Risk', 
+                value: atRisk, 
+                img: '/assets/project/new/4.png', 
+                change: atRisk > 0 ? `-${atRisk}` : '+0' 
+            },
         ];
 
         // Build real upcoming deadlines from tasks with deadlines
         const upcomingDeadlines = tasks
-            .filter(t => t.deadline && new Date(t.deadline) >= new Date() && t.status !== 'Done')
+            .filter(t => t.deadline && new Date(t.deadline) >= new Date() && t.status !== 'Done' && t.status !== 'Completed')
             .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
             .slice(0, 5)
             .map(t => {
@@ -204,13 +260,11 @@ const ProjectManagement = () => {
             });
 
         // Compute real health
-        const total = projectList.length || 1;
-        const onTrack = projectList.filter(p => p.status === 'In Progress' || p.status === 'Completed').length;
-        const onHold = projectList.filter(p => p.status === 'On Hold').length;
-        const delayed = atRisk;
-        const onTrackPct = Math.round((onTrack / total) * 100);
-        const atRiskPct = Math.round((onHold / total) * 100);
-        const delayedPct = Math.round((delayed / total) * 100);
+        const total = totalProjects || 1;
+        const completedPct = Math.round((completedProjects / total) * 100);
+        const onTrackPct = Math.round((activeProjects / total) * 100);
+        const onHoldPct = Math.round((onHoldProjects / total) * 100);
+        const delayedPct = Math.round((atRisk / total) * 100);
 
         return (
             <div className="pm__overview">
@@ -220,7 +274,7 @@ const ProjectManagement = () => {
                             <div className="pm__stat-info">
                                 <span className="pm__stat-value">{stat.value}</span>
                                 <span className="pm__stat-label">{stat.label}</span>
-                                <div className={`pm__stat-trend ${stat.change.startsWith('+') || stat.change.includes('total') || stat.change.includes('done') ? 'positive' : 'negative'}`}>
+                                <div className={`pm__stat-trend ${stat.change.startsWith('+') || stat.change.includes('total') || stat.change.includes('done') || stat.change.includes('completed') ? 'positive' : 'negative'}`}>
                                     <TrendingUp size={10} style={{marginRight: '4px'}}/>
                                     {stat.change}
                                 </div>
@@ -263,14 +317,19 @@ const ProjectManagement = () => {
                         </div>
                         <div className="pm__health-chart">
                             <div className="pm__health-item">
+                                <label>Completed</label>
+                                <div className="pm__health-bar"><div className="fill success" style={{width: `${completedPct}%`}}></div></div>
+                                <span>{completedPct}%</span>
+                            </div>
+                            <div className="pm__health-item">
                                 <label>On Track</label>
-                                <div className="pm__health-bar"><div className="fill success" style={{width: `${onTrackPct}%`}}></div></div>
+                                <div className="pm__health-bar"><div className="fill info" style={{width: `${onTrackPct}%`}}></div></div>
                                 <span>{onTrackPct}%</span>
                             </div>
                             <div className="pm__health-item">
                                 <label>On Hold</label>
-                                <div className="pm__health-bar"><div className="fill warning" style={{width: `${atRiskPct}%`}}></div></div>
-                                <span>{atRiskPct}%</span>
+                                <div className="pm__health-bar"><div className="fill warning" style={{width: `${onHoldPct}%`}}></div></div>
+                                <span>{onHoldPct}%</span>
                             </div>
                             <div className="pm__health-item">
                                 <label>Overdue</label>
@@ -431,6 +490,9 @@ const ProjectManagement = () => {
                 client_id: projectForm.client_id ? projectForm.client_id : null,
                 amount: parseFloat(projectForm.amount) || 0
             };
+            if (projectForm.status === 'Completed') {
+                payload.progress = 100;
+            }
 
             if (editMode && selectedProject) {
                 await projectService.update(selectedProject.id, payload);
