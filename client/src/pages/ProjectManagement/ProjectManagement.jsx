@@ -525,11 +525,9 @@ const ProjectManagement = () => {
 
     return (
         <div className="pm">
-            {/* Banner */}
-            <div className="pm__banner">
-                <div className="pm__banner-bg" style={{ backgroundImage: `url('/assets/project/5.png')` }}></div>
-                <div className="pm__banner-overlay"></div>
-                <div className="pm__banner-content">
+            {/* Clean Header */}
+            <div className="page-header">
+                <div className="page-header__info">
                     <h1>Project Management</h1>
                     <p>Drive efficiency, meet deadlines, and deliver excellence across all projects.</p>
                 </div>

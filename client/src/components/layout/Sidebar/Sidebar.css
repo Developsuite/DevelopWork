@@ -14,19 +14,14 @@
     transition: transform var(--transition-slow);
     overflow-y: auto;
     overflow-x: hidden;
-    background: url('/assets/sidebar/light_bg.png') center/cover no-repeat;
+    background: #FFFFFF;
     color: var(--text-primary);
-    border-right: 1px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 1px 0 8px rgba(0, 0, 0, 0.02);
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: none;
 }
 
 .sidebar::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.45);
-    backdrop-filter: blur(6px);
-    z-index: -1;
+    display: none;
 }
 
 .sidebar.collapsed {
@@ -488,6 +483,23 @@
     border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
 
+.sidebar__user {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sidebar__user:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
 /* ---- Mobile Overlay ---- */
 .sidebar-overlay {
     display: none;
@@ -501,15 +513,14 @@
    DARK THEME
    ============================================ */
 [data-theme="dark"] .sidebar {
-    background: url('/assets/sidebar/dark_bg.png') center/cover no-repeat;
+    background: #060709;
     color: rgba(255, 255, 255, 0.75);
-    border-right-color: rgba(255, 255, 255, 0.04);
-    box-shadow: 1px 0 8px rgba(0, 0, 0, 0.2);
+    border-right-color: rgba(255, 255, 255, 0.06);
+    box-shadow: none;
 }
 
 [data-theme="dark"] .sidebar::before {
-    background: rgba(9, 10, 14, 0.88);
-    backdrop-filter: blur(12px);
+    display: none;
 }
 
 [data-theme="dark"] .sidebar__header {
@@ -657,8 +668,30 @@
     color: rgba(255, 255, 255, 0.9);
 }
 
+[data-theme="dark"] .sidebar__nav-item.active {
+    background: rgba(87, 155, 252, 0.12);
+    color: #579BFC;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .sidebar__nav-item--logout:hover {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #ef4444 !important;
+}
+
 [data-theme="dark"] .sidebar__footer {
     border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .sidebar__user {
+    background: #0E0F14;
+    border-color: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .sidebar__user:hover {
+    background: #141720;
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 /* ---- Mobile ---- */

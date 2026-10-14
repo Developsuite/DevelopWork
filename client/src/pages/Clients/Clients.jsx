@@ -270,11 +270,9 @@ const Clients = () => {
 
     return (
         <div className="cl">
-            {/* Banner */}
-            <div className="cl__banner">
-                <div className="cl__banner-bg" style={{ backgroundImage: `url(${theme === 'dark' ? '/assets/clients_banner_dark.png' : '/assets/clients_banner_light.png'})` }}></div>
-                <div className="cl__banner-overlay"></div>
-                <div className="cl__banner-content">
+            {/* Clean Header */}
+            <div className="page-header">
+                <div className="page-header__info">
                     <h1>Client Management</h1>
                     <p>Manage client relations, project lifecycles, and financial health.</p>
                 </div>

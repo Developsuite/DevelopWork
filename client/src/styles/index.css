@@ -441,3 +441,34 @@ ol {
 .dw-form-member-chip.active .avatar {
     border-color: rgba(255, 255, 255, 0.3);
 }
+
+/* ─── Standard Clean Page Header (OpenRouter style) ─── */
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 24px 0 8px 0;
+}
+
+.page-header__info h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+
+.page-header__info p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+.page-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}

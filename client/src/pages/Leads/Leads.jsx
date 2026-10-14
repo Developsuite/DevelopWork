@@ -447,11 +447,9 @@ const Leads = () => {
 
     return (
         <div className="ld">
-            {/* Banner */}
-            <div className="ld__banner">
-                <div className="ld__banner-bg" style={{ backgroundImage: `url('/assets/leads_banner.png')` }}></div>
-                <div className="ld__banner-overlay"></div>
-                <div className="ld__banner-content">
+            {/* Clean Header */}
+            <div className="page-header">
+                <div className="page-header__info">
                     <h1>Leads & Pipeline</h1>
                     <p>Track opportunities, manage relationships, and close deals faster.</p>
                 </div>

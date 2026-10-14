@@ -694,10 +694,8 @@ const HR = () => {
 
     return (
         <div className="hr-dashboard">
-            <div className="hr-dashboard__banner">
-                <div className="hr-dashboard__banner-bg"></div>
-                <div className="hr-dashboard__banner-overlay"></div>
-                <div className="hr-dashboard__banner-content">
+            <div className="page-header" style={{ padding: '24px 40px 16px 40px' }}>
+                <div className="page-header__info">
                     <h1>Human Resources</h1>
                     <p>Manage your workforce, payroll, and performance</p>
                 </div>

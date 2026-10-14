@@ -1077,10 +1077,8 @@ const Docs = () => {
 
     return (
         <div className="docs-dashboard">
-            <div className="docs-dashboard__banner">
-                <div className="docs-dashboard__banner-bg"></div>
-                <div className="docs-dashboard__banner-overlay"></div>
-                <div className="docs-dashboard__banner-content">
+            <div className="page-header" style={{ padding: '24px 0 16px 0' }}>
+                <div className="page-header__info">
                     <h1>Documentation</h1>
                     <p>Create, collaborate, and share your team's knowledge</p>
                 </div>

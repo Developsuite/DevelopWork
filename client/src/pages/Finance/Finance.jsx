@@ -19,8 +19,7 @@ import img1 from '../../assets/finance/1.png';
 import img2 from '../../assets/finance/2.png';
 import img3 from '../../assets/finance/3.png';
 import img4 from '../../assets/finance/4.png';
-import bannerLight from '../../assets/finance/banner_light.png';
-import bannerDark from '../../assets/finance/banner_dark.png';
+
 import InvoiceBuilder from './components/InvoiceBuilder/InvoiceBuilder';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -632,8 +631,7 @@ const Finance = () => {
         return matchSearch && matchCat && matchDate;
     });
 
-    const theme = useSelector((state) => state.ui.theme);
-    const bannerImg = theme === 'dark' ? bannerDark : bannerLight;
+
 
     const invoiceStatusColor = { Paid: 'var(--success)', Sent: 'var(--info)', Overdue: 'var(--danger)', Draft: 'var(--text-muted)' };
 
@@ -662,10 +660,8 @@ const Finance = () => {
 
     return (
         <div className="finance-dashboard">
-            <div className="finance-dashboard__banner">
-                <div className="finance-dashboard__banner-bg" style={{ backgroundImage: `url(${bannerImg})` }}></div>
-                <div className="finance-dashboard__banner-overlay"></div>
-                <div className="finance-dashboard__banner-content">
+            <div className="page-header" style={{ padding: '24px 40px 16px 40px' }}>
+                <div className="page-header__info">
                     <h1>Finance Dashboard</h1>
                     <p>Manage your company finances and expenses securely</p>
                 </div>

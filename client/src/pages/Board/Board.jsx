@@ -227,13 +227,11 @@ const Board = () => {
 
     return (
         <div className="brd">
-            {/* Banner */}
-            <div className="brd__banner">
-                <div className="brd__banner-bg" style={{ backgroundImage: `url('/assets/project/5.png')` }}></div>
-                <div className="brd__banner-overlay"></div>
-                <div className="brd__banner-content">
-                    <div className="brd__banner-path">
-                        <span onClick={() => navigate('/projects')}>Projects</span>
+            {/* Clean Header */}
+            <div className="page-header" style={{ padding: '24px 0 16px 0' }}>
+                <div className="page-header__info">
+                    <div className="brd__banner-path" style={{ marginBottom: '8px', opacity: 0.6 }}>
+                        <span onClick={() => navigate('/projects')} style={{ cursor: 'pointer' }}>Projects</span>
                         <ChevronRight size={14} />
                         <span>{projectName}</span>
                         {sprint && <><ChevronRight size={14} /><span>{sprintName}</span></>}

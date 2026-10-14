@@ -446,16 +446,6 @@ const Sidebar = () => {
                     <div 
                         className="sidebar__user" 
                         onClick={() => navigate('/settings')}
-                        style={{ 
-                            marginTop: '12px',
-                            padding: '12px',
-                            background: 'rgba(255,255,255,0.05)',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            cursor: 'pointer'
-                        }}
                         title="View Profile Settings"
                     >
                         <Avatar name={user?.name || 'Admin'} src={user?.avatar} size="sm" />
