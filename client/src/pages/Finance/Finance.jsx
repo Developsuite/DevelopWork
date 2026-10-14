@@ -33,6 +33,7 @@ const formatCurrency = (n) => `Rs. ${new Intl.NumberFormat('en-US').format(n)}`;
 
 const Finance = () => {
     const { user } = useSelector((state) => state.auth);
+    const theme = useSelector((state) => state.ui.theme);
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
