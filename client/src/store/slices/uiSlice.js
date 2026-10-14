@@ -9,8 +9,18 @@ const getSavedTheme = () => {
     }
 };
 
+// Read saved currency from localStorage, default to 'PKR'
+const getSavedCurrency = () => {
+    try {
+        return localStorage.getItem('dw-currency') || 'PKR';
+    } catch {
+        return 'PKR';
+    }
+};
+
 const initialState = {
     theme: getSavedTheme(),
+    currency: getSavedCurrency(),
     sidebarOpen: true,
     itemDrawerOpen: false,
     activeItemId: null,
@@ -37,6 +47,10 @@ const uiSlice = createSlice({
         setTheme: (state, action) => {
             state.theme = action.payload;
             try { localStorage.setItem('dw-theme', state.theme); } catch { }
+        },
+        setCurrency: (state, action) => {
+            state.currency = action.payload; // 'PKR' or 'USD'
+            try { localStorage.setItem('dw-currency', state.currency); } catch { }
         },
         toggleSidebar: (state) => {
             state.sidebarOpen = !state.sidebarOpen;
@@ -79,6 +93,7 @@ const uiSlice = createSlice({
 export const {
     toggleTheme,
     setTheme,
+    setCurrency,
     toggleSidebar,
     setSidebarOpen,
     openItemDrawer,

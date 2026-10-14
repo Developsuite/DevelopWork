@@ -29,9 +29,11 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
 
-const formatCurrency = (n) => `Rs. ${new Intl.NumberFormat('en-US').format(n)}`;
+const getCurrencyPrefix = (curr) => (curr === 'USD' ? '$' : 'Rs. ');
 
 const NetCashFlowTooltip = ({ active, payload, label }) => {
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
+    const prefix = getCurrencyPrefix(currency);
     if (active && payload && payload.length) {
         const val = payload[0].value;
         const isPositive = val >= 0;
@@ -45,7 +47,7 @@ const NetCashFlowTooltip = ({ active, payload, label }) => {
                     />
                     <span className="fin-chart-tooltip__name">Net Profit:</span>
                     <span className={`fin-chart-tooltip__value ${isPositive ? 'positive' : 'negative'}`}>
-                        {val < 0 ? `-Rs. ${Math.abs(val).toLocaleString()}` : `Rs. ${val.toLocaleString()}`}
+                        {val < 0 ? `-${prefix}${Math.abs(val).toLocaleString()}` : `${prefix}${val.toLocaleString()}`}
                     </span>
                 </div>
             </div>
@@ -55,6 +57,8 @@ const NetCashFlowTooltip = ({ active, payload, label }) => {
 };
 
 const RevenueExpenseTooltip = ({ active, payload, label }) => {
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
+    const prefix = getCurrencyPrefix(currency);
     if (active && payload && payload.length) {
         return (
             <div className="fin-chart-tooltip">
@@ -67,7 +71,7 @@ const RevenueExpenseTooltip = ({ active, payload, label }) => {
                         />
                         <span className="fin-chart-tooltip__name">{item.name}:</span>
                         <span className="fin-chart-tooltip__value">
-                            Rs. {Number(item.value).toLocaleString()}
+                            {prefix}{Number(item.value).toLocaleString()}
                         </span>
                     </div>
                 ))}
@@ -78,6 +82,8 @@ const RevenueExpenseTooltip = ({ active, payload, label }) => {
 };
 
 const ExpensePieTooltip = ({ active, payload }) => {
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
+    const prefix = getCurrencyPrefix(currency);
     if (active && payload && payload.length) {
         const item = payload[0];
         return (
@@ -89,7 +95,7 @@ const ExpensePieTooltip = ({ active, payload }) => {
                     />
                     <span className="fin-chart-tooltip__name">{item.name}:</span>
                     <span className="fin-chart-tooltip__value">
-                        Rs. {Number(item.value).toLocaleString()}
+                        {prefix}{Number(item.value).toLocaleString()}
                     </span>
                 </div>
             </div>
@@ -101,7 +107,13 @@ const ExpensePieTooltip = ({ active, payload }) => {
 const Finance = () => {
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
     const dispatch = useDispatch();
+
+    const formatCurrency = useCallback((n) => {
+        const prefix = getCurrencyPrefix(currency);
+        return `${prefix}${new Intl.NumberFormat('en-US').format(n || 0)}`;
+    }, [currency]);
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
 
@@ -801,7 +813,7 @@ const Finance = () => {
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
                                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => `Rs.${val/1000}k`} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => currency === 'USD' ? `$${val/1000}k` : `Rs.${val/1000}k`} />
                                     <Tooltip content={<RevenueExpenseTooltip />} />
                                     <Legend verticalAlign="top" height={36} align="right" iconType="circle" />
                                     <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" name="Revenue" />
@@ -843,7 +855,7 @@ const Finance = () => {
                                 <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'} />
                                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => `Rs.${val/1000}k`} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => currency === 'USD' ? `$${val/1000}k` : `Rs.${val/1000}k`} />
                                     <Tooltip 
                                         content={<NetCashFlowTooltip />}
                                         cursor={{fill: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}}
@@ -966,7 +978,7 @@ const Finance = () => {
                                 <span className="fin-summary-label">Executive Spending Summary</span>
                                 <div className="fin-summary-amount-group">
                                     <span className="fin-summary-amount">{totalCompanyExpenses.toLocaleString()}</span>
-                                    <span className="fin-summary-symbol">PKR</span>
+                                    <span className="fin-summary-symbol">{currency === 'USD' ? 'USD' : 'PKR'}</span>
                                 </div>
                             </div>
                             <div className="fin-summary-details">

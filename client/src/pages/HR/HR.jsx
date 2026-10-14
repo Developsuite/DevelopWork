@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { hrService } from '../../services/hrService';
 import { financeService } from '../../services/financeService';
 import { isValidEmail, isEmpty, isPositiveNumber } from '../../utils/validation';
@@ -25,6 +25,9 @@ import './HR.css';
 
 const HR = () => {
     const dispatch = useDispatch();
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
+    const currLabel = currency === 'USD' ? '$' : 'PKR ';
+    const currUnit = currency === 'USD' ? 'USD' : 'PKR';
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'directory');
     const [searchQuery, setSearchQuery] = useState('');
@@ -516,7 +519,7 @@ const HR = () => {
 
     const stats = [
         { label: 'Total Employees', value: employees.length, image: hr1, align: 'bottom' },
-        { label: 'Monthly Payroll', value: 'PKR ' + employees.reduce((acc, emp) => acc + ((parseFloat(emp.salary) || 0) + (parseFloat(emp.bonus) || 0) + (parseFloat(emp.commission) || 0) - (parseFloat(emp.deductions) || 0)), 0).toLocaleString(), image: hr2, align: 'center' },
+        { label: 'Monthly Payroll', value: `${currLabel}${employees.reduce((acc, emp) => acc + ((parseFloat(emp.salary) || 0) + (parseFloat(emp.bonus) || 0) + (parseFloat(emp.commission) || 0) - (parseFloat(emp.deductions) || 0)), 0).toLocaleString()}`, image: hr2, align: 'center' },
         { label: 'Active Employees', value: employees.filter(e => e.status === 'Active').length, image: hr3, align: 'center' },
         { label: 'Avg Rating', value: '4.3★', image: hr4, align: 'center' },
     ];
@@ -758,7 +761,7 @@ const HR = () => {
                 pdf.save(`payroll_report_${payrollMonth.replace(' ', '_')}.pdf`);
             }
 
-            dispatch(addToast({ title: 'Payroll Processed', message: `Successfully processed PKR ${totalNetPay.toLocaleString()} and generated PDF.`, type: 'success' }));
+            dispatch(addToast({ title: 'Payroll Processed', message: `Successfully processed ${currLabel}${totalNetPay.toLocaleString()} and generated PDF.`, type: 'success' }));
         } catch (err) {
             console.error('Payroll Error:', err);
             dispatch(addToast({ title: 'Error', message: 'Failed to process payroll.', type: 'error' }));
@@ -1107,7 +1110,7 @@ const HR = () => {
                             <div>
                                 <h3 style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Payroll Amount</h3>
                                 <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--primary-600)', marginTop: '4px' }}>
-                                    PKR {filteredPayrollEmployees.reduce((sum, emp) => sum + ((parseFloat(emp.salary) || 0) + (parseFloat(emp.bonus) || 0) - (parseFloat(emp.deductions) || 0)), 0).toLocaleString()}
+                                    {currLabel}{filteredPayrollEmployees.reduce((sum, emp) => sum + ((parseFloat(emp.salary) || 0) + (parseFloat(emp.bonus) || 0) - (parseFloat(emp.deductions) || 0)), 0).toLocaleString()}
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
@@ -1123,10 +1126,10 @@ const HR = () => {
                                 {filteredPayrollEmployees.length > 0 ? filteredPayrollEmployees.map(emp => (
                                     <tr key={emp.id}>
                                         <td><div className="hr-payroll-employee"><Avatar name={emp.name} size="sm" /><span>{emp.name}</span></div></td>
-                                        <td>PKR {(parseFloat(emp.salary) || 0).toLocaleString()}</td>
-                                        <td className="positive">+PKR {(parseFloat(emp.bonus) || 0).toLocaleString()}</td>
-                                        <td className="negative">-PKR {(parseFloat(emp.deductions) || 0).toLocaleString()}</td>
-                                        <td className="hr-payroll-net">PKR {((parseFloat(emp.salary) || 0) + (parseFloat(emp.bonus) || 0) - (parseFloat(emp.deductions) || 0)).toLocaleString()}</td>
+                                        <td>{currLabel}{(parseFloat(emp.salary) || 0).toLocaleString()}</td>
+                                        <td className="positive">+{currLabel}{(parseFloat(emp.bonus) || 0).toLocaleString()}</td>
+                                        <td className="negative">-{currLabel}{(parseFloat(emp.deductions) || 0).toLocaleString()}</td>
+                                        <td className="hr-payroll-net">{currLabel}{((parseFloat(emp.salary) || 0) + (parseFloat(emp.bonus) || 0) - (parseFloat(emp.deductions) || 0)).toLocaleString()}</td>
                                         <td>
                                             <span 
                                                 className="hr-employee-card__dept" 
@@ -1331,7 +1334,7 @@ const HR = () => {
                     </div>
                     <div className="hr-profile-info-grid">
                         <div className="dw-form-group">
-                            <label className="dw-form-label">Basic Salary (PKR)</label>
+                            <label className="dw-form-label">Basic Salary ({currUnit})</label>
                             <input
                                 type="number"
                                 className="dw-form-input"
@@ -1341,7 +1344,7 @@ const HR = () => {
                             />
                         </div>
                         <div className="dw-form-group">
-                            <label className="dw-form-label">Commission (PKR)</label>
+                            <label className="dw-form-label">Commission ({currUnit})</label>
                             <input
                                 type="number"
                                 className="dw-form-input"
@@ -1446,11 +1449,11 @@ const HR = () => {
                             <div className="hr-profile-info-grid">
                                 <div className="hr-profile-info-group">
                                     <label>Salary</label>
-                                    <div>PKR {(selectedEmployee.salary || 0).toLocaleString()}</div>
+                                    <div>{currLabel}{(selectedEmployee.salary || 0).toLocaleString()}</div>
                                 </div>
                                 <div className="hr-profile-info-group">
                                     <label>Commission</label>
-                                    <div>PKR {(selectedEmployee.commission || 0).toLocaleString()}</div>
+                                    <div>{currLabel}{(selectedEmployee.commission || 0).toLocaleString()}</div>
                                 </div>
                             </div>
                             <div className="hr-profile-info-grid">

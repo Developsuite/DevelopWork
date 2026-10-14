@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { addToast, setTheme } from '../../store/slices/uiSlice';
+import { addToast, setTheme, setCurrency } from '../../store/slices/uiSlice';
 import { toggleModule } from '../../store/slices/accessSlice';
 import { updateUser } from '../../store/slices/authSlice';
 import Button from '../../components/common/Button/Button';
@@ -106,6 +106,8 @@ const Settings = () => {
     const [workspaceName, setWorkspaceName] = useState(() => localStorage.getItem('dw-workspace-name') || 'DevelopWork');
     const [workspaceUrl, setWorkspaceUrl] = useState(() => localStorage.getItem('dw-workspace-url') || 'main');
     const [workspaceLanguage, setWorkspaceLanguage] = useState(() => localStorage.getItem('dw-workspace-lang') || 'en');
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
+    const [workspaceCurrency, setWorkspaceCurrency] = useState(currency);
     const [selectedTheme, setSelectedTheme] = useState(theme || 'light');
 
     // Keep selectedTheme synchronized if theme state changes externally
@@ -115,9 +117,23 @@ const Settings = () => {
         }
     }, [theme]);
 
+    useEffect(() => {
+        setWorkspaceCurrency(currency);
+    }, [currency]);
+
     const handleSelectTheme = (newTheme) => {
         setSelectedTheme(newTheme);
         dispatch(setTheme(newTheme)); // Instant visual preview
+    };
+
+    const handleCurrencyChange = (newCurrency) => {
+        setWorkspaceCurrency(newCurrency);
+        dispatch(setCurrency(newCurrency));
+        dispatch(addToast({
+            title: 'Pricing Format Updated',
+            message: `Workspace pricing set to ${newCurrency === 'USD' ? 'US Dollars ($)' : 'Pakistani Rupees (PKR / Rs.)'}.`,
+            type: 'success'
+        }));
     };
 
     const handleUpdateWorkspace = () => {
@@ -125,7 +141,9 @@ const Settings = () => {
             localStorage.setItem('dw-workspace-name', workspaceName);
             localStorage.setItem('dw-workspace-url', workspaceUrl);
             localStorage.setItem('dw-workspace-lang', workspaceLanguage);
+            localStorage.setItem('dw-currency', workspaceCurrency);
             dispatch(setTheme(selectedTheme));
+            dispatch(setCurrency(workspaceCurrency));
             
             // Dispatch event to sync other components (like Sidebar)
             window.dispatchEvent(new Event('workspaceUpdate'));
@@ -432,6 +450,18 @@ const Settings = () => {
                                 </select>
                             </div>
 
+                            <div className="settings-field">
+                                <label>Currency &amp; Pricing Unit</label>
+                                <select 
+                                    value={workspaceCurrency} 
+                                    onChange={(e) => handleCurrencyChange(e.target.value)}
+                                >
+                                    <option value="PKR">Pakistani Rupee (PKR - Rs.)</option>
+                                    <option value="USD">US Dollar (USD - $)</option>
+                                </select>
+                                <p className="field-hint">Choose whether transactions, invoices, revenue, and expenses are displayed in Dollars ($) or Rupees (PKR).</p>
+                            </div>
+
                             <div className="settings-divider" />
 
                             <h3 className="settings-subsection-title">Appearance</h3>
@@ -557,9 +587,48 @@ const Settings = () => {
                         </div>
                     )}
 
-                    {(activeTab === 'notifications' || activeTab === 'billing') && (
+                    {activeTab === 'notifications' && (
                         <div className="empty-settings">
                             <p>This setting section is coming soon.</p>
+                        </div>
+                    )}
+
+                    {activeTab === 'billing' && (
+                        <div className="settings-section">
+                            <h2 className="settings-section-title">Billing &amp; Pricing Preferences</h2>
+                            <p className="settings-section-hint">Configure default currency and pricing display options for your organization.</p>
+                            
+                            <div className="settings-grid" style={{ marginTop: '20px' }}>
+                                <div className="settings-field">
+                                    <label>Default Currency / Pricing Format</label>
+                                    <select 
+                                        value={workspaceCurrency} 
+                                        onChange={(e) => handleCurrencyChange(e.target.value)}
+                                    >
+                                        <option value="PKR">Pakistani Rupee (PKR - Rs.)</option>
+                                        <option value="USD">US Dollar (USD - $)</option>
+                                    </select>
+                                    <p className="field-hint">Select between Dollars ($) and Rupees (PKR) for all financial views.</p>
+                                </div>
+                            </div>
+
+                            <div className="settings-divider" />
+
+                            <h3 className="settings-subsection-title">Currency Live Preview</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '16px' }}>
+                                <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-default)' }}>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '6px' }}>Sample Invoice</div>
+                                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                        {workspaceCurrency === 'USD' ? '$5,050.00' : 'Rs. 5,050'}
+                                    </div>
+                                </div>
+                                <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-default)' }}>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '6px' }}>Monthly Revenue</div>
+                                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--success)' }}>
+                                        {workspaceCurrency === 'USD' ? '+$12,400.00' : '+Rs. 12,400'}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )}
 

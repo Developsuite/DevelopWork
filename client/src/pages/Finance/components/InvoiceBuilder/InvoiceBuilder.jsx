@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { X, Plus, Trash2, Download, CheckCircle2, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -7,6 +8,8 @@ import { clientsService } from '../../../../services/clientsService';
 import './InvoiceBuilder.css';
 
 const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
+    const currency = useSelector(state => state.ui.currency) || 'PKR';
+    const currSymbol = currency === 'USD' ? '$' : 'Rs. ';
     const previewRef = useRef(null);
     const [isExporting, setIsExporting] = useState(false);
     const [clients, setClients] = useState([]);
@@ -173,7 +176,7 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
                 </div>
                 <div className="inv-meta-item">
                     <span>Amount Due</span>
-                    <span>Rs. {total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    <span>{currSymbol}{total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
             </div>
 
@@ -206,8 +209,8 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
                         <tr key={item.id}>
                             <td style={{ fontWeight: 600 }}>{item.description}</td>
                             <td className="right">{item.quantity}</td>
-                            <td className="right">Rs. {item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                            <td className="right" style={{ fontWeight: 700 }}>Rs. {(item.quantity * item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td className="right">{currSymbol}{item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                            <td className="right" style={{ fontWeight: 700 }}>{currSymbol}{(item.quantity * item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -217,15 +220,15 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
             <div className="inv-totals">
                 <div className="inv-total-row">
                     <span>Subtotal</span>
-                    <span>Rs. {subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    <span>{currSymbol}{subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div className="inv-total-row">
                     <span>Tax ({invoiceData.taxRate}%)</span>
-                    <span>Rs. {taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    <span>{currSymbol}{taxAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div className="inv-total-row grand">
                     <span>Total</span>
-                    <span>Rs. {total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    <span>{currSymbol}{total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
             </div>
 
@@ -274,7 +277,7 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
                 </div>
                 <div className="inv-meta-cell highlight">
                     <span>Amount Due</span>
-                    <span>Rs. {total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                    <span>{currSymbol}{total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
             </div>
 
@@ -309,8 +312,8 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
                             <tr key={item.id}>
                                 <td style={{ fontWeight: 700 }}>{item.description}</td>
                                 <td className="right">{item.quantity}</td>
-                                <td className="right">Rs. {item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                                <td className="right" style={{ fontWeight: 700 }}>Rs. {(item.quantity * item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td className="right">{currSymbol}{item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td className="right" style={{ fontWeight: 700 }}>{currSymbol}{(item.quantity * item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -321,15 +324,15 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
                     <div className="inv-totals">
                         <div className="inv-total-row">
                             <span>Subtotal</span>
-                            <span style={{ fontWeight: 600, color: '#0f172a' }}>Rs. {subtotal.toFixed(2)}</span>
+                            <span style={{ fontWeight: 600, color: '#0f172a' }}>{currSymbol}{subtotal.toFixed(2)}</span>
                         </div>
                         <div className="inv-total-row">
                             <span>Tax ({invoiceData.taxRate}%)</span>
-                            <span style={{ fontWeight: 600, color: '#0f172a' }}>Rs. {taxAmount.toFixed(2)}</span>
+                            <span style={{ fontWeight: 600, color: '#0f172a' }}>{currSymbol}{taxAmount.toFixed(2)}</span>
                         </div>
                         <div className="inv-total-row grand">
                             <span>Total Due</span>
-                            <span>Rs. {total.toFixed(2)}</span>
+                            <span>{currSymbol}{total.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
