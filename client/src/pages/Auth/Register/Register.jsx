@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { signUpWithEmail, signInWithGoogle, clearError, clearSignUpSuccess } from '../../../store/slices/authSlice';
-import { isValidEmail, isEmpty, isValidPassword } from '../../../utils/validation';
-import { LayoutDashboard, Users, BarChart3, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { isValidEmail, isEmpty, isValidPassword, formatAuthError } from '../../../utils/validation';
+import { LayoutDashboard, Users, BarChart3, Shield, AlertCircle, CheckCircle2, Loader2, Eye, EyeOff } from 'lucide-react';
 import '../Login/Login.css';
 
 const Register = () => {
@@ -11,6 +11,8 @@ const Register = () => {
     const dispatch = useDispatch();
     const { isLoading, error, signUpSuccess, isAuthenticated } = useSelector((state) => state.auth);
     const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [localError, setLocalError] = useState('');
 
     // Redirect when auto-logged in after signup
@@ -62,7 +64,7 @@ const Register = () => {
         dispatch(signInWithGoogle());
     };
 
-    const displayError = localError || error;
+    const displayError = localError || (error ? formatAuthError(error) : null);
 
     return (
         <div className="login-page">
@@ -146,31 +148,55 @@ const Register = () => {
 
                         <div className="login-page__field">
                             <label className="login-page__label" htmlFor="reg-password">Password</label>
-                            <input
-                                id="reg-password"
-                                type="password"
-                                className="login-page__input"
-                                placeholder="Minimum 6 characters"
-                                value={form.password}
-                                onChange={handleChange('password')}
-                                required
-                                disabled={isLoading}
-                                minLength={6}
-                            />
+                            <div className="login-page__password-wrapper">
+                                <input
+                                    id="reg-password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    className="login-page__input login-page__input--password"
+                                    placeholder="Minimum 6 characters"
+                                    value={form.password}
+                                    onChange={handleChange('password')}
+                                    required
+                                    disabled={isLoading}
+                                    minLength={6}
+                                />
+                                <button
+                                    type="button"
+                                    className="login-page__password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex={-1}
+                                    title={showPassword ? 'Hide password' : 'Show password'}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="login-page__field">
                             <label className="login-page__label" htmlFor="confirm-password">Confirm Password</label>
-                            <input
-                                id="confirm-password"
-                                type="password"
-                                className="login-page__input"
-                                placeholder="Confirm your password"
-                                value={form.confirmPassword}
-                                onChange={handleChange('confirmPassword')}
-                                required
-                                disabled={isLoading}
-                            />
+                            <div className="login-page__password-wrapper">
+                                <input
+                                    id="confirm-password"
+                                    type={showConfirmPassword ? 'text' : 'password'}
+                                    className="login-page__input login-page__input--password"
+                                    placeholder="Confirm your password"
+                                    value={form.confirmPassword}
+                                    onChange={handleChange('confirmPassword')}
+                                    required
+                                    disabled={isLoading}
+                                />
+                                <button
+                                    type="button"
+                                    className="login-page__password-toggle"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    tabIndex={-1}
+                                    title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         <button type="submit" className="login-page__submit" disabled={isLoading || signUpSuccess}>

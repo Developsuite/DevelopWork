@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { resetPassword, clearError, clearResetSuccess } from '../../../store/slices/authSlice';
 import { addToast } from '../../../store/slices/uiSlice';
-import { isValidEmail } from '../../../utils/validation';
+import { isValidEmail, formatAuthError } from '../../../utils/validation';
 import { Zap, AlertCircle, Loader2 } from 'lucide-react';
 import '../Login/Login.css';
 
@@ -11,17 +11,26 @@ const ForgotPassword = () => {
     const dispatch = useDispatch();
     const { isLoading, error, resetSuccess } = useSelector((state) => state.auth);
     const [email, setEmail] = useState('');
+    const [localError, setLocalError] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!isValidEmail(email)) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+        setLocalError('');
+        const trimmedEmail = email.trim();
+        if (!trimmedEmail) {
+            setLocalError('Please enter your email address.');
+            return;
+        }
+        if (!isValidEmail(trimmedEmail)) {
+            setLocalError('Please enter a valid email address (e.g., name@example.com).');
             return;
         }
         dispatch(clearError());
         dispatch(clearResetSuccess());
-        dispatch(resetPassword({ email }));
+        dispatch(resetPassword({ email: trimmedEmail }));
     };
+
+    const displayError = localError || (error ? formatAuthError(error) : null);
 
     return (
         <div className="login-page">
@@ -44,10 +53,10 @@ const ForgotPassword = () => {
                             : "Enter your email and we'll send you a reset link."}
                     </p>
 
-                    {error && (
+                    {displayError && (
                         <div className="login-page__error">
-                            <AlertCircle size={14} />
-                            {error}
+                            <AlertCircle size={16} />
+                            <span>{displayError}</span>
                         </div>
                     )}
 

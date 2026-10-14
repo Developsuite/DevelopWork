@@ -19,7 +19,6 @@ const AppLayout = () => {
                     <Outlet />
                 </div>
             </div>
-            <ToastContainer />
             <CreateProjectModal />
             <AddTaskModal />
         </div>

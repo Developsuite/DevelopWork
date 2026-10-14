@@ -7,6 +7,7 @@ import { supabase } from './lib/supabase';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
 import EmployeeLayout from './components/layout/EmployeeLayout/EmployeeLayout';
+import ToastContainer from './components/common/Toast/Toast';
 import AIChatbot from './components/common/AIChatbot/AIChatbot';
 import AdminRoute from './components/guards/AdminRoute';
 import ManagerRoute from './components/guards/ManagerRoute';
@@ -256,6 +257,7 @@ function App() {
         <Route path="/" element={<Navigate to={getRootRedirect()} replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <ToastContainer />
     </BrowserRouter>
   );
 }

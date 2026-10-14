@@ -3,9 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { signInWithEmail, signInWithGoogle, clearError } from '../../../store/slices/authSlice';
 import { addToast } from '../../../store/slices/uiSlice';
-import { isValidEmail } from '../../../utils/validation';
+import { isValidEmail, formatAuthError } from '../../../utils/validation';
 import ThemeToggle from '../../../components/common/ThemeToggle/ThemeToggle';
-import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle, Loader2 } from 'lucide-react';
+import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
@@ -14,6 +14,8 @@ const Login = () => {
     const { isAuthenticated, isLoading, error, user } = useSelector((state) => state.auth);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [localError, setLocalError] = useState('');
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -31,19 +33,23 @@ const Login = () => {
     // Clear errors when component mounts
     useEffect(() => {
         dispatch(clearError());
+        setLocalError('');
     }, [dispatch]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!email || !password) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Please enter both email and password.', type: 'warning' }));
+        setLocalError('');
+        const trimmedEmail = email.trim();
+
+        if (!trimmedEmail || !password) {
+            setLocalError('Please enter both your email address and password.');
             return;
         }
-        if (!isValidEmail(email)) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+        if (!isValidEmail(trimmedEmail)) {
+            setLocalError('Please enter a valid email address (e.g., name@example.com).');
             return;
         }
-        dispatch(signInWithEmail({ email, password }));
+        dispatch(signInWithEmail({ email: trimmedEmail, password }));
     };
 
     const handleGoogleSignIn = () => {
@@ -90,12 +96,15 @@ const Login = () => {
                     <h1 className="login-page__form-title">Welcome back</h1>
                     <p className="login-page__form-subtitle">Sign in to your DevelopWork account</p>
 
-                    {error && (
-                        <div className="login-page__error">
-                            <AlertCircle size={14} />
-                            {error}
-                        </div>
-                    )}
+                    {(() => {
+                        const displayError = localError || (error ? formatAuthError(error) : null);
+                        return displayError ? (
+                            <div className="login-page__error">
+                                <AlertCircle size={16} />
+                                <span>{displayError}</span>
+                            </div>
+                        ) : null;
+                    })()}
 
                     <form className="login-page__form" onSubmit={handleSubmit}>
                         <div className="login-page__field">
@@ -106,24 +115,45 @@ const Login = () => {
                                 className="login-page__input"
                                 placeholder="you@company.com"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (localError) setLocalError('');
+                                    if (error) dispatch(clearError());
+                                }}
                                 required
                                 disabled={isLoading}
+                                autoFocus
                             />
                         </div>
 
                         <div className="login-page__field">
                             <label className="login-page__label" htmlFor="password">Password</label>
-                            <input
-                                id="password"
-                                type="password"
-                                className="login-page__input"
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                disabled={isLoading}
-                            />
+                            <div className="login-page__password-wrapper">
+                                <input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    className="login-page__input login-page__input--password"
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (localError) setLocalError('');
+                                        if (error) dispatch(clearError());
+                                    }}
+                                    required
+                                    disabled={isLoading}
+                                />
+                                <button
+                                    type="button"
+                                    className="login-page__password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex={-1}
+                                    title={showPassword ? 'Hide password' : 'Show password'}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         <div className="login-page__row">
