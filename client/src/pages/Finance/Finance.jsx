@@ -31,6 +31,73 @@ import {
 
 const formatCurrency = (n) => `Rs. ${new Intl.NumberFormat('en-US').format(n)}`;
 
+const NetCashFlowTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        const val = payload[0].value;
+        const isPositive = val >= 0;
+        return (
+            <div className="fin-chart-tooltip">
+                <span className="fin-chart-tooltip__label">{label}</span>
+                <div className="fin-chart-tooltip__row">
+                    <span
+                        className="fin-chart-tooltip__dot"
+                        style={{ backgroundColor: isPositive ? '#10b981' : '#f43f5e' }}
+                    />
+                    <span className="fin-chart-tooltip__name">Net Profit:</span>
+                    <span className={`fin-chart-tooltip__value ${isPositive ? 'positive' : 'negative'}`}>
+                        {val < 0 ? `-Rs. ${Math.abs(val).toLocaleString()}` : `Rs. ${val.toLocaleString()}`}
+                    </span>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
+const RevenueExpenseTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="fin-chart-tooltip">
+                <span className="fin-chart-tooltip__label">{label}</span>
+                {payload.map((item, idx) => (
+                    <div key={idx} className="fin-chart-tooltip__row">
+                        <span
+                            className="fin-chart-tooltip__dot"
+                            style={{ backgroundColor: item.color || (item.dataKey === 'revenue' ? '#6366f1' : '#f43f5e') }}
+                        />
+                        <span className="fin-chart-tooltip__name">{item.name}:</span>
+                        <span className="fin-chart-tooltip__value">
+                            Rs. {Number(item.value).toLocaleString()}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
+const ExpensePieTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+        const item = payload[0];
+        return (
+            <div className="fin-chart-tooltip">
+                <div className="fin-chart-tooltip__row">
+                    <span
+                        className="fin-chart-tooltip__dot"
+                        style={{ backgroundColor: item.payload?.fill || '#6366f1' }}
+                    />
+                    <span className="fin-chart-tooltip__name">{item.name}:</span>
+                    <span className="fin-chart-tooltip__value">
+                        Rs. {Number(item.value).toLocaleString()}
+                    </span>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 const Finance = () => {
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
@@ -735,15 +802,7 @@ const Finance = () => {
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
                                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} dy={10} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => `Rs.${val/1000}k`} />
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: theme === 'dark' ? '#1e293b' : '#fff', 
-                                            border: '1px solid var(--border-color)', 
-                                            borderRadius: '8px',
-                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                        }} 
-                                        itemStyle={{ fontSize: '13px', fontWeight: 600 }}
-                                    />
+                                    <Tooltip content={<RevenueExpenseTooltip />} />
                                     <Legend verticalAlign="top" height={36} align="right" iconType="circle" />
                                     <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" name="Revenue" />
                                     <Area type="monotone" dataKey="expenses" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorExp)" name="Expenses" />
@@ -767,16 +826,10 @@ const Finance = () => {
                                         dataKey="value"
                                     >
                                         {categoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
-                                    <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: theme === 'dark' ? '#1e293b' : '#fff', 
-                                            border: '1px solid var(--border-color)', 
-                                            borderRadius: '8px'
-                                        }}
-                                    />
+                                    <Tooltip content={<ExpensePieTooltip />} />
                                     <Legend />
                                 </PieChart>
                             </ResponsiveContainer>
@@ -788,18 +841,12 @@ const Finance = () => {
                         <div style={{ width: '100%', height: 350 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'} />
                                     <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} dy={10} />
                                     <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} tickFormatter={(val) => `Rs.${val/1000}k`} />
                                     <Tooltip 
-                                        contentStyle={{ 
-                                            backgroundColor: theme === 'dark' ? '#1e293b' : '#fff', 
-                                            border: '1px solid var(--border-color)', 
-                                            borderRadius: '8px',
-                                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                        }} 
-                                        itemStyle={{ fontSize: '13px', fontWeight: 600 }}
-                                        cursor={{fill: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}}
+                                        content={<NetCashFlowTooltip />}
+                                        cursor={{fill: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'}}
                                     />
                                     <Bar dataKey="netProfit" name="Net Profit" radius={[4, 4, 0, 0]}>
                                         {chartData.map((entry, index) => (
