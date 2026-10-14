@@ -274,41 +274,54 @@ CREATE TRIGGER trg_board_items_updated BEFORE UPDATE ON board_items
 -- 16. SEED DATA
 -- ========================
 
--- Labels
-INSERT INTO labels (project_id, name, color) VALUES
-  ((SELECT id FROM projects LIMIT 1), 'UI', '#579BFC'),
-  ((SELECT id FROM projects LIMIT 1), 'Backend', '#FDAB3D'),
-  ((SELECT id FROM projects LIMIT 1), 'Design', '#A25DDC'),
-  ((SELECT id FROM projects LIMIT 1), 'Testing', '#00C875'),
-  ((SELECT id FROM projects LIMIT 1), 'DevOps', '#E2445C'),
-  ((SELECT id FROM projects LIMIT 1), 'Database', '#037F4C'),
-  ((SELECT id FROM projects LIMIT 1), 'Frontend', '#FF642E'),
-  ((SELECT id FROM projects LIMIT 1), 'Meeting', '#CAB641')
-ON CONFLICT (project_id, name) DO NOTHING;
-
--- Sprint for the first project
-INSERT INTO sprints (project_id, name, start_date, end_date, status, goal, velocity) VALUES
-  ((SELECT id FROM projects WHERE name = 'Dashboard Redesign v2.0' LIMIT 1),
-   'Sprint 24', '2026-05-05', '2026-05-19', 'Active',
-   'Complete dashboard widgets and login page redesign', 42),
-  ((SELECT id FROM projects WHERE name = 'Dashboard Redesign v2.0' LIMIT 1),
-   'Sprint 25', '2026-05-19', '2026-06-02', 'Planning',
-   'API integration and testing phase', 0)
-ON CONFLICT DO NOTHING;
-
--- Board for Sprint 24
-INSERT INTO boards (project_id, sprint_id, name, type, default_view) VALUES
-  ((SELECT id FROM projects WHERE name = 'Dashboard Redesign v2.0' LIMIT 1),
-   (SELECT id FROM sprints WHERE name = 'Sprint 24' LIMIT 1),
-   'Sprint 24 - Dashboard Redesign', 'project', 'kanban')
-ON CONFLICT DO NOTHING;
-
--- Board Columns (matching mockData structure)
 DO $$
 DECLARE
+  v_project_id UUID;
+  v_sprint_id UUID;
   v_board_id UUID;
 BEGIN
+  -- 1. Ensure at least one project exists
+  SELECT id INTO v_project_id FROM projects WHERE name = 'Dashboard Redesign v2.0' LIMIT 1;
+  IF v_project_id IS NULL THEN
+    SELECT id INTO v_project_id FROM projects LIMIT 1;
+  END IF;
+  IF v_project_id IS NULL THEN
+    INSERT INTO projects (name, description, status, priority, due_date, progress, color, icon)
+    VALUES ('Dashboard Redesign v2.0', 'Core dashboard redesign and work management system', 'In Progress', 'Critical', '2026-06-30', 65, '#579BFC', '🚀')
+    RETURNING id INTO v_project_id;
+  END IF;
+
+  -- 2. Labels
+  INSERT INTO labels (project_id, name, color) VALUES
+    (v_project_id, 'UI', '#579BFC'),
+    (v_project_id, 'Backend', '#FDAB3D'),
+    (v_project_id, 'Design', '#A25DDC'),
+    (v_project_id, 'Testing', '#00C875'),
+    (v_project_id, 'DevOps', '#E2445C'),
+    (v_project_id, 'Database', '#037F4C'),
+    (v_project_id, 'Frontend', '#FF642E'),
+    (v_project_id, 'Meeting', '#CAB641')
+  ON CONFLICT (project_id, name) DO NOTHING;
+
+  -- 3. Sprints for project
+  INSERT INTO sprints (project_id, name, start_date, end_date, status, goal, velocity) VALUES
+    (v_project_id, 'Sprint 24', '2026-05-05', '2026-05-19', 'Active',
+     'Complete dashboard widgets and login page redesign', 42),
+    (v_project_id, 'Sprint 25', '2026-05-19', '2026-06-02', 'Planning',
+     'API integration and testing phase', 0)
+  ON CONFLICT DO NOTHING;
+
+  -- 4. Board for Sprint 24
+  SELECT id INTO v_sprint_id FROM sprints WHERE name = 'Sprint 24' AND project_id = v_project_id LIMIT 1;
+
   SELECT id INTO v_board_id FROM boards WHERE name = 'Sprint 24 - Dashboard Redesign' LIMIT 1;
+  IF v_board_id IS NULL THEN
+    INSERT INTO boards (project_id, sprint_id, name, type, default_view)
+    VALUES (v_project_id, v_sprint_id, 'Sprint 24 - Dashboard Redesign', 'project', 'kanban')
+    RETURNING id INTO v_board_id;
+  END IF;
+
+  -- 5. Board Columns & Groups
   IF v_board_id IS NOT NULL THEN
     INSERT INTO board_columns (board_id, name, type, width, position, options) VALUES
       (v_board_id, 'Task', 'text', 280, 0, '[]'),
@@ -321,7 +334,6 @@ BEGIN
       (v_board_id, 'Tags', 'tags', 160, 5, '[]')
     ON CONFLICT DO NOTHING;
 
-    -- Board Groups
     INSERT INTO board_groups (board_id, name, color, position) VALUES
       (v_board_id, 'To Do', '#579BFC', 0),
       (v_board_id, 'In Progress', '#FDAB3D', 1),

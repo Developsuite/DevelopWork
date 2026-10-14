@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://nzzzwllxdrmkjulurmaf.supabase.co';
-const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'YOUR_KEY_HERE'; // I'll extract it from .env
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://laexpcpifyvknqqgshet.supabase.co';
+const SUPABASE_KEY = process.env.VITE_SUPABASE_ANON_KEY || 'YOUR_KEY_HERE';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 

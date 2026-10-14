@@ -76,15 +76,19 @@ END;
 $$;
 
 -- 3. Create Tenant Isolation RLS Policies
--- For profiles: users can see themselves, OR anyone in the same tenant
+-- For profiles: users can see themselves, anyone in the same tenant, or demo profiles
 CREATE POLICY "Tenant isolation for profiles" ON profiles
 FOR ALL USING (
-  tenant_id = get_auth_tenant_id() 
+  tenant_id IS NULL 
+  OR tenant_id = get_auth_tenant_id() 
   OR id = auth.uid()
 );
 
--- For all other tables (cannot easily be done in a loop for CREATE POLICY, so we generate the statements or just write them out)
--- Actually, a PL/PGSQL DO block can execute CREATE POLICY statements!
+-- Ensure user signup trigger can insert new profiles
+CREATE POLICY "Allow insert for service" ON profiles
+FOR INSERT WITH CHECK (true);
+
+-- For all other tables: allow viewing tenant data as well as global seed data (tenant_id IS NULL)
 DO $$
 DECLARE
   table_name_var TEXT;
@@ -101,7 +105,7 @@ BEGIN
   FOREACH table_name_var IN ARRAY tables_to_update
   LOOP
     IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = table_name_var) THEN
-      EXECUTE format('CREATE POLICY "Tenant isolation for %I" ON %I FOR ALL USING (tenant_id = get_auth_tenant_id())', table_name_var, table_name_var);
+      EXECUTE format('CREATE POLICY "Tenant isolation for %I" ON %I FOR ALL USING (tenant_id IS NULL OR tenant_id = get_auth_tenant_id())', table_name_var, table_name_var);
     END IF;
   END LOOP;
 END;
