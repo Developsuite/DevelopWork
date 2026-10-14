@@ -941,7 +941,6 @@ const HR = () => {
                                                 onClick={(e) => handleContactClick(e, emp, 'email')}
                                             >
                                                 <Mail size={14} />
-                                                <span className="hr-employee-card__tooltip">{emp.email || 'No email'}</span>
                                             </button>
                                             <button 
                                                 type="button"
@@ -950,7 +949,6 @@ const HR = () => {
                                                 onClick={(e) => handleContactClick(e, emp, 'phone')}
                                             >
                                                 <Phone size={14} />
-                                                <span className="hr-employee-card__tooltip">{emp.phone || 'No phone'}</span>
                                             </button>
                                             <button 
                                                 type="button"
@@ -959,7 +957,6 @@ const HR = () => {
                                                 onClick={(e) => handleContactClick(e, emp, 'manager')}
                                             >
                                                 <Users size={14} />
-                                                <span className="hr-employee-card__tooltip">Manager: {emp.manager || 'CEO'}</span>
                                             </button>
                                         </div>
 
