@@ -22,6 +22,17 @@ export const DEPARTMENT_MODULES = [
         memberCount: 24,
     },
     {
+        key: 'tasks',
+        label: 'Task Management',
+        description: 'Organization-wide task command center. Assign, monitor, and delegate deliverables to any employee or manager.',
+        icon: 'CheckSquare',
+        color: '#6366F1',
+        gradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+        image: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=800&h=400',
+        route: '/tasks',
+        memberCount: 30,
+    },
+    {
         key: 'hr',
         label: 'Human Resources',
         description: 'Manage your workforce, onboarding, and employee records.',
@@ -82,6 +93,7 @@ export const DEPARTMENT_MODULES = [
 export const APP_MODULES = [
     { key: 'home', label: 'Home', icon: 'Home', color: '#579BFC', route: '/modules' },
     { key: 'projects', label: 'Projects', icon: 'FolderKanban', color: '#579BFC', route: '/projects' },
+    { key: 'tasks', label: 'Tasks', icon: 'CheckSquare', color: '#6366F1', route: '/tasks' },
     { key: 'hr', label: 'HR', icon: 'Users', color: '#A25DDC', route: '/hr' },
     { key: 'finance', label: 'Finance', icon: 'DollarSign', color: '#00C875', route: '/finance' },
     { key: 'leads', label: 'Leads', icon: 'Handshake', color: '#FDAB3D', route: '/leads' },

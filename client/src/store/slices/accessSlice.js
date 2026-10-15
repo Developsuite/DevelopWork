@@ -4,11 +4,15 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
     // Active modules the admin has enabled
     activeModules: (() => {
+        const defaultMods = ['projects', 'tasks', 'hr', 'finance', 'leads', 'clients', 'docs'];
         try {
             const saved = typeof window !== 'undefined' ? localStorage.getItem('dw-active-modules') : null;
-            return saved ? JSON.parse(saved) : ['projects', 'hr', 'finance', 'leads', 'clients', 'docs'];
+            if (!saved) return defaultMods;
+            const parsed = JSON.parse(saved);
+            if (!parsed.includes('tasks')) parsed.splice(1, 0, 'tasks');
+            return parsed;
         } catch (e) {
-            return ['projects', 'hr', 'finance', 'leads', 'clients', 'docs'];
+            return defaultMods;
         }
     })(),
 

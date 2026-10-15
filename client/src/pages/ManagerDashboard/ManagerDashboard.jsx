@@ -4,6 +4,7 @@ import { ShieldCheck } from 'lucide-react';
 
 // Import actual module components for 100% feature parity
 import ProjectManagement from '../../pages/ProjectManagement/ProjectManagement';
+import TaskManagement from '../../pages/TaskManagement/TaskManagement';
 import HR from '../../pages/HR/HR';
 import Finance from '../../pages/Finance/Finance';
 import Leads from '../../pages/Leads/Leads';
@@ -19,6 +20,7 @@ const ManagerDashboard = () => {
     // Map module keys to their respective components
     const moduleComponents = {
         projects: <ProjectManagement />,
+        tasks: <TaskManagement />,
         hr: <HR />,
         finance: <Finance />,
         leads: <Leads />,

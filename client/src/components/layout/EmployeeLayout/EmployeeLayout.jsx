@@ -30,6 +30,7 @@ const navItems = [
 
 const modIconMap = {
     projects: FolderKanban,
+    tasks: CheckSquare,
     hr: Users,
     finance: DollarSign,
     leads: Handshake,

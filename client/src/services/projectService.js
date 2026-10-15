@@ -65,12 +65,24 @@ export const projectService = {
     // ========================
 
     async getAllTasks() {
-        const { data, error } = await supabase
-            .from('tasks')
-            .select('*, projects!inner(name)')
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        return data.map(t => ({ ...t, project_name: t.projects?.name || 'Unknown' }));
+        try {
+            const { data, error } = await supabase
+                .from('tasks')
+                .select('*, projects(name)')
+                .order('created_at', { ascending: false });
+            if (error) {
+                console.warn('[projectService] getAllTasks fallback query:', error.message);
+                const { data: fallbackData } = await supabase
+                    .from('tasks')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                return (fallbackData || []).map(t => ({ ...t, project_name: 'General Operational' }));
+            }
+            return (data || []).map(t => ({ ...t, project_name: t.projects?.name || 'General Operational' }));
+        } catch (err) {
+            console.error('[projectService] getAllTasks error:', err);
+            return [];
+        }
     },
 
     async getTasks(projectId, sprintId = null) {

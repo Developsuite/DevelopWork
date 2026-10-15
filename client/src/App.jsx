@@ -22,6 +22,7 @@ import ModuleHub from './pages/ModuleHub/ModuleHub';
 import Onboarding from './pages/Onboarding/Onboarding';
 import Landing from './pages/Landing/Landing';
 import ProjectManagement from './pages/ProjectManagement/ProjectManagement';
+import TaskManagement from './pages/TaskManagement/TaskManagement';
 import Leads from './pages/Leads/Leads';
 import Clients from './pages/Clients/Clients';
 import Docs from './pages/Docs/Docs';
@@ -238,6 +239,7 @@ function App() {
           <Route path="/hr" element={<HR />} />
           <Route path="/finance" element={<Finance />} />
           <Route path="/projects" element={<ProjectManagement />} />
+          <Route path="/tasks" element={<TaskManagement />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/clients" element={<Clients />} />
           <Route path="/docs" element={<Docs />} />

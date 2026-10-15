@@ -48,11 +48,13 @@ import {
     CheckCircle2,
     Key,
     Plus,
+    CheckSquare,
 } from 'lucide-react';
 import './ModuleHub.css';
 
 const iconMap = {
     FolderKanban,
+    CheckSquare,
     Users,
     DollarSign,
     Handshake,

@@ -41,6 +41,7 @@ import {
     LogOut,
     Folder,
     Home,
+    CheckSquare,
 } from 'lucide-react';
 import Avatar from '../../common/Avatar/Avatar';
 import { permissionsService } from '../../../services/permissionsService';
@@ -48,6 +49,7 @@ import './Sidebar.css';
 
 const moduleIconMap = {
     FolderKanban,
+    CheckSquare,
     Users,
     DollarSign,
     Handshake,
@@ -62,6 +64,12 @@ const moduleSubPages = {
         { label: 'All Projects', path: '/projects?tab=projects', icon: FolderKanban, id: 'proj-all' },
         { label: 'Tasks Directory', path: '/projects?tab=tasks', icon: ClipboardList, id: 'proj-tasks' },
         { label: 'Sprint Dashboard', path: '/board/board-1', icon: LayoutGrid, id: 'proj-sprint' },
+    ],
+    tasks: [
+        { label: 'All Tasks', path: '/tasks?tab=all', icon: ClipboardList, id: 'tasks-all' },
+        { label: 'Delegation Center', path: '/tasks?tab=delegated', icon: UserCheck, id: 'tasks-delegated' },
+        { label: 'Kanban Board', path: '/tasks?tab=kanban', icon: LayoutGrid, id: 'tasks-kanban' },
+        { label: 'Workload & Analytics', path: '/tasks?tab=analytics', icon: BarChart3, id: 'tasks-analytics' },
     ],
     hr: [
         { label: 'Directory', path: '/hr?tab=directory', icon: Users },
@@ -310,6 +318,12 @@ const Sidebar = () => {
             if (item.id === 'proj-overview' && location.pathname === '/projects' && location.search.includes('tab=overview')) isActive = true;
             if (item.id === 'proj-tasks' && location.pathname === '/projects' && location.search.includes('tab=tasks')) isActive = true;
             if (item.id === 'proj-sprint' && location.pathname.startsWith('/board/')) isActive = true;
+
+            // Tasks module
+            if (item.id === 'tasks-all' && location.pathname === '/tasks' && (location.search.includes('tab=all') || !location.search)) isActive = true;
+            if (item.id === 'tasks-delegated' && location.pathname === '/tasks' && location.search.includes('tab=delegated')) isActive = true;
+            if (item.id === 'tasks-kanban' && location.pathname === '/tasks' && location.search.includes('tab=kanban')) isActive = true;
+            if (item.id === 'tasks-analytics' && location.pathname === '/tasks' && location.search.includes('tab=analytics')) isActive = true;
         }
 
         if (item.isFolder) {

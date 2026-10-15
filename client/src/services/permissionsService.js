@@ -17,6 +17,18 @@ export const SYSTEM_MODULES = [
         ]
     },
     {
+        key: 'tasks',
+        label: 'Task Management',
+        description: 'Organization-wide task command center. Assign, monitor, and delegate deliverables to any employee or manager.',
+        color: '#6366F1',
+        features: [
+            { key: 'tasks.all', label: 'All Tasks Directory', path: '/tasks?tab=all' },
+            { key: 'tasks.delegated', label: 'Delegation Center', path: '/tasks?tab=delegated' },
+            { key: 'tasks.kanban', label: 'Tasks Kanban Board', path: '/tasks?tab=kanban' },
+            { key: 'tasks.analytics', label: 'Workload & Analytics', path: '/tasks?tab=analytics' },
+        ]
+    },
+    {
         key: 'hr',
         label: 'Human Resources',
         description: 'Manage workforce, organization chart, recruitment, and payroll.',

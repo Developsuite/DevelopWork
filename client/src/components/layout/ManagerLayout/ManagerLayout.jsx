@@ -36,7 +36,8 @@ import {
     ChevronLeft,
     ChevronRight,
     TrendingUp,
-    Award
+    Award,
+    CheckSquare
 } from 'lucide-react';
 import { toggleTheme } from '../../../store/slices/uiSlice';
 import Avatar from '../../common/Avatar/Avatar';
@@ -46,6 +47,7 @@ import './ManagerLayout.css';
 
 const moduleIconMap = {
     FolderKanban,
+    CheckSquare,
     Users,
     DollarSign,
     Handshake,
@@ -62,6 +64,12 @@ const moduleSubPages = {
         { label: 'Milestones', path: '/manager/projects?tab=milestones', matchTab: 'milestones', icon: Target },
         { label: 'Teams', path: '/manager/projects?tab=teams', matchTab: 'teams', icon: UsersRound },
         { label: 'Approvals', path: '/manager/projects?tab=approvals', matchTab: 'approvals', icon: Inbox },
+    ],
+    tasks: [
+        { label: 'All Tasks', path: '/manager/tasks?tab=all', matchTab: 'all', icon: ClipboardList },
+        { label: 'Delegation Center', path: '/manager/tasks?tab=delegated', matchTab: 'delegated', icon: UserCheck },
+        { label: 'Kanban Board', path: '/manager/tasks?tab=kanban', matchTab: 'kanban', icon: BarChart3 },
+        { label: 'Workload & Analytics', path: '/manager/tasks?tab=analytics', matchTab: 'analytics', icon: TrendingUp },
     ],
     hr: [
         { label: 'Dashboard', path: '/manager/hr?tab=directory', matchTab: 'directory', icon: Home },
