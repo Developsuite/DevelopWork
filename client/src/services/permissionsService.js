@@ -187,7 +187,7 @@ export const permissionsService = {
     },
 
     // Save permissions for a user (persists to Supabase profiles & caches locally)
-    async saveUserPermissions(userId, permissions = [], targetUser = null) {
+    async saveUserPermissions(userId, permissions = [], targetUser = null, newRole = null) {
         if (!userId) return;
 
         // 1. Save locally immediately for fast optimistic UI response
@@ -198,25 +198,35 @@ export const permissionsService = {
         try {
             const serializedPerms = permissions.length > 0 ? JSON.stringify(permissions) : null;
             
+            const updatePayload = {
+                assigned_module: serializedPerms,
+                permissions: permissions,
+                updated_at: new Date().toISOString()
+            };
+            if (newRole) {
+                updatePayload.role = newRole;
+            }
+
+            const fallbackPayload = {
+                assigned_module: serializedPerms,
+                updated_at: new Date().toISOString()
+            };
+            if (newRole) {
+                fallbackPayload.role = newRole;
+            }
+            
             // Try updating assigned_module and permissions (if column exists)
             try {
                 const { error } = await supabase
                     .from('profiles')
-                    .update({
-                        assigned_module: serializedPerms,
-                        permissions: permissions,
-                        updated_at: new Date().toISOString()
-                    })
+                    .update(updatePayload)
                     .eq('id', userId);
                 
                 if (error) {
                     // Fallback to assigned_module only
                     const { error: fallbackError } = await supabase
                         .from('profiles')
-                        .update({
-                            assigned_module: serializedPerms,
-                            updated_at: new Date().toISOString()
-                        })
+                        .update(fallbackPayload)
                         .eq('id', userId);
                     if (fallbackError) {
                         console.error('[RBAC] Failed to save permissions to Supabase profiles (fallback):', fallbackError);
@@ -226,10 +236,7 @@ export const permissionsService = {
                 console.warn('[RBAC] Standard profile update threw, trying assigned_module fallback:', innerErr);
                 await supabase
                     .from('profiles')
-                    .update({
-                        assigned_module: serializedPerms,
-                        updated_at: new Date().toISOString()
-                    })
+                    .update(fallbackPayload)
                     .eq('id', userId);
             }
         } catch (err) {

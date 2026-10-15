@@ -171,10 +171,12 @@ const Settings = () => {
     const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
     const [selectedUserForPermissions, setSelectedUserForPermissions] = useState(null);
     const [userPermissionsState, setUserPermissionsState] = useState([]);
+    const [userRoleState, setUserRoleState] = useState('employee');
 
     const handleOpenPermissionsModal = (targetUser) => {
         const uId = targetUser.id || targetUser._id;
         setSelectedUserForPermissions({ ...targetUser, id: uId });
+        setUserRoleState(targetUser.role || 'employee');
         let perms = permissionsService.getUserPermissions(targetUser);
         if (perms.length === 0 && targetUser.assigned_module) {
             perms = permissionsService.parsePermissionsData(targetUser.assigned_module);
@@ -212,10 +214,10 @@ const Settings = () => {
         if (!selectedUserForPermissions) return;
         const uId = selectedUserForPermissions.id || selectedUserForPermissions._id;
         try {
-            await permissionsService.saveUserPermissions(uId, userPermissionsState, selectedUserForPermissions);
+            await permissionsService.saveUserPermissions(uId, userPermissionsState, selectedUserForPermissions, userRoleState);
             dispatch(addToast({
                 title: 'Permissions Saved',
-                message: `Granular role-based access updated for ${selectedUserForPermissions.name}.`,
+                message: `Granular access & role updated for ${selectedUserForPermissions.name}.`,
                 type: 'success'
             }));
         } catch (err) {
@@ -1028,12 +1030,58 @@ const Settings = () => {
                                     {selectedUserForPermissions.name}
                                 </div>
                                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                    {selectedUserForPermissions.email} &bull; <span style={{ textTransform: 'capitalize' }}>{selectedUserForPermissions.role || 'Employee'}</span>
+                                    {selectedUserForPermissions.email} &bull; <span style={{ textTransform: 'capitalize', fontWeight: 600, color: userRoleState === 'manager' ? 'var(--primary-500)' : 'var(--text-muted)' }}>{userRoleState}</span>
                                 </div>
                             </div>
                             <div className="permissions-quick-actions">
                                 <Button variant="secondary" size="sm" onClick={handleSelectAllPermissions}>Grant All</Button>
                                 <Button variant="ghost" size="sm" onClick={handleClearAllPermissions}>Clear All</Button>
+                            </div>
+                        </div>
+
+                        {/* Account Portal Role Switcher */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'var(--bg-hover)', borderRadius: '10px', marginTop: '12px', marginBottom: '12px' }}>
+                            <div>
+                                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Account Portal Role</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Choose whether {selectedUserForPermissions.name} logs in as Staff Employee or Department Manager</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setUserRoleState('employee')}
+                                    style={{
+                                        padding: '6px 14px',
+                                        borderRadius: '8px',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        border: '1px solid',
+                                        borderColor: userRoleState === 'employee' ? 'var(--primary-500)' : 'var(--border-light)',
+                                        background: userRoleState === 'employee' ? 'var(--primary-500)' : 'transparent',
+                                        color: userRoleState === 'employee' ? '#fff' : 'var(--text-secondary)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    Staff Employee
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setUserRoleState('manager')}
+                                    style={{
+                                        padding: '6px 14px',
+                                        borderRadius: '8px',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        border: '1px solid',
+                                        borderColor: userRoleState === 'manager' ? 'var(--primary-500)' : 'var(--border-light)',
+                                        background: userRoleState === 'manager' ? 'var(--primary-500)' : 'transparent',
+                                        color: userRoleState === 'manager' ? '#fff' : 'var(--text-secondary)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    Department Manager
+                                </button>
                             </div>
                         </div>
 

@@ -1,6 +1,8 @@
 import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { permissionsService } from '../../services/permissionsService';
 
 // Import actual module components for 100% feature parity
 import ProjectManagement from '../../pages/ProjectManagement/ProjectManagement';
@@ -14,8 +16,9 @@ import Docs from '../../pages/Docs/Docs';
 import './ManagerDashboard.css';
 
 const ManagerDashboard = () => {
-    const { moduleKey } = useParams();
+    const { moduleKey: paramKey } = useParams();
     const { user } = useSelector((state) => state.auth);
+    const navigate = useNavigate();
 
     // Map module keys to their respective components
     const moduleComponents = {
@@ -29,8 +32,21 @@ const ManagerDashboard = () => {
         support: <div className="pm__empty">Support module coming soon...</div>
     };
 
-    // Determine the module to show (fallback to user's assigned module if moduleKey is missing)
-    const activeModule = moduleKey || user?.assignedModule;
+    const accessibleModules = permissionsService.getAccessibleModules(user);
+    const defaultModule = accessibleModules[0]?.key || 'projects';
+
+    // Safely extract clean module key
+    let activeModule = paramKey;
+    if (!activeModule || activeModule.startsWith('[') || !moduleComponents[activeModule]) {
+        activeModule = defaultModule;
+    }
+
+    // Auto-correct malformed URLs (e.g. /manager/["leads",...] -> /manager/leads)
+    useEffect(() => {
+        if (paramKey && (paramKey.startsWith('[') || !moduleComponents[paramKey])) {
+            navigate(`/manager/${defaultModule}`, { replace: true });
+        }
+    }, [paramKey, defaultModule, navigate]);
 
     return (
         <div className="manager-portal-content" style={{ height: '100%' }}>

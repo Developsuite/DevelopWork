@@ -397,3 +397,61 @@
         padding: 16px;
     }
 }
+
+/* ------- Manager Multi-Module Switcher ------- */
+.manager-module-switcher {
+    padding: 12px 14px 6px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.manager-module-switcher__label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.manager-module-switcher__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.manager-module-switcher__btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.manager-module-switcher__btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.manager-module-switcher__btn.active {
+    background: rgba(87, 155, 252, 0.1);
+    color: var(--primary-500);
+    border-color: rgba(87, 155, 252, 0.25);
+    font-weight: 600;
+}
+
+.manager-module-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+

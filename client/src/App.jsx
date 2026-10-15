@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { restoreSession, setUser } from './store/slices/authSlice';
 import { authService } from './services/authService';
+import { permissionsService } from './services/permissionsService';
 import { supabase } from './lib/supabase';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
@@ -189,8 +190,10 @@ function App() {
   // Smart redirect for root path based on role
   const getRootRedirect = () => {
     if (!isAuthenticated || !user) return '/landing';
-    if (user.role === 'manager' && user.assignedModule) {
-      return `/manager/${user.assignedModule}`;
+    if (user.role === 'manager') {
+      const accessibleModules = permissionsService.getAccessibleModules(user);
+      const firstMod = accessibleModules[0]?.key || 'projects';
+      return `/manager/${firstMod}`;
     }
     if (user.role === 'employee') {
       return '/employee/dashboard';
