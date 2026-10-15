@@ -139,7 +139,7 @@ export const managerService = {
 
         // Save granular permissions for this user
         if (permissions && permissions.length > 0) {
-            permissionsService.saveUserPermissions(userId, permissions);
+            await permissionsService.saveUserPermissions(userId, permissions, { email, name });
         }
 
         // Restore admin session so admin stays logged in seamlessly

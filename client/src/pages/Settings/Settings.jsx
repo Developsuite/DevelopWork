@@ -175,9 +175,9 @@ const Settings = () => {
     const handleOpenPermissionsModal = (targetUser) => {
         const uId = targetUser.id || targetUser._id;
         setSelectedUserForPermissions({ ...targetUser, id: uId });
-        let perms = permissionsService.getUserPermissions(uId);
+        let perms = permissionsService.getUserPermissions(targetUser);
         if (perms.length === 0 && targetUser.assigned_module) {
-            perms = [`${targetUser.assigned_module}.*`];
+            perms = permissionsService.parsePermissionsData(targetUser.assigned_module);
         }
         setUserPermissionsState(perms);
         setIsPermissionsModalOpen(true);
@@ -208,15 +208,24 @@ const Settings = () => {
         setUserPermissionsState([]);
     };
 
-    const handleSavePermissions = () => {
+    const handleSavePermissions = async () => {
         if (!selectedUserForPermissions) return;
         const uId = selectedUserForPermissions.id || selectedUserForPermissions._id;
-        permissionsService.saveUserPermissions(uId, userPermissionsState);
-        dispatch(addToast({
-            title: 'Permissions Saved',
-            message: `Granular role-based access updated for ${selectedUserForPermissions.name}.`,
-            type: 'success'
-        }));
+        try {
+            await permissionsService.saveUserPermissions(uId, userPermissionsState, selectedUserForPermissions);
+            dispatch(addToast({
+                title: 'Permissions Saved',
+                message: `Granular role-based access updated for ${selectedUserForPermissions.name}.`,
+                type: 'success'
+            }));
+        } catch (err) {
+            console.error('[Settings] Error saving permissions:', err);
+            dispatch(addToast({
+                title: 'Error',
+                message: 'Failed to sync permissions to database.',
+                type: 'error'
+            }));
+        }
         setIsPermissionsModalOpen(false);
         loadData();
     };
@@ -711,7 +720,7 @@ const Settings = () => {
                             {managers.length > 0 && (
                                 <div className="module-settings-list">
                                     {managers.map(m => {
-                                        const mod = DEPARTMENT_MODULES.find(dm => dm.key === m.assigned_module);
+                                        const mod = DEPARTMENT_MODULES.find(dm => dm.key === m.assigned_module || (m.assigned_module && m.assigned_module.includes(dm.key)));
                                         return (
                                             <div key={m.id} className="module-setting-item" style={{padding:'16px 20px'}}>
                                                 <div style={{display:'flex', alignItems:'center', gap:'14px', flex:1}}>
@@ -723,7 +732,7 @@ const Settings = () => {
                                                 </div>
                                                 <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
                                                     <span style={{padding:'4px 12px', borderRadius:'6px', fontSize:'11px', fontWeight:700, textTransform:'uppercase', background: mod ? 'rgba(87,155,252,0.08)' : 'rgba(0,0,0,0.04)', color: mod?.color || 'var(--text-muted)'}}>
-                                                        {mod?.label || m.assigned_module || 'Custom Access'}
+                                                        {mod?.label || (m.assigned_module?.startsWith('[') ? 'Custom RBAC Access' : m.assigned_module) || 'Custom Access'}
                                                     </span>
                                                     <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(m)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
                                                     <button className="brd__icon-btn" onClick={() => { setEditingManager(m); setIsEditModuleModalOpen(true); }} title="Change module"><Pencil size={14}/></button>
@@ -766,8 +775,8 @@ const Settings = () => {
                                             </div>
                                                 <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
                                                     <span style={{padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:600, background:'rgba(59,130,246,0.08)', color:'var(--primary-600)'}}>
-                                                        {permissionsService.getUserPermissions(e.id).length > 0 
-                                                            ? `${permissionsService.getUserPermissions(e.id).length} Permitted Features` 
+                                                        {permissionsService.getUserPermissions(e).length > 0 
+                                                            ? `${permissionsService.getUserPermissions(e).length} Permitted Features` 
                                                             : 'Standard Access'}
                                                     </span>
                                                     <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(e)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>

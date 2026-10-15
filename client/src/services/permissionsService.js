@@ -1,3 +1,5 @@
+import { supabase } from '../lib/supabase';
+
 // ==========================================
 // GRANULAR ROLE-BASED ACCESS CONTROL (RBAC) SERVICE
 // Manages module-level and feature-level permissions
@@ -95,27 +97,171 @@ export const permissionsService = {
         return SYSTEM_MODULES;
     },
 
-    // Get permissions list for a user
-    getUserPermissions(userId) {
-        if (!userId) return [];
-        try {
-            const raw = localStorage.getItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${userId}`);
-            if (raw) return JSON.parse(raw);
-        } catch (e) {
-            console.error('[RBAC] Error reading permissions for user:', userId, e);
+    // Extract raw permission keys from any string or data representation
+    parsePermissionsData(raw) {
+        if (!raw) return [];
+        if (Array.isArray(raw)) return raw;
+        if (typeof raw === 'string') {
+            const trimmed = raw.trim();
+            if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch (e) {
+                    console.warn('[RBAC] Error parsing permissions JSON string:', e);
+                }
+            }
+            if (trimmed.includes(',')) {
+                return trimmed.split(',').map(s => s.trim()).filter(Boolean);
+            }
+            // Single module key (e.g. 'leads')
+            const mod = SYSTEM_MODULES.find(m => m.key === trimmed);
+            if (mod) {
+                return [mod.key, `${mod.key}.*`, ...mod.features.map(f => f.key)];
+            }
+            return [trimmed];
         }
         return [];
     },
 
-    // Save permissions for a user
-    saveUserPermissions(userId, permissions = []) {
+    // Get permissions list for a user (accepts user object or userId string)
+    getUserPermissions(userOrId) {
+        if (!userOrId) return [];
+        const userId = typeof userOrId === 'object' ? (userOrId.id || userOrId._id) : userOrId;
+        const userObj = typeof userOrId === 'object' ? userOrId : null;
+
+        let permissions = [];
+
+        // 1. Direct permissions property on user object
+        if (userObj?.permissions) {
+            const parsed = this.parsePermissionsData(userObj.permissions);
+            if (parsed.length > 0) permissions.push(...parsed);
+        }
+
+        // 2. assignedModule / assigned_module on user object
+        const assignedMod = userObj?.assignedModule || userObj?.assigned_module;
+        if (assignedMod) {
+            const parsed = this.parsePermissionsData(assignedMod);
+            if (parsed.length > 0) permissions.push(...parsed);
+        }
+
+        // 3. LocalStorage by userId
+        if (userId) {
+            try {
+                const raw = localStorage.getItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${userId}`);
+                if (raw) {
+                    const parsed = this.parsePermissionsData(JSON.parse(raw));
+                    if (parsed.length > 0) permissions.push(...parsed);
+                }
+            } catch (e) {
+                console.error('[RBAC] Error reading permissions for user:', userId, e);
+            }
+        }
+
+        // 4. LocalStorage by user email if available
+        if (userObj?.email) {
+            try {
+                const raw = localStorage.getItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${userObj.email}`);
+                if (raw) {
+                    const parsed = this.parsePermissionsData(JSON.parse(raw));
+                    if (parsed.length > 0) permissions.push(...parsed);
+                }
+            } catch (e) {}
+        }
+
+        return Array.from(new Set(permissions));
+    },
+
+    // Save permissions locally
+    saveUserPermissionsLocally(userId, permissions = [], email = null) {
         if (!userId) return;
         try {
             localStorage.setItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${userId}`, JSON.stringify(permissions));
-            // Trigger storage event for live reactive update across components
+            if (email) {
+                localStorage.setItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${email}`, JSON.stringify(permissions));
+            }
             window.dispatchEvent(new CustomEvent('dwPermissionsUpdated', { detail: { userId, permissions } }));
         } catch (e) {
-            console.error('[RBAC] Error saving permissions for user:', userId, e);
+            console.error('[RBAC] Error saving permissions locally:', e);
+        }
+    },
+
+    // Save permissions for a user (persists to Supabase profiles & caches locally)
+    async saveUserPermissions(userId, permissions = [], targetUser = null) {
+        if (!userId) return;
+
+        // 1. Save locally immediately for fast optimistic UI response
+        const email = targetUser?.email || null;
+        this.saveUserPermissionsLocally(userId, permissions, email);
+
+        // 2. Persist to Supabase profiles table
+        try {
+            const serializedPerms = permissions.length > 0 ? JSON.stringify(permissions) : null;
+            
+            // Try updating assigned_module and permissions (if column exists)
+            try {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        assigned_module: serializedPerms,
+                        permissions: permissions,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', userId);
+                
+                if (error) {
+                    // Fallback to assigned_module only
+                    const { error: fallbackError } = await supabase
+                        .from('profiles')
+                        .update({
+                            assigned_module: serializedPerms,
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', userId);
+                    if (fallbackError) {
+                        console.error('[RBAC] Failed to save permissions to Supabase profiles (fallback):', fallbackError);
+                    }
+                }
+            } catch (innerErr) {
+                console.warn('[RBAC] Standard profile update threw, trying assigned_module fallback:', innerErr);
+                await supabase
+                    .from('profiles')
+                    .update({
+                        assigned_module: serializedPerms,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', userId);
+            }
+        } catch (err) {
+            console.error('[RBAC] Error saving permissions to database:', err);
+        }
+    },
+
+    // Fetch latest user permissions directly from Supabase
+    async fetchUserPermissions(userId) {
+        if (!userId) return [];
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('id, email, assigned_module, permissions')
+                .eq('id', userId)
+                .single();
+            if (error || !data) return this.getUserPermissions(userId);
+
+            let perms = [];
+            if (data.permissions && Array.isArray(data.permissions)) {
+                perms = data.permissions;
+            } else if (data.assigned_module) {
+                perms = this.parsePermissionsData(data.assigned_module);
+            }
+
+            if (perms.length > 0) {
+                this.saveUserPermissionsLocally(userId, perms, data.email);
+            }
+            return perms;
+        } catch (err) {
+            console.warn('[RBAC] Error fetching user permissions from Supabase:', err);
+            return this.getUserPermissions(userId);
         }
     },
 
@@ -125,7 +271,7 @@ export const permissionsService = {
         // Admins have unrestricted access to all modules and features
         if (user.role === 'admin') return true;
 
-        const userPerms = this.getUserPermissions(user.id);
+        const userPerms = this.getUserPermissions(user);
 
         // Check wildcard for module (e.g., 'finance.*' grants 'finance.invoices')
         const [modKey] = permissionKey.split('.');
@@ -138,8 +284,9 @@ export const permissionsService = {
             return true;
         }
 
-        // Backward compatibility: check assignedModule on legacy manager
-        if (user.role === 'manager' && user.assignedModule === modKey) {
+        // Module matching on assignedModule
+        const assignedMod = user.assignedModule || user.assigned_module;
+        if (assignedMod && (assignedMod === modKey || (typeof assignedMod === 'string' && assignedMod.includes(modKey)))) {
             return true;
         }
 
@@ -151,11 +298,16 @@ export const permissionsService = {
         if (!user) return [];
         if (user.role === 'admin') return SYSTEM_MODULES;
 
-        const userPerms = this.getUserPermissions(user.id);
-        const legacyMod = user.role === 'manager' ? user.assignedModule : null;
+        const userPerms = this.getUserPermissions(user);
+        const assignedMod = user.assignedModule || user.assigned_module;
 
         return SYSTEM_MODULES.filter(mod => {
-            if (legacyMod && legacyMod === mod.key) return true;
+            // Check direct assigned module
+            if (assignedMod) {
+                if (assignedMod === mod.key) return true;
+                if (typeof assignedMod === 'string' && assignedMod.includes(mod.key)) return true;
+            }
+            // Check permissions array
             if (userPerms.includes(mod.key) || userPerms.includes(`${mod.key}.*`)) return true;
             return mod.features.some(f => userPerms.includes(f.key));
         });
@@ -169,16 +321,18 @@ export const permissionsService = {
 
         if (user.role === 'admin') return mod.features;
 
-        const userPerms = this.getUserPermissions(user.id);
+        const userPerms = this.getUserPermissions(user);
         if (userPerms.includes(moduleKey) || userPerms.includes(`${moduleKey}.*`)) {
             return mod.features;
         }
 
-        // Legacy manager fallback
-        if (user.role === 'manager' && user.assignedModule === moduleKey && userPerms.length === 0) {
+        // Check if assigned module directly matches moduleKey
+        const assignedMod = user.assignedModule || user.assigned_module;
+        if (assignedMod === moduleKey && userPerms.length === 0) {
             return mod.features;
         }
 
-        return mod.features.filter(f => userPerms.includes(f.key));
+        const filtered = mod.features.filter(f => userPerms.includes(f.key));
+        return filtered.length > 0 ? filtered : mod.features;
     }
 };

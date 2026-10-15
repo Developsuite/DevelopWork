@@ -29,6 +29,7 @@ import { projectService } from '../../services/projectService';
 import { permissionsService } from '../../services/permissionsService';
 import { addToast } from '../../store/slices/uiSlice';
 import Avatar from '../../components/common/Avatar/Avatar';
+import { supabase } from '../../lib/supabase';
 import './EmployeeDashboard.css';
 
 const modIconMap = {
@@ -54,14 +55,67 @@ const EmployeeDashboard = () => {
     const [expandedTaskId, setExpandedTaskId] = useState(null);
     const [permittedModules, setPermittedModules] = useState(() => permissionsService.getAccessibleModules(user));
 
-    // Sync permissions dynamically
+    // Sync permissions dynamically and from Supabase database (multi-device)
     useEffect(() => {
-        const updateModules = () => {
-            setPermittedModules(permissionsService.getAccessibleModules(user));
+        let isMounted = true;
+        const updateModules = async () => {
+            if (!user) return;
+            if (isMounted) {
+                setPermittedModules(permissionsService.getAccessibleModules(user));
+            }
+            if (user.id) {
+                try {
+                    await permissionsService.fetchUserPermissions(user.id);
+                    if (isMounted) {
+                        setPermittedModules(permissionsService.getAccessibleModules(user));
+                    }
+                } catch (e) {
+                    console.warn('[EmployeeDashboard] Permissions sync warning:', e);
+                }
+            }
         };
+
         updateModules();
         window.addEventListener('dwPermissionsUpdated', updateModules);
-        return () => window.removeEventListener('dwPermissionsUpdated', updateModules);
+        window.addEventListener('focus', updateModules);
+
+        // Realtime sync when Workspace Admin grants permissions from another device
+        let channel = null;
+        if (user?.id) {
+            try {
+                channel = supabase
+                    .channel(`emp-dashboard-perms-${user.id}`)
+                    .on(
+                        'postgres_changes',
+                        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+                        (payload) => {
+                            if (payload.new) {
+                                permissionsService.fetchUserPermissions(user.id).then(() => {
+                                    if (isMounted) {
+                                        setPermittedModules(permissionsService.getAccessibleModules({
+                                            ...user,
+                                            assignedModule: payload.new.assigned_module,
+                                            permissions: payload.new.permissions
+                                        }));
+                                    }
+                                });
+                            }
+                        }
+                    )
+                    .subscribe();
+            } catch (err) {
+                console.warn('[EmployeeDashboard] Realtime subscription not available:', err);
+            }
+        }
+
+        return () => {
+            isMounted = false;
+            window.removeEventListener('dwPermissionsUpdated', updateModules);
+            window.removeEventListener('focus', updateModules);
+            if (channel) {
+                supabase.removeChannel(channel);
+            }
+        };
     }, [user]);
 
     const loadTasks = async () => {

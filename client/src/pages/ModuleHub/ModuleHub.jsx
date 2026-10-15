@@ -352,7 +352,7 @@ const ModuleHub = () => {
                     {filteredModules.map((mod, index) => {
                         const Icon = iconMap[mod.icon] || FileText;
                         const isActive = activeModules.includes(mod.key);
-                        const moduleAccess = realManagers.filter(m => m.assigned_module === mod.key);
+                        const moduleAccess = realManagers.filter(m => m.assigned_module === mod.key || (typeof m.assigned_module === 'string' && m.assigned_module.includes(mod.key)));
                         const moduleInvites = [];
 
                         return (

@@ -21,6 +21,7 @@ import {
     ExternalLink
 } from 'lucide-react';
 import { permissionsService } from '../../../services/permissionsService';
+import { supabase } from '../../../lib/supabase';
 import './EmployeeLayout.css';
 
 const navItems = [
@@ -49,18 +50,69 @@ const EmployeeLayout = () => {
     const [permittedModules, setPermittedModules] = useState(() => permissionsService.getAccessibleModules(user));
 
     useEffect(() => {
+        let isMounted = true;
         const handleWsUpdate = () => {
-            setWsName(localStorage.getItem('dw-workspace-name') || 'DevelopWork');
+            if (isMounted) setWsName(localStorage.getItem('dw-workspace-name') || 'DevelopWork');
         };
-        const handlePermsUpdate = () => {
-            setPermittedModules(permissionsService.getAccessibleModules(user));
+        const handlePermsUpdate = async () => {
+            if (!user) return;
+            if (isMounted) {
+                setPermittedModules(permissionsService.getAccessibleModules(user));
+            }
+            if (user.id) {
+                try {
+                    await permissionsService.fetchUserPermissions(user.id);
+                    if (isMounted) {
+                        setPermittedModules(permissionsService.getAccessibleModules(user));
+                    }
+                } catch (e) {
+                    console.warn('[EmployeeLayout] Permissions sync warning:', e);
+                }
+            }
         };
 
+        handlePermsUpdate();
         window.addEventListener('workspaceUpdate', handleWsUpdate);
         window.addEventListener('dwPermissionsUpdated', handlePermsUpdate);
+        window.addEventListener('focus', handlePermsUpdate);
+
+        // Realtime sync for sidebar modules
+        let channel = null;
+        if (user?.id) {
+            try {
+                channel = supabase
+                    .channel(`emp-layout-perms-${user.id}`)
+                    .on(
+                        'postgres_changes',
+                        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+                        (payload) => {
+                            if (payload.new) {
+                                permissionsService.fetchUserPermissions(user.id).then(() => {
+                                    if (isMounted) {
+                                        setPermittedModules(permissionsService.getAccessibleModules({
+                                            ...user,
+                                            assignedModule: payload.new.assigned_module,
+                                            permissions: payload.new.permissions
+                                        }));
+                                    }
+                                });
+                            }
+                        }
+                    )
+                    .subscribe();
+            } catch (err) {
+                console.warn('[EmployeeLayout] Realtime subscription warning:', err);
+            }
+        }
+
         return () => {
+            isMounted = false;
             window.removeEventListener('workspaceUpdate', handleWsUpdate);
             window.removeEventListener('dwPermissionsUpdated', handlePermsUpdate);
+            window.removeEventListener('focus', handlePermsUpdate);
+            if (channel) {
+                supabase.removeChannel(channel);
+            }
         };
     }, [user]);
 

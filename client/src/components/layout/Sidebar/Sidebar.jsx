@@ -192,14 +192,14 @@ const Sidebar = () => {
     }, [selectedModule]);
 
     // Live sync permissions state
-    const [userPermissions, setUserPermissions] = useState(() => permissionsService.getUserPermissions(user?.id));
+    const [userPermissions, setUserPermissions] = useState(() => permissionsService.getUserPermissions(user));
     useEffect(() => {
         const handlePermsUpdate = () => {
-            setUserPermissions(permissionsService.getUserPermissions(user?.id));
+            setUserPermissions(permissionsService.getUserPermissions(user));
         };
         window.addEventListener('dwPermissionsUpdated', handlePermsUpdate);
         return () => window.removeEventListener('dwPermissionsUpdated', handlePermsUpdate);
-    }, [user?.id]);
+    }, [user]);
 
     const accessibleModuleKeys = user?.role === 'admin'
         ? null
@@ -384,7 +384,7 @@ const Sidebar = () => {
             <aside className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
                 {/* Header */}
                 <div className="sidebar__header">
-                    <button className="workspace-switcher" onClick={() => navigate('/modules')}>
+                    <button className="workspace-switcher" onClick={() => navigate(user?.role === 'employee' ? '/employee/dashboard' : '/modules')}>
                         <div className="workspace-switcher__icon">
                             <img src="/images/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                         </div>
@@ -411,6 +411,21 @@ const Sidebar = () => {
                         placeholder="Search..."
                     />
                 </div>
+
+                {/* Employee Quick Cockpit Link */}
+                {user?.role === 'employee' && (
+                    <div style={{ padding: '0 12px 10px 12px' }}>
+                        <button
+                            className="sidebar__hub-btn"
+                            style={{ background: 'rgba(87, 155, 252, 0.08)', color: 'var(--primary-400)', border: '1px solid rgba(87, 155, 252, 0.2)' }}
+                            onClick={() => navigate('/employee/dashboard')}
+                            title="Return to Employee Dashboard"
+                        >
+                            <Home size={16} />
+                            <span>Employee Cockpit</span>
+                        </button>
+                    </div>
+                )}
 
                 {/* Module Hub — single dropdown button */}
                 <div className="sidebar__module-hub" ref={dropdownRef}>
