@@ -64,7 +64,7 @@ const moduleSubPages = {
     hr: [
         { label: 'Directory', path: '/hr?tab=directory', icon: Users },
         { label: 'Org Chart', path: '/hr?tab=org', icon: BarChart3 },
-
+        { label: 'Recruitment', path: '/hr?tab=recruitment', icon: Briefcase },
         { label: 'Payroll', path: '/hr?tab=payroll', icon: DollarSign },
         { label: 'Performance', path: '/hr?tab=performance', icon: Star },
     ],

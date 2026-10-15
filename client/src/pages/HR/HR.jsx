@@ -13,7 +13,8 @@ import Modal from '../../components/common/Modal/Modal';
 import { addToast } from '../../store/slices/uiSlice';
 import {
     Users, UserPlus, Calendar, Clock, TrendingUp, Award, Briefcase, DollarSign,
-    FileText, Search, MoreVertical, Mail, Phone, MapPin, Star, Check, X, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Download, LayoutGrid, List
+    FileText, Search, MoreVertical, Mail, Phone, MapPin, Star, Check, X, ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Download, LayoutGrid, List,
+    ExternalLink, Eye, CheckCircle2, UserCheck, Filter, ArrowRight, Building, Sparkles
 } from 'lucide-react';
 import hr1 from '../../assets/hr/1.png';
 import hr2 from '../../assets/hr/2.png';
@@ -227,6 +228,7 @@ const HR = () => {
     const tabs = [
         { id: 'directory', label: 'Directory', icon: Users },
         { id: 'org', label: 'Org Chart', icon: TrendingUp },
+        { id: 'recruitment', label: 'Recruitment', icon: Briefcase },
         { id: 'payroll', label: 'Payroll', icon: DollarSign },
         { id: 'performance', label: 'Performance', icon: Award },
     ];
@@ -768,6 +770,298 @@ const HR = () => {
         }
     };
 
+    // ========== RECRUITMENT STATE ==========
+    const [jobPostings, setJobPostings] = useState(() => hrService.getJobPostings());
+    const [applicants, setApplicants] = useState(() => hrService.getApplicants());
+    const [recruitmentView, setRecruitmentView] = useState('pipeline'); // 'pipeline' | 'jobs'
+    const [selectedJobFilter, setSelectedJobFilter] = useState('all');
+    const [applicantSearch, setApplicantSearch] = useState('');
+    const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+    const [isApplicantModalOpen, setIsApplicantModalOpen] = useState(false);
+    const [isCandidateModalOpen, setIsCandidateModalOpen] = useState(false);
+    const [selectedCandidate, setSelectedCandidate] = useState(null);
+
+    const [jobFormData, setJobFormData] = useState({
+        id: null,
+        title: '',
+        department: 'Engineering',
+        type: 'Full-time',
+        location: 'Islamabad (Hybrid)',
+        experience: '3+ years',
+        minSalary: '',
+        maxSalary: '',
+        status: 'Active',
+        description: '',
+        skills: ''
+    });
+
+    const [applicantFormData, setApplicantFormData] = useState({
+        id: null,
+        name: '',
+        email: '',
+        phone: '',
+        jobId: '',
+        stage: 'Applied',
+        experience: '2 years',
+        expectedSalary: '',
+        rating: 5,
+        notes: '',
+        portfolio: ''
+    });
+
+    const pipelineStages = [
+        { key: 'Applied', label: 'Applied', color: '#3B82F6', badgeBg: 'rgba(59, 130, 246, 0.12)' },
+        { key: 'Screening', label: 'Screening', color: '#8B5CF6', badgeBg: 'rgba(139, 92, 246, 0.12)' },
+        { key: 'Interview', label: 'Interview', color: '#06B6D4', badgeBg: 'rgba(6, 182, 212, 0.12)' },
+        { key: 'Offered', label: 'Offered', color: '#F59E0B', badgeBg: 'rgba(245, 158, 11, 0.12)' },
+        { key: 'Hired', label: 'Hired', color: '#10B981', badgeBg: 'rgba(16, 185, 129, 0.12)' },
+        { key: 'Rejected', label: 'Rejected', color: '#EF4444', badgeBg: 'rgba(239, 68, 68, 0.12)' }
+    ];
+
+    const handleOpenJobModal = (job = null) => {
+        if (job) {
+            setJobFormData({
+                id: job.id,
+                title: job.title || '',
+                department: job.department || 'Engineering',
+                type: job.type || 'Full-time',
+                location: job.location || 'Islamabad',
+                experience: job.experience || '2+ years',
+                minSalary: job.minSalary || '',
+                maxSalary: job.maxSalary || '',
+                status: job.status || 'Active',
+                description: job.description || '',
+                skills: job.skills || ''
+            });
+        } else {
+            setJobFormData({
+                id: null,
+                title: '',
+                department: 'Engineering',
+                type: 'Full-time',
+                location: 'Islamabad (Hybrid)',
+                experience: '3+ years',
+                minSalary: '',
+                maxSalary: '',
+                status: 'Active',
+                description: '',
+                skills: ''
+            });
+        }
+        setIsJobModalOpen(true);
+    };
+
+    const handleSaveJob = () => {
+        if (!jobFormData.title.trim()) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Job title is required.', type: 'warning' }));
+            return;
+        }
+
+        let updated;
+        if (jobFormData.id) {
+            updated = jobPostings.map(j => j.id === jobFormData.id ? {
+                ...j,
+                ...jobFormData,
+                minSalary: parseFloat(jobFormData.minSalary) || 0,
+                maxSalary: parseFloat(jobFormData.maxSalary) || 0,
+            } : j);
+            dispatch(addToast({ title: 'Job Updated', message: `${jobFormData.title} updated successfully.`, type: 'success' }));
+        } else {
+            const newJob = {
+                ...jobFormData,
+                id: `job-${Date.now()}`,
+                minSalary: parseFloat(jobFormData.minSalary) || 0,
+                maxSalary: parseFloat(jobFormData.maxSalary) || 0,
+                postedDate: new Date().toISOString().split('T')[0]
+            };
+            updated = [newJob, ...jobPostings];
+            dispatch(addToast({ title: 'Job Created', message: `${jobFormData.title} posting published.`, type: 'success' }));
+        }
+
+        setJobPostings(updated);
+        hrService.saveJobPostings(updated);
+        setIsJobModalOpen(false);
+    };
+
+    const handleDeleteJob = (jobId) => {
+        const updated = jobPostings.filter(j => j.id !== jobId);
+        setJobPostings(updated);
+        hrService.saveJobPostings(updated);
+        dispatch(addToast({ title: 'Job Removed', message: 'Job opening has been deleted.', type: 'info' }));
+    };
+
+    const handleToggleJobStatus = (jobId) => {
+        const updated = jobPostings.map(j => {
+            if (j.id === jobId) {
+                const nextStatus = j.status === 'Active' ? 'Closed' : 'Active';
+                return { ...j, status: nextStatus };
+            }
+            return j;
+        });
+        setJobPostings(updated);
+        hrService.saveJobPostings(updated);
+        dispatch(addToast({ title: 'Status Changed', message: 'Job status updated.', type: 'info' }));
+    };
+
+    const handleOpenApplicantModal = (app = null, defaultJobId = null) => {
+        if (app) {
+            setApplicantFormData({
+                id: app.id,
+                name: app.name,
+                email: app.email,
+                phone: app.phone,
+                jobId: app.jobId,
+                stage: app.stage,
+                experience: app.experience,
+                expectedSalary: app.expectedSalary,
+                rating: app.rating || 5,
+                notes: app.notes || '',
+                portfolio: app.portfolio || ''
+            });
+        } else {
+            const initialJob = defaultJobId || (jobPostings.length > 0 ? jobPostings[0].id : '');
+            setApplicantFormData({
+                id: null,
+                name: '',
+                email: '',
+                phone: '',
+                jobId: initialJob,
+                stage: 'Applied',
+                experience: '2 years',
+                expectedSalary: '',
+                rating: 5,
+                notes: '',
+                portfolio: ''
+            });
+        }
+        setIsApplicantModalOpen(true);
+    };
+
+    const handleSaveApplicant = () => {
+        if (!applicantFormData.name.trim()) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Applicant name is required.', type: 'warning' }));
+            return;
+        }
+        if (!applicantFormData.jobId) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please select a job position.', type: 'warning' }));
+            return;
+        }
+
+        const selectedJob = jobPostings.find(j => j.id === applicantFormData.jobId);
+        let updated;
+        if (applicantFormData.id) {
+            updated = applicants.map(a => a.id === applicantFormData.id ? {
+                ...a,
+                ...applicantFormData,
+                jobTitle: selectedJob?.title || a.jobTitle,
+                department: selectedJob?.department || a.department,
+                expectedSalary: parseFloat(applicantFormData.expectedSalary) || 0
+            } : a);
+            dispatch(addToast({ title: 'Candidate Updated', message: `${applicantFormData.name}'s info has been saved.`, type: 'success' }));
+        } else {
+            const newApp = {
+                ...applicantFormData,
+                id: `app-${Date.now()}`,
+                jobTitle: selectedJob?.title || 'Open Position',
+                department: selectedJob?.department || 'General',
+                expectedSalary: parseFloat(applicantFormData.expectedSalary) || 0,
+                appliedDate: new Date().toISOString().split('T')[0]
+            };
+            updated = [newApp, ...applicants];
+            dispatch(addToast({ title: 'Candidate Added', message: `${applicantFormData.name} added to pipeline.`, type: 'success' }));
+        }
+
+        setApplicants(updated);
+        hrService.saveApplicants(updated);
+        setIsApplicantModalOpen(false);
+    };
+
+    const handleMoveStage = (applicantId, newStage) => {
+        const updated = applicants.map(a => a.id === applicantId ? { ...a, stage: newStage } : a);
+        setApplicants(updated);
+        hrService.saveApplicants(updated);
+        if (selectedCandidate && selectedCandidate.id === applicantId) {
+            setSelectedCandidate({ ...selectedCandidate, stage: newStage });
+        }
+        dispatch(addToast({ title: 'Stage Updated', message: `Candidate moved to ${newStage}.`, type: 'info' }));
+    };
+
+    const handleDeleteApplicant = (appId) => {
+        const updated = applicants.filter(a => a.id !== appId);
+        setApplicants(updated);
+        hrService.saveApplicants(updated);
+        if (selectedCandidate && selectedCandidate.id === appId) {
+            setIsCandidateModalOpen(false);
+            setSelectedCandidate(null);
+        }
+        dispatch(addToast({ title: 'Candidate Removed', message: 'Candidate removed from pipeline.', type: 'info' }));
+    };
+
+    const handleConvertToEmployee = async (applicant) => {
+        try {
+            const correspondingJob = jobPostings.find(j => j.id === applicant.jobId);
+            const skillsArr = correspondingJob?.skills 
+                ? correspondingJob.skills.split(',').map(s => s.trim()) 
+                : ['Professional'];
+
+            await hrService.createEmployee({
+                name: applicant.name,
+                role: applicant.jobTitle || correspondingJob?.title || 'Team Member',
+                department: applicant.department || correspondingJob?.department || 'Engineering',
+                employment_type: correspondingJob?.type || 'Full-time',
+                status: 'Active',
+                email: applicant.email || '',
+                phone: applicant.phone || '',
+                location: correspondingJob?.location || 'Islamabad',
+                skills: skillsArr,
+                salary: parseFloat(applicant.expectedSalary) || parseFloat(correspondingJob?.minSalary) || 120000,
+                bonus: 0,
+                deductions: 0,
+                commission: 0,
+                manager: 'CEO',
+                is_manager: false,
+                join_date: new Date().toISOString().split('T')[0]
+            });
+
+            // Update candidate stage to Hired
+            const updated = applicants.map(a => a.id === applicant.id ? { ...a, stage: 'Hired' } : a);
+            setApplicants(updated);
+            hrService.saveApplicants(updated);
+            if (selectedCandidate && selectedCandidate.id === applicant.id) {
+                setSelectedCandidate({ ...selectedCandidate, stage: 'Hired' });
+            }
+
+            await loadEmployees();
+            dispatch(addToast({
+                title: 'Converted to Employee!',
+                message: `${applicant.name} has been added to the Employee Directory!`,
+                type: 'success'
+            }));
+        } catch (err) {
+            console.error('Error converting candidate to employee:', err);
+            dispatch(addToast({ title: 'Conversion Failed', message: err.message || 'Could not convert candidate.', type: 'error' }));
+        }
+    };
+
+    const filteredApplicants = useMemo(() => {
+        return applicants.filter(app => {
+            const matchesJob = selectedJobFilter === 'all' || app.jobId === selectedJobFilter;
+            const matchesSearch = !applicantSearch || 
+                app.name.toLowerCase().includes(applicantSearch.toLowerCase()) ||
+                (app.jobTitle && app.jobTitle.toLowerCase().includes(applicantSearch.toLowerCase())) ||
+                (app.email && app.email.toLowerCase().includes(applicantSearch.toLowerCase()));
+            return matchesJob && matchesSearch;
+        });
+    }, [applicants, selectedJobFilter, applicantSearch]);
+
+    const recruitmentMetrics = useMemo(() => {
+        const activeJobs = jobPostings.filter(j => j.status === 'Active').length;
+        const totalCandidates = applicants.length;
+        const inInterview = applicants.filter(a => a.stage === 'Interview').length;
+        const hiredCount = applicants.filter(a => a.stage === 'Hired').length;
+        return { activeJobs, totalCandidates, inInterview, hiredCount };
+    }, [jobPostings, applicants]);
+
     return (
         <div className="hr-dashboard">
             <div className="page-header">
@@ -809,7 +1103,14 @@ const HR = () => {
                     ))}
                 </div>
                 <div>
-                    <Button variant="primary" icon={UserPlus} onClick={handleAddEmployee}>Add Employee</Button>
+                    {activeTab === 'recruitment' ? (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <Button variant="secondary" icon={Briefcase} onClick={() => handleOpenJobModal()}>Post Job</Button>
+                            <Button variant="primary" icon={UserPlus} onClick={() => handleOpenApplicantModal()}>Add Candidate</Button>
+                        </div>
+                    ) : (
+                        <Button variant="primary" icon={UserPlus} onClick={handleAddEmployee}>Add Employee</Button>
+                    )}
                 </div>
             </div>
 
@@ -1199,6 +1500,371 @@ const HR = () => {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* === RECRUITMENT === */}
+            {activeTab === 'recruitment' && (
+                <div className="recruitment-container">
+                    {/* Recruitment Metrics Bar */}
+                    <div className="recruitment-metrics">
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <span className="recruitment-metric-card__val">{recruitmentMetrics.activeJobs}</span>
+                                <span className="recruitment-metric-card__lbl">Active Openings</span>
+                            </div>
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3B82F6' }}>
+                                <Briefcase size={20} />
+                            </div>
+                        </div>
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <span className="recruitment-metric-card__val">{recruitmentMetrics.totalCandidates}</span>
+                                <span className="recruitment-metric-card__lbl">Total Candidates</span>
+                            </div>
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8B5CF6' }}>
+                                <Users size={20} />
+                            </div>
+                        </div>
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <span className="recruitment-metric-card__val">{recruitmentMetrics.inInterview}</span>
+                                <span className="recruitment-metric-card__lbl">In Interview</span>
+                            </div>
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06B6D4' }}>
+                                <Clock size={20} />
+                            </div>
+                        </div>
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <span className="recruitment-metric-card__val">{recruitmentMetrics.hiredCount}</span>
+                                <span className="recruitment-metric-card__lbl">Hired / Placed</span>
+                            </div>
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10B981' }}>
+                                <UserCheck size={20} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Section Card */}
+                    <div className="hr-section glass-card">
+                        <div className="recruitment-subbar">
+                            <div className="recruitment-subbar__left">
+                                <div className="recruitment-view-switcher">
+                                    <button 
+                                        type="button"
+                                        className={`recruitment-view-btn ${recruitmentView === 'pipeline' ? 'active' : ''}`}
+                                        onClick={() => setRecruitmentView('pipeline')}
+                                    >
+                                        <LayoutGrid size={15} />
+                                        <span>Candidate Pipeline</span>
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        className={`recruitment-view-btn ${recruitmentView === 'jobs' ? 'active' : ''}`}
+                                        onClick={() => setRecruitmentView('jobs')}
+                                    >
+                                        <Briefcase size={15} />
+                                        <span>Job Openings ({jobPostings.length})</span>
+                                    </button>
+                                </div>
+
+                                {recruitmentView === 'pipeline' && (
+                                    <>
+                                        <div className="hr-search" style={{ width: '220px' }}>
+                                            <Search size={15} style={{ color: 'var(--text-muted)' }} />
+                                            <input 
+                                                type="text"
+                                                placeholder="Search candidates..."
+                                                value={applicantSearch}
+                                                onChange={e => setApplicantSearch(e.target.value)}
+                                                style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '13px', color: 'var(--text-primary)' }}
+                                            />
+                                        </div>
+
+                                        <select 
+                                            className="recruitment-select"
+                                            value={selectedJobFilter}
+                                            onChange={e => setSelectedJobFilter(e.target.value)}
+                                        >
+                                            <option value="all">All Job Positions</option>
+                                            {jobPostings.map(job => (
+                                                <option key={job.id} value={job.id}>{job.title}</option>
+                                            ))}
+                                        </select>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className="recruitment-subbar__right">
+                                <Button variant="secondary" size="sm" icon={Briefcase} onClick={() => handleOpenJobModal()}>Post Job</Button>
+                                <Button variant="primary" size="sm" icon={UserPlus} onClick={() => handleOpenApplicantModal()}>Add Candidate</Button>
+                            </div>
+                        </div>
+
+                        {/* Pipeline Kanban View */}
+                        {recruitmentView === 'pipeline' && (
+                            <div className="recruitment-pipeline-scroll">
+                                <div className="recruitment-pipeline-board">
+                                    {pipelineStages.map(stage => {
+                                        const stageApplicants = filteredApplicants.filter(a => a.stage === stage.key);
+                                        return (
+                                            <div key={stage.key} className="recruitment-pipeline-col">
+                                                <div className="recruitment-col-header">
+                                                    <div className="recruitment-col-header__title">
+                                                        <span className="recruitment-col-dot" style={{ backgroundColor: stage.color }} />
+                                                        <span>{stage.label}</span>
+                                                    </div>
+                                                    <span 
+                                                        className="recruitment-col-badge" 
+                                                        style={{ backgroundColor: stage.badgeBg, color: stage.color }}
+                                                    >
+                                                        {stageApplicants.length}
+                                                    </span>
+                                                </div>
+
+                                                <div className="recruitment-col-body">
+                                                    {stageApplicants.length === 0 ? (
+                                                        <div className="recruitment-empty-col">
+                                                            No candidates in {stage.label}
+                                                        </div>
+                                                    ) : (
+                                                        stageApplicants.map(applicant => (
+                                                            <div 
+                                                                key={applicant.id} 
+                                                                className="recruitment-card"
+                                                                onClick={() => {
+                                                                    setSelectedCandidate(applicant);
+                                                                    setIsCandidateModalOpen(true);
+                                                                }}
+                                                            >
+                                                                <div className="recruitment-card__top">
+                                                                    <div className="recruitment-card__name">{applicant.name}</div>
+                                                                    {applicant.rating && (
+                                                                        <div className="recruitment-card__rating">
+                                                                            <Star size={12} fill="#F59E0B" />
+                                                                            <span>{applicant.rating}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="recruitment-card__job">
+                                                                    {applicant.jobTitle}
+                                                                </div>
+
+                                                                <div className="recruitment-card__meta">
+                                                                    <div className="recruitment-card__meta-row">
+                                                                        <span>Exp: {applicant.experience || 'N/A'}</span>
+                                                                        <span className="recruitment-card__salary">
+                                                                            {currLabel}{parseFloat(applicant.expectedSalary || 0).toLocaleString()}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="recruitment-card__meta-row">
+                                                                        <span>{applicant.department}</span>
+                                                                        <span>{applicant.appliedDate}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Quick Contact & Links */}
+                                                                <div className="recruitment-card__contact" onClick={e => e.stopPropagation()}>
+                                                                    {applicant.email && (
+                                                                        <button 
+                                                                            type="button" 
+                                                                            className="recruitment-contact-btn" 
+                                                                            title={`Email: ${applicant.email}`}
+                                                                            onClick={() => {
+                                                                                if (navigator.clipboard) navigator.clipboard.writeText(applicant.email);
+                                                                                dispatch(addToast({ title: 'Email Copied', message: applicant.email, type: 'info' }));
+                                                                            }}
+                                                                        >
+                                                                            <Mail size={13} />
+                                                                        </button>
+                                                                    )}
+                                                                    {applicant.phone && (
+                                                                        <button 
+                                                                            type="button" 
+                                                                            className="recruitment-contact-btn" 
+                                                                            title={`Phone: ${applicant.phone}`}
+                                                                            onClick={() => {
+                                                                                if (navigator.clipboard) navigator.clipboard.writeText(applicant.phone);
+                                                                                dispatch(addToast({ title: 'Phone Copied', message: applicant.phone, type: 'info' }));
+                                                                            }}
+                                                                        >
+                                                                            <Phone size={13} />
+                                                                        </button>
+                                                                    )}
+                                                                    {applicant.portfolio && (
+                                                                        <a 
+                                                                            href={applicant.portfolio} 
+                                                                            target="_blank" 
+                                                                            rel="noreferrer" 
+                                                                            className="recruitment-contact-btn" 
+                                                                            title="Portfolio Link"
+                                                                        >
+                                                                            <ExternalLink size={13} />
+                                                                        </a>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Card Footer Actions */}
+                                                                <div className="recruitment-card__footer" onClick={e => e.stopPropagation()}>
+                                                                    <select
+                                                                        className="recruitment-stage-select"
+                                                                        value={applicant.stage}
+                                                                        onChange={e => handleMoveStage(applicant.id, e.target.value)}
+                                                                    >
+                                                                        {pipelineStages.map(s => (
+                                                                            <option key={s.key} value={s.key}>Move: {s.label}</option>
+                                                                        ))}
+                                                                    </select>
+
+                                                                    <div className="recruitment-card__action-btns">
+                                                                        <button 
+                                                                            type="button"
+                                                                            className="hr-icon-btn"
+                                                                            title="Edit Candidate"
+                                                                            onClick={() => handleOpenApplicantModal(applicant)}
+                                                                        >
+                                                                            <Pencil size={13} />
+                                                                        </button>
+                                                                        <button 
+                                                                            type="button"
+                                                                            className="hr-icon-btn hr-icon-btn--danger"
+                                                                            title="Remove Candidate"
+                                                                            onClick={() => handleDeleteApplicant(applicant.id)}
+                                                                        >
+                                                                            <Trash2 size={13} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* One-Click Convert to Employee */}
+                                                                {applicant.stage === 'Hired' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="recruitment-hire-banner-btn"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleConvertToEmployee(applicant);
+                                                                        }}
+                                                                    >
+                                                                        <UserCheck size={13} />
+                                                                        <span>Add to Employee Directory</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Job Openings View */}
+                        {recruitmentView === 'jobs' && (
+                            <div className="recruitment-jobs-grid">
+                                {jobPostings.map(job => {
+                                    const jobApplicantCount = applicants.filter(a => a.jobId === job.id).length;
+                                    const isClosed = job.status === 'Closed';
+
+                                    return (
+                                        <div key={job.id} className="recruitment-job-card">
+                                            <div className="recruitment-job-card__header">
+                                                <div>
+                                                    <h3 className="recruitment-job-card__title">{job.title}</h3>
+                                                    <div className="recruitment-job-card__pills">
+                                                        <span className="recruitment-job-card__pill">{job.department}</span>
+                                                        <span className="recruitment-job-card__pill">{job.type}</span>
+                                                        <span className="recruitment-job-card__pill">{job.location}</span>
+                                                    </div>
+                                                </div>
+                                                <Badge 
+                                                    variant={isClosed ? 'secondary' : 'success'}
+                                                    style={{ cursor: 'pointer' }}
+                                                    onClick={() => handleToggleJobStatus(job.id)}
+                                                    title="Click to toggle status"
+                                                >
+                                                    {job.status}
+                                                </Badge>
+                                            </div>
+
+                                            {job.description && (
+                                                <p className="recruitment-job-card__desc">{job.description}</p>
+                                            )}
+
+                                            <div className="recruitment-job-card__salary">
+                                                <DollarSign size={14} />
+                                                <span>
+                                                    Budget: {currLabel}{parseFloat(job.minSalary || 0).toLocaleString()} - {currLabel}{parseFloat(job.maxSalary || 0).toLocaleString()}
+                                                </span>
+                                            </div>
+
+                                            {job.skills && (
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                    {job.skills.split(',').map((skill, idx) => (
+                                                        <span key={idx} style={{ 
+                                                            fontSize: '10px', 
+                                                            padding: '2px 6px', 
+                                                            borderRadius: '4px', 
+                                                            background: 'rgba(59, 130, 246, 0.08)', 
+                                                            color: 'var(--primary-600)',
+                                                            fontWeight: 500 
+                                                        }}>
+                                                            {skill.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className="recruitment-job-card__footer">
+                                                <button
+                                                    type="button"
+                                                    className="recruitment-applicant-badge"
+                                                    onClick={() => {
+                                                        setSelectedJobFilter(job.id);
+                                                        setRecruitmentView('pipeline');
+                                                    }}
+                                                >
+                                                    <Users size={14} />
+                                                    <span>{jobApplicantCount} Candidates applied</span>
+                                                </button>
+
+                                                <div style={{ display: 'flex', gap: '6px' }}>
+                                                    <button 
+                                                        type="button" 
+                                                        className="hr-icon-btn" 
+                                                        title="Add candidate for this job"
+                                                        onClick={() => handleOpenApplicantModal(null, job.id)}
+                                                    >
+                                                        <UserPlus size={13} />
+                                                    </button>
+                                                    <button 
+                                                        type="button" 
+                                                        className="hr-icon-btn" 
+                                                        title="Edit Job"
+                                                        onClick={() => handleOpenJobModal(job)}
+                                                    >
+                                                        <Pencil size={13} />
+                                                    </button>
+                                                    <button 
+                                                        type="button" 
+                                                        className="hr-icon-btn hr-icon-btn--danger" 
+                                                        title="Delete Job"
+                                                        onClick={() => handleDeleteJob(job.id)}
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -1625,6 +2291,414 @@ const HR = () => {
                 }
             >
                 <p>Are you sure you want to remove <strong>{deleteConfig.name}</strong>? This action cannot be undone.</p>
+            </Modal>
+
+            {/* Modal: Job Posting */}
+            <Modal
+                isOpen={isJobModalOpen}
+                onClose={() => setIsJobModalOpen(false)}
+                title={jobFormData.id ? "Edit Job Posting" : "Create New Job Opening"}
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setIsJobModalOpen(false)}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSaveJob}>
+                            {jobFormData.id ? "Update Posting" : "Publish Job Opening"}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="dw-form">
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Job Title *</label>
+                            <input
+                                type="text"
+                                className="dw-form-input"
+                                placeholder="e.g. Senior Frontend Engineer"
+                                value={jobFormData.title}
+                                onChange={e => setJobFormData({ ...jobFormData, title: e.target.value })}
+                                autoFocus
+                            />
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Department</label>
+                            <select
+                                className="dw-form-input"
+                                value={jobFormData.department}
+                                onChange={e => setJobFormData({ ...jobFormData, department: e.target.value })}
+                            >
+                                <option>Engineering</option>
+                                <option>Design</option>
+                                <option>Operations</option>
+                                <option>Marketing</option>
+                                <option>HR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Employment Type</label>
+                            <select
+                                className="dw-form-input"
+                                value={jobFormData.type}
+                                onChange={e => setJobFormData({ ...jobFormData, type: e.target.value })}
+                            >
+                                <option>Full-time</option>
+                                <option>Part-time</option>
+                                <option>Contract</option>
+                                <option>Remote</option>
+                            </select>
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Location</label>
+                            <input
+                                type="text"
+                                className="dw-form-input"
+                                placeholder="e.g. Islamabad (Hybrid) or Remote"
+                                value={jobFormData.location}
+                                onChange={e => setJobFormData({ ...jobFormData, location: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Experience Required</label>
+                            <input
+                                type="text"
+                                className="dw-form-input"
+                                placeholder="e.g. 3+ years"
+                                value={jobFormData.experience}
+                                onChange={e => setJobFormData({ ...jobFormData, experience: e.target.value })}
+                            />
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Status</label>
+                            <select
+                                className="dw-form-input"
+                                value={jobFormData.status}
+                                onChange={e => setJobFormData({ ...jobFormData, status: e.target.value })}
+                            >
+                                <option>Active</option>
+                                <option>Closed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Min Salary Budget ({currUnit})</label>
+                            <input
+                                type="number"
+                                className="dw-form-input"
+                                placeholder="e.g. 150000"
+                                value={jobFormData.minSalary}
+                                onChange={e => setJobFormData({ ...jobFormData, minSalary: e.target.value })}
+                            />
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Max Salary Budget ({currUnit})</label>
+                            <input
+                                type="number"
+                                className="dw-form-input"
+                                placeholder="e.g. 220000"
+                                value={jobFormData.maxSalary}
+                                onChange={e => setJobFormData({ ...jobFormData, maxSalary: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Required Skills (Comma separated)</label>
+                        <input
+                            type="text"
+                            className="dw-form-input"
+                            placeholder="e.g. React, Node.js, TypeScript, PostgreSQL"
+                            value={jobFormData.skills}
+                            onChange={e => setJobFormData({ ...jobFormData, skills: e.target.value })}
+                        />
+                    </div>
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Role Description & Objectives</label>
+                        <textarea
+                            className="dw-form-input"
+                            style={{ height: '90px' }}
+                            placeholder="Describe primary responsibilities and qualifications..."
+                            value={jobFormData.description}
+                            onChange={e => setJobFormData({ ...jobFormData, description: e.target.value })}
+                        />
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal: Add/Edit Candidate */}
+            <Modal
+                isOpen={isApplicantModalOpen}
+                onClose={() => setIsApplicantModalOpen(false)}
+                title={applicantFormData.id ? "Edit Candidate Details" : "Add New Candidate"}
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setIsApplicantModalOpen(false)}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSaveApplicant}>
+                            {applicantFormData.id ? "Save Changes" : "Add to Pipeline"}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="dw-form">
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Candidate Name *</label>
+                            <input
+                                type="text"
+                                className="dw-form-input"
+                                placeholder="e.g. Sara Ahmed"
+                                value={applicantFormData.name}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, name: e.target.value })}
+                                autoFocus
+                            />
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Target Job Opening *</label>
+                            <select
+                                className="dw-form-input"
+                                value={applicantFormData.jobId}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, jobId: e.target.value })}
+                            >
+                                <option value="">Select Job Opening</option>
+                                {jobPostings.map(j => (
+                                    <option key={j.id} value={j.id}>{j.title} ({j.department})</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Email Address</label>
+                            <input
+                                type="email"
+                                className="dw-form-input"
+                                placeholder="candidate@example.com"
+                                value={applicantFormData.email}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, email: e.target.value })}
+                            />
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Phone Number</label>
+                            <input
+                                type="text"
+                                className="dw-form-input"
+                                placeholder="+92 300 1234567"
+                                value={applicantFormData.phone}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, phone: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Pipeline Stage</label>
+                            <select
+                                className="dw-form-input"
+                                value={applicantFormData.stage}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, stage: e.target.value })}
+                            >
+                                {pipelineStages.map(s => (
+                                    <option key={s.key} value={s.key}>{s.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Years of Experience</label>
+                            <input
+                                type="text"
+                                className="dw-form-input"
+                                placeholder="e.g. 3 years"
+                                value={applicantFormData.experience}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, experience: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div className="hr-profile-info-grid">
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Expected Salary ({currUnit})</label>
+                            <input
+                                type="number"
+                                className="dw-form-input"
+                                placeholder="e.g. 180000"
+                                value={applicantFormData.expectedSalary}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, expectedSalary: e.target.value })}
+                            />
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Candidate Rating (1 - 5 ★)</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="5"
+                                step="0.1"
+                                className="dw-form-input"
+                                value={applicantFormData.rating}
+                                onChange={e => setApplicantFormData({ ...applicantFormData, rating: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Portfolio / Resume / LinkedIn Link</label>
+                        <input
+                            type="text"
+                            className="dw-form-input"
+                            placeholder="https://linkedin.com/in/... or GitHub / Behance"
+                            value={applicantFormData.portfolio}
+                            onChange={e => setApplicantFormData({ ...applicantFormData, portfolio: e.target.value })}
+                        />
+                    </div>
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Interviewer Notes & Assessment</label>
+                        <textarea
+                            className="dw-form-input"
+                            style={{ height: '80px' }}
+                            placeholder="Initial impressions, evaluation notes, test results..."
+                            value={applicantFormData.notes}
+                            onChange={e => setApplicantFormData({ ...applicantFormData, notes: e.target.value })}
+                        />
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal: Candidate Full Profile */}
+            <Modal
+                isOpen={isCandidateModalOpen}
+                onClose={() => {
+                    setIsCandidateModalOpen(false);
+                    setSelectedCandidate(null);
+                }}
+                title="Candidate Profile & Status"
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                        <div>
+                            {selectedCandidate && (
+                                <button
+                                    type="button"
+                                    className="recruitment-hire-banner-btn"
+                                    style={{ margin: 0, padding: '7px 14px', fontSize: '13px' }}
+                                    onClick={() => {
+                                        handleConvertToEmployee(selectedCandidate);
+                                        setIsCandidateModalOpen(false);
+                                    }}
+                                >
+                                    <UserCheck size={16} />
+                                    <span>Convert to Directory Employee</span>
+                                </button>
+                            )}
+                        </div>
+                        <Button variant="primary" onClick={() => setIsCandidateModalOpen(false)}>Close</Button>
+                    </div>
+                }
+            >
+                {selectedCandidate && (
+                    <div className="hr-profile-detail">
+                        <div className="hr-profile-detail__header" style={{
+                            background: 'linear-gradient(to bottom, rgba(59, 130, 246, 0.08), transparent)',
+                            padding: '30px 20px',
+                            borderRadius: '16px'
+                        }}>
+                            <Avatar name={selectedCandidate.name} size="lg" />
+                            <h3 style={{ margin: '12px 0 2px', fontSize: '18px', fontWeight: 700 }}>{selectedCandidate.name}</h3>
+                            <div style={{ fontSize: '13px', color: 'var(--primary-600)', fontWeight: 600 }}>{selectedCandidate.jobTitle}</div>
+                            <div className="hr-profile-detail__id" style={{ marginTop: '6px' }}>
+                                Stage: <strong>{selectedCandidate.stage}</strong>
+                            </div>
+                        </div>
+
+                        <div className="hr-profile-detail__body">
+                            <div className="hr-profile-info-grid">
+                                <div className="hr-profile-info-group">
+                                    <label>Applied Position</label>
+                                    <div>{selectedCandidate.jobTitle}</div>
+                                </div>
+                                <div className="hr-profile-info-group">
+                                    <label>Department</label>
+                                    <div>{selectedCandidate.department}</div>
+                                </div>
+                            </div>
+
+                            <div className="hr-profile-info-grid">
+                                <div className="hr-profile-info-group">
+                                    <label>Expected Compensation</label>
+                                    <div>{currLabel}{parseFloat(selectedCandidate.expectedSalary || 0).toLocaleString()}</div>
+                                </div>
+                                <div className="hr-profile-info-group">
+                                    <label>Experience</label>
+                                    <div>{selectedCandidate.experience || 'Not specified'}</div>
+                                </div>
+                            </div>
+
+                            <div className="hr-profile-info-grid">
+                                <div className="hr-profile-info-group">
+                                    <label>Email Address</label>
+                                    <div>{selectedCandidate.email || 'N/A'}</div>
+                                </div>
+                                <div className="hr-profile-info-group">
+                                    <label>Phone Number</label>
+                                    <div>{selectedCandidate.phone || 'N/A'}</div>
+                                </div>
+                            </div>
+
+                            {selectedCandidate.portfolio && (
+                                <div className="hr-profile-info-group">
+                                    <label>Portfolio / Links</label>
+                                    <div>
+                                        <a 
+                                            href={selectedCandidate.portfolio} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            style={{ color: 'var(--primary-600)', display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'underline' }}
+                                        >
+                                            {selectedCandidate.portfolio}
+                                            <ExternalLink size={14} />
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {selectedCandidate.notes && (
+                                <div className="hr-profile-info-group">
+                                    <label>Evaluation Notes</label>
+                                    <div style={{ 
+                                        padding: '12px', 
+                                        borderRadius: '8px', 
+                                        background: 'var(--bg-secondary)', 
+                                        border: '1px solid var(--border-color)',
+                                        fontSize: '13px',
+                                        lineHeight: 1.5,
+                                        fontWeight: 400
+                                    }}>
+                                        {selectedCandidate.notes}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="hr-profile-info-group" style={{ marginTop: '8px' }}>
+                                <label>Change Stage In Pipeline</label>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                                    {pipelineStages.map(s => (
+                                        <button
+                                            key={s.key}
+                                            type="button"
+                                            className="recruitment-view-btn"
+                                            style={{
+                                                border: '1px solid var(--border-color)',
+                                                background: selectedCandidate.stage === s.key ? s.color : 'transparent',
+                                                color: selectedCandidate.stage === s.key ? '#fff' : 'var(--text-muted)',
+                                                fontWeight: selectedCandidate.stage === s.key ? 600 : 400
+                                            }}
+                                            onClick={() => handleMoveStage(selectedCandidate.id, s.key)}
+                                        >
+                                            {s.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     );
