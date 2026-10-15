@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { formatCurrency } from '../../utils/helpers';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Badge from '../../components/common/Badge/Badge';
 import {
@@ -34,7 +35,8 @@ const MOCK_APPROVALS = [
         requester: 'Fatima Noor',
         role: 'Engineering Lead',
         date: 'Oct 15, 2026',
-        details: 'Software Subscription - $120.00',
+        details: 'Software Subscription',
+        amount: 120,
         submittedAt: '5 hours ago',
         status: 'pending',
         module: 'projects'
@@ -66,6 +68,7 @@ const MOCK_APPROVALS = [
 const Approvals = () => {
     const { moduleKey } = useParams();
     const { user } = useSelector((state) => state.auth);
+    const currency = useSelector((state) => state.ui?.currency) || 'PKR';
     
     // Filter approvals for this manager's module
     const [approvals, setApprovals] = useState(MOCK_APPROVALS.filter(a => a.module === moduleKey));
@@ -164,7 +167,10 @@ const Approvals = () => {
                                 <div className="approval-card__details">
                                     <div className="approval-card__detail-row">
                                         <span className="label">Request:</span>
-                                        <span className="value">{req.details}</span>
+                                        <span className="value">
+                                            {req.details}
+                                            {req.amount ? ` - ${formatCurrency(req.amount, currency)}` : ''}
+                                        </span>
                                     </div>
                                     <div className="approval-card__detail-row">
                                         <span className="label">Date/Item:</span>

@@ -6,6 +6,7 @@ import { projectService } from '../../services/projectService';
 import { clientsService } from '../../services/clientsService';
 import { managerService } from '../../services/managerService';
 import { isEmpty, isPositiveNumber } from '../../utils/validation';
+import { formatCurrency } from '../../utils/helpers';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import Modal from '../../components/common/Modal/Modal';
@@ -22,6 +23,7 @@ const ProjectManagement = () => {
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
     const theme = useSelector((state) => state.ui.theme);
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
     
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'projects');
     const [viewMode, setViewMode] = useState('grid');
@@ -706,7 +708,7 @@ const ProjectManagement = () => {
                     </div>
                     
                     <div className="dw-form-group" style={{marginTop: '16px'}}>
-                        <label className="dw-form-label">Project Budget / Amount ($)</label>
+                        <label className="dw-form-label">Project Budget / Amount ({currency === 'USD' ? '$' : 'PKR'})</label>
                         <input type="number" className="dw-form-input" value={projectForm.amount} onChange={e => setProjectForm({...projectForm, amount: e.target.value})} />
                     </div>
 
@@ -809,7 +811,7 @@ const ProjectManagement = () => {
                             </div>
                             <div className="dw-form-group">
                                 <label className="dw-form-label">Budget / Amount</label>
-                                <div style={{color: 'var(--text-secondary)'}}>${viewingProject.amount || 0}</div>
+                                <div style={{color: 'var(--text-secondary)'}}>{formatCurrency(viewingProject.amount || 0, currency)}</div>
                             </div>
                         </div>
                         <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>

@@ -63,3 +63,13 @@ export const debounce = (fn, delay) => {
 export const classNames = (...classes) => {
     return classes.filter(Boolean).join(' ');
 };
+
+export const getCurrencySymbol = (currency = 'PKR') => {
+    return currency === 'USD' ? '$' : 'Rs. ';
+};
+
+export const formatCurrency = (amount, currency = 'PKR') => {
+    const symbol = getCurrencySymbol(currency);
+    const num = Number(amount) || 0;
+    return `${symbol}${new Intl.NumberFormat('en-US').format(num)}`;
+};

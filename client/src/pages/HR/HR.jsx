@@ -1584,7 +1584,7 @@ const HR = () => {
             >
                 <div className="dw-form">
                     <div className="dw-form-group">
-                        <label className="dw-form-label">Base Salary ($)</label>
+                        <label className="dw-form-label">Base Salary ({currUnit})</label>
                         <input
                             type="number"
                             className="dw-form-input"
@@ -1593,7 +1593,7 @@ const HR = () => {
                         />
                     </div>
                     <div className="dw-form-group">
-                        <label className="dw-form-label">Bonuses ($)</label>
+                        <label className="dw-form-label">Bonuses ({currUnit})</label>
                         <input
                             type="number"
                             className="dw-form-input"
@@ -1602,7 +1602,7 @@ const HR = () => {
                         />
                     </div>
                     <div className="dw-form-group">
-                        <label className="dw-form-label">Deductions ($)</label>
+                        <label className="dw-form-label">Deductions ({currUnit})</label>
                         <input
                             type="number"
                             className="dw-form-input"

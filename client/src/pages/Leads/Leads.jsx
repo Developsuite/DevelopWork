@@ -5,6 +5,7 @@ import { addToast } from '../../store/slices/uiSlice';
 import { leadsService } from '../../services/leadsService';
 import { clientsService } from '../../services/clientsService';
 import { isValidEmail, isEmpty, isPositiveNumber } from '../../utils/validation';
+import { formatCurrency } from '../../utils/helpers';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
@@ -29,6 +30,7 @@ const Leads = () => {
     const [selectedLead, setSelectedLead] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const theme = useSelector((state) => state.ui.theme);
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
 
     // Initial Data
     const [leads, setLeads] = useState([]);
@@ -330,7 +332,7 @@ const Leads = () => {
                                                     </div>
                                                     <h4 className="ld__lead-card-name">{lead.name}</h4>
                                                     <div className="ld__lead-card-meta">
-                                                        <span><DollarSign size={12} /> {lead.value.toLocaleString()}</span>
+                                                        <span style={{ fontWeight: 600 }}>{formatCurrency(lead.value || 0, currency)}</span>
                                                         <span><Clock size={12} /> {lead.lastContact}</span>
                                                     </div>
                                                     <div className="ld__lead-card-footer">
@@ -381,7 +383,7 @@ const Leads = () => {
                                 </div>
                             </td>
                             <td>{renderTag(lead.stage)}</td>
-                            <td><strong className="ld__table-value">${lead.value.toLocaleString()}</strong></td>
+                            <td><strong className="ld__table-value">{formatCurrency(lead.value || 0, currency)}</strong></td>
                             <td>
                                 <div className="ld__table-contact">
                                     <span>{lead.contact}</span>
@@ -439,7 +441,7 @@ const Leads = () => {
     const conversionRate = leads.length > 0 ? ((wonLeadsCount / leads.length) * 100).toFixed(1) + '%' : '0.0%';
 
     const stats = [
-        { label: 'Total Value', value: `$${leads.reduce((a,b) => a+b.value, 0).toLocaleString()}`, img: '/assets/leads/icons/1.png', color: 'var(--primary-500)' },
+        { label: 'Total Value', value: formatCurrency(leads.reduce((a,b) => a+b.value, 0), currency), img: '/assets/leads/icons/1.png', color: 'var(--primary-500)' },
         { label: 'Active Leads', value: leads.length, img: '/assets/leads/icons/2.png', color: 'var(--info)' },
         { label: 'Won Leads', value: wonLeadsCount, img: '/assets/leads/icons/3.png', color: 'var(--success)' },
         { label: 'Conversion', value: conversionRate, img: '/assets/leads/icons/4.png', color: 'var(--warning)' },
@@ -518,7 +520,7 @@ const Leads = () => {
                         <div className="dw-form-group"><label className="dw-form-label">Email</label><input className="dw-form-input" value={leadFormData.email} onChange={e => setLeadFormData({...leadFormData, email: e.target.value})} /></div>
                     </div>
                     <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div className="dw-form-group"><label className="dw-form-label">Est. Value ($)</label><input type="number" className="dw-form-input" value={leadFormData.value} onChange={e => setLeadFormData({...leadFormData, value: parseInt(e.target.value)})} /></div>
+                        <div className="dw-form-group"><label className="dw-form-label">Est. Value ({currency === 'USD' ? '$' : 'PKR'})</label><input type="number" className="dw-form-input" value={leadFormData.value} onChange={e => setLeadFormData({...leadFormData, value: parseInt(e.target.value)})} /></div>
                         <div className="dw-form-group"><label className="dw-form-label">Stage</label>
                             <select className="dw-form-input" value={leadFormData.stage} onChange={e => setLeadFormData({...leadFormData, stage: e.target.value})}>
                                 {stages.map(s => <option key={s} value={s}>{s}</option>)}
@@ -549,7 +551,7 @@ const Leads = () => {
                             <div className="ld__detail-item"><label>Contact</label><div>{selectedLead.contact}</div></div>
                             <div className="ld__detail-item"><label>Email</label><div>{selectedLead.email}</div></div>
                             <div className="ld__detail-item"><label>Phone</label><div>{selectedLead.phone}</div></div>
-                            <div className="ld__detail-item"><label>Value</label><div className="highlight">${selectedLead.value.toLocaleString()}</div></div>
+                            <div className="ld__detail-item"><label>Value</label><div className="highlight">{formatCurrency(selectedLead.value || 0, currency)}</div></div>
                         </div>
                         <div className="ld__detail-actions">
                             <Button variant="ghost" icon={Mail} fullWidth>Send Email</Button>

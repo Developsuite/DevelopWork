@@ -1081,7 +1081,7 @@ const Finance = () => {
                     </div>
                     <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
                         <div className="dw-form-group">
-                            <label className="dw-form-label">Amount ($)</label>
+                            <label className="dw-form-label">Amount ({currency === 'USD' ? '$' : 'PKR'})</label>
                             <input
                                 type="number"
                                 className="dw-form-input"
@@ -1225,7 +1225,7 @@ const Finance = () => {
                             </div>
                             <div className="fin-summary-row">
                                 <span>Tax (0%)</span>
-                                <span>$0.00</span>
+                                <span>{formatCurrency(0)}</span>
                             </div>
                             <div className="fin-summary-row total">
                                 <span>Total Amount</span>
@@ -1397,7 +1397,7 @@ const Finance = () => {
                             </select>
                         </div>
                         <div className="dw-form-group">
-                            <label className="dw-form-label">Amount ($)</label>
+                            <label className="dw-form-label">Amount ({currency === 'USD' ? '$' : 'PKR'})</label>
                             <input 
                                 className="dw-form-input" 
                                 type="number" 

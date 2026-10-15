@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { ArrowRight } from 'lucide-react';
 import { 
   FiCheck, 
@@ -15,10 +16,12 @@ const Landing = () => {
   const [activeModuleTab, setActiveModuleTab] = useState('client');
   const [activePricePlan, setActivePricePlan] = useState('starter');
 
+  const currency = useSelector((state) => state.ui?.currency) || 'PKR';
+
   const pricingPlans = {
     starter: { name: 'Starter', price: 'Free Trial', desc: 'Try everything for free. Experience the full power of DevelopWork with no commitment.', features: ['Access to all core features', 'Basic analytics dashboard', 'Up to 5 team members', 'Standard support', '2GB storage'] },
-    growth: { name: 'Growth', price: '$79', desc: 'Advanced features for growing businesses that need more power and flexibility.', features: ['Everything in Starter', 'Advanced analytics', 'Unlimited team members', 'Priority support', '50GB storage'] },
-    scale: { name: 'Scale', price: '$199', desc: 'Full power for large-scale operations requiring enterprise-grade tools.', features: ['Everything in Growth', 'Custom integrations', 'Dedicated account manager', 'SSO & advanced security', 'Unlimited storage'] }
+    growth: { name: 'Growth', price: currency === 'USD' ? '$79' : 'Rs. 22,000', desc: 'Advanced features for growing businesses that need more power and flexibility.', features: ['Everything in Starter', 'Advanced analytics', 'Unlimited team members', 'Priority support', '50GB storage'] },
+    scale: { name: 'Scale', price: currency === 'USD' ? '$199' : 'Rs. 55,000', desc: 'Full power for large-scale operations requiring enterprise-grade tools.', features: ['Everything in Growth', 'Custom integrations', 'Dedicated account manager', 'SSO & advanced security', 'Unlimited storage'] }
   };
 
   return (

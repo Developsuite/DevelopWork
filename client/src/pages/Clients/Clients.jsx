@@ -5,6 +5,7 @@ import { addToast } from '../../store/slices/uiSlice';
 import { clientsService } from '../../services/clientsService';
 import { projectService } from '../../services/projectService';
 import { isValidEmail, isEmpty } from '../../utils/validation';
+import { formatCurrency } from '../../utils/helpers';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import Modal from '../../components/common/Modal/Modal';
@@ -33,6 +34,7 @@ const Clients = () => {
     const [selectedClient, setSelectedClient] = useState(null);
     const [editMode, setEditMode] = useState(false);
     const theme = useSelector((state) => state.ui.theme);
+    const currency = useSelector((state) => state.ui.currency) || 'PKR';
 
     const [clients, setClients] = useState([]);
     const [dataLoading, setDataLoading] = useState(true);
@@ -183,15 +185,15 @@ const Clients = () => {
                 <div className="cl__billing-summary-grid">
                     <div className="cl__billing-summary-card">
                         <h4>Total Revenue</h4>
-                        <div className="amount">${totalRevenue.toLocaleString()}</div>
+                        <div className="amount">{formatCurrency(totalRevenue, currency)}</div>
                     </div>
                     <div className="cl__billing-summary-card paid">
                         <h4>Total Paid</h4>
-                        <div className="amount">${totalPaid.toLocaleString()}</div>
+                        <div className="amount">{formatCurrency(totalPaid, currency)}</div>
                     </div>
                     <div className="cl__billing-summary-card outstanding">
                         <h4>Outstanding Balance</h4>
-                        <div className="amount">${totalOutstanding.toLocaleString()}</div>
+                        <div className="amount">{formatCurrency(totalOutstanding, currency)}</div>
                     </div>
                 </div>
 
@@ -229,7 +231,7 @@ const Clients = () => {
                                         </td>
                                         <td>
                                             <div className={`cl__billing-amount ${client.payment === 'Paid' ? 'success' : 'pending'}`}>
-                                                ${clientTotal.toLocaleString()}
+                                                {formatCurrency(clientTotal, currency)}
                                             </div>
                                         </td>
                                         <td>{renderTag(client.payment)}</td>
@@ -503,7 +505,7 @@ const Clients = () => {
                                                 <Calendar size={13} />
                                                 <span>{project.due_date || 'No Deadline'}</span>
                                             </div>
-                                            <strong style={{fontSize: '14px', color: 'var(--text-primary)'}}>${project.amount ? project.amount.toLocaleString() : '0'}</strong>
+                                            <strong style={{fontSize: '14px', color: 'var(--text-primary)'}}>{formatCurrency(project.amount || 0, currency)}</strong>
                                         </div>
                                     </div>
                                 ))}
@@ -538,7 +540,7 @@ const Clients = () => {
                                                 </td>
                                                 <td>{renderTag(project.status)}</td>
                                                 <td>{project.due_date || '-'}</td>
-                                                <td><strong>${project.amount ? project.amount.toLocaleString() : '0'}</strong></td>
+                                                <td><strong>{formatCurrency(project.amount || 0, currency)}</strong></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -578,7 +580,7 @@ const Clients = () => {
                                     <div key={p.id} className="cl__detail-project">
                                         <div className="cl__detail-project-info">
                                             <span className="cl__detail-project-name">{p.name}</span>
-                                            <small>Deadline: {p.due_date} · ${p.amount ? p.amount.toLocaleString() : '0'}</small>
+                                            <small>Deadline: {p.due_date} · {formatCurrency(p.amount || 0, currency)}</small>
                                         </div>
                                         {renderTag(p.status)}
                                     </div>
