@@ -293,7 +293,7 @@ const TaskManagement = () => {
                 <div className="task-header__top">
                     <div className="task-header__info">
                         <div className="task-header__badge">
-                            <CheckSquare size={14} color="#6366F1" />
+                            <CheckSquare size={13} color="var(--primary-500)" />
                             <span>Enterprise Task Center</span>
                         </div>
                         <h1>Task Management & Delegation</h1>
@@ -335,7 +335,7 @@ const TaskManagement = () => {
                     </div>
                     <div className="task-kpi-divider" />
                     <div className="task-kpi-item">
-                        <span className="task-kpi-num" style={{ color: '#6366F1' }}>{stats.completionRate}%</span>
+                        <span className="task-kpi-num" style={{ color: 'var(--primary-500)' }}>{stats.completionRate}%</span>
                         <span className="task-kpi-txt">Completion Rate</span>
                     </div>
                     {stats.urgent > 0 && (
@@ -462,12 +462,12 @@ const TaskManagement = () => {
                     {/* Table */}
                     {loading ? (
                         <div className="task-empty-box">
-                            <Loader2 size={32} className="spinning" color="#6366F1" />
+                            <Loader2 size={32} className="spinning" color="var(--primary-500)" />
                             <p>Loading enterprise tasks...</p>
                         </div>
                     ) : filteredTasks.length === 0 ? (
                         <div className="task-empty-box">
-                            <CheckSquare size={44} style={{ opacity: 0.25, color: '#6366F1' }} />
+                            <CheckSquare size={44} style={{ opacity: 0.25, color: 'var(--primary-500)' }} />
                             <h3>No tasks match your criteria</h3>
                             <p>Try adjusting your search filters or assign a new task to get started.</p>
                             <button className="task-btn task-btn--primary" onClick={() => handleOpenCreateModal()}>

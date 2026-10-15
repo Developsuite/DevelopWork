@@ -1,6 +1,7 @@
 /* ==========================================================================
    ENTERPRISE TASK MANAGEMENT MODULE STYLES
    Theme-tailored, Glassmorphism, Micro-interactions, Responsive
+   Brand Blue CTAs & Non-Glowing Tagline Badges
    ========================================================================== */
 
 .task-management-page {
@@ -21,10 +22,10 @@
     flex-direction: column;
     gap: 20px;
     padding: 28px 32px;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.05), rgba(87, 155, 252, 0.03));
+    background: var(--bg-surface);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-lg, 16px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .task-header__top {
@@ -35,20 +36,22 @@
     flex-wrap: wrap;
 }
 
+/* Non-glowing, clean corporate tagline badge */
 .task-header__badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 4px 10px;
-    border-radius: 100px;
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.25);
-    color: #6366F1;
+    border-radius: 6px;
+    background: var(--bg-body);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 8px;
+    box-shadow: none;
 }
 
 .task-header__info h1 {
@@ -76,7 +79,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 9px 18px;
+    padding: 9px 20px;
     border-radius: 10px;
     font-size: 13px;
     font-weight: 700;
@@ -85,15 +88,21 @@
     border: 1px solid transparent;
 }
 
+/* Primary CTA Button — Crisp DevelopWork Brand Blue */
 .task-btn--primary {
-    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    background: var(--primary-500, #0055FE);
     color: #fff;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 2px 8px rgba(0, 85, 254, 0.25);
 }
 
 .task-btn--primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+    background: var(--primary-600, #004AD9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(0, 85, 254, 0.35);
+}
+
+.task-btn--primary:active {
+    transform: translateY(0);
 }
 
 .task-btn--secondary {
@@ -113,7 +122,7 @@
     align-items: center;
     gap: 20px;
     padding: 14px 20px;
-    background: var(--bg-surface);
+    background: var(--bg-body);
     border: 1px solid var(--border-light);
     border-radius: 12px;
     overflow-x: auto;
@@ -194,18 +203,21 @@
 }
 
 .task-tab-btn.active {
-    color: #6366F1;
-    border-bottom-color: #6366F1;
+    color: var(--primary-500, #0055FE);
+    border-bottom-color: var(--primary-500, #0055FE);
     background: var(--bg-surface);
 }
 
+/* Non-glowing clean count badge */
 .task-tab-badge {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 10px;
-    background: rgba(99, 102, 241, 0.12);
-    color: #6366F1;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 100px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+    box-shadow: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -256,7 +268,7 @@
 }
 
 .task-search-box input:focus {
-    border-color: #6366F1;
+    border-color: var(--primary-400, #3377FE);
 }
 
 .task-filters-group {
@@ -331,7 +343,7 @@
 }
 
 .task-table tbody tr:hover {
-    background: rgba(99, 102, 241, 0.02);
+    background: rgba(0, 85, 254, 0.02);
 }
 
 .task-row--done {
@@ -387,17 +399,18 @@
     font-weight: 600;
 }
 
-/* Priority Pills */
+/* Priority Pills — Clean Matte Badges (Non-Glowing) */
 .task-priority-pill {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 3px 9px;
-    border-radius: 100px;
+    border-radius: 6px;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.4px;
+    box-shadow: none;
 }
 
 .task-priority-dot {
@@ -412,8 +425,8 @@
 .task-priority--high { background: rgba(253, 171, 61, 0.12); color: #FDAB3D; border: 1px solid rgba(253, 171, 61, 0.25); }
 .task-priority--high .task-priority-dot { background: #FDAB3D; }
 
-.task-priority--medium { background: rgba(87, 155, 252, 0.12); color: #579BFC; border: 1px solid rgba(87, 155, 252, 0.25); }
-.task-priority--medium .task-priority-dot { background: #579BFC; }
+.task-priority--medium { background: rgba(0, 85, 254, 0.1); color: var(--primary-500, #0055FE); border: 1px solid rgba(0, 85, 254, 0.2); }
+.task-priority--medium .task-priority-dot { background: var(--primary-500, #0055FE); }
 
 .task-priority--low { background: rgba(108, 122, 150, 0.12); color: #6C7A96; border: 1px solid rgba(108, 122, 150, 0.25); }
 .task-priority--low .task-priority-dot { background: #6C7A96; }
@@ -425,11 +438,12 @@
     border-radius: 6px;
     font-size: 11px;
     font-weight: 600;
+    box-shadow: none;
 }
 
 .task-deadline--overdue { background: rgba(226, 68, 92, 0.12); color: #E2445C; border: 1px solid rgba(226, 68, 92, 0.2); }
 .task-deadline--today { background: rgba(253, 171, 61, 0.12); color: #FDAB3D; border: 1px solid rgba(253, 171, 61, 0.2); }
-.task-deadline--soon { background: rgba(99, 102, 241, 0.12); color: #6366F1; }
+.task-deadline--soon { background: rgba(0, 85, 254, 0.1); color: var(--primary-500, #0055FE); }
 .task-deadline--normal { background: var(--bg-body); color: var(--text-muted); }
 .task-deadline--done { background: rgba(0, 200, 117, 0.1); color: #00C875; }
 .task-deadline--none { background: var(--bg-body); color: var(--text-muted); }
@@ -528,7 +542,7 @@
 }
 
 .delegation-card:hover {
-    border-color: rgba(99, 102, 241, 0.4);
+    border-color: rgba(0, 85, 254, 0.3);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
@@ -556,31 +570,33 @@
 
 .delegation-role-tag.role--manager { background: rgba(253, 171, 61, 0.15); color: #FDAB3D; }
 .delegation-role-tag.role--admin { background: rgba(226, 68, 92, 0.15); color: #E2445C; }
-.delegation-role-tag.role--employee { background: rgba(99, 102, 241, 0.15); color: #6366F1; }
+.delegation-role-tag.role--employee { background: rgba(0, 85, 254, 0.1); color: var(--primary-500, #0055FE); }
 
 .delegation-dept-tag {
     font-size: 11px;
     color: var(--text-muted);
 }
 
+/* Delegation Blue Button */
 .delegation-assign-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
+    padding: 7px 14px;
     border-radius: 8px;
     font-size: 12px;
     font-weight: 700;
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366F1;
-    border: 1px solid rgba(99, 102, 241, 0.25);
+    background: rgba(0, 85, 254, 0.08);
+    color: var(--primary-500, #0055FE);
+    border: 1px solid rgba(0, 85, 254, 0.2);
     cursor: pointer;
     transition: all 0.2s;
 }
 
 .delegation-assign-btn:hover {
-    background: #6366F1;
+    background: var(--primary-500, #0055FE);
     color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 85, 254, 0.25);
 }
 
 .delegation-workload-bar-wrap {
@@ -676,7 +692,7 @@
 
 .priority-dot--urgent { background: #E2445C; }
 .priority-dot--high { background: #FDAB3D; }
-.priority-dot--medium { background: #579BFC; }
+.priority-dot--medium { background: var(--primary-500, #0055FE); }
 .priority-dot--low { background: #6C7A96; }
 
 /* --------------------------------------------------------------------------
@@ -759,7 +775,7 @@
 }
 
 .kanban-task-card:hover {
-    border-color: rgba(99, 102, 241, 0.4);
+    border-color: rgba(0, 85, 254, 0.3);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
@@ -844,7 +860,7 @@
 .analytics-metric-big span:first-child {
     font-size: 40px;
     font-weight: 800;
-    color: #6366F1;
+    color: var(--primary-500, #0055FE);
     line-height: 1;
 }
 
@@ -865,7 +881,7 @@
 .analytics-progress-fill {
     height: 100%;
     border-radius: 100px;
-    background: linear-gradient(90deg, #6366F1, #00C875);
+    background: linear-gradient(90deg, var(--primary-500, #0055FE), #00C875);
     transition: width 0.5s ease;
 }
 
@@ -925,8 +941,8 @@
     font-weight: 700;
     padding: 1px 6px;
     border-radius: 4px;
-    background: rgba(99, 102, 241, 0.12);
-    color: #6366F1;
+    background: rgba(0, 85, 254, 0.1);
+    color: var(--primary-500, #0055FE);
 }
 
 .analytics-count-pill {

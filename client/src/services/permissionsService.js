@@ -20,7 +20,7 @@ export const SYSTEM_MODULES = [
         key: 'tasks',
         label: 'Task Management',
         description: 'Organization-wide task command center. Assign, monitor, and delegate deliverables to any employee or manager.',
-        color: '#6366F1',
+        color: '#0055FE',
         features: [
             { key: 'tasks.all', label: 'All Tasks Directory', path: '/tasks?tab=all' },
             { key: 'tasks.delegated', label: 'Delegation Center', path: '/tasks?tab=delegated' },
