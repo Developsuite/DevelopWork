@@ -4,6 +4,8 @@ import { jsPDF } from 'jspdf';
 import { useDispatch, useSelector } from 'react-redux';
 import { hrService } from '../../services/hrService';
 import { financeService } from '../../services/financeService';
+import { managerService } from '../../services/managerService';
+import { permissionsService } from '../../services/permissionsService';
 import { isValidEmail, isEmpty, isPositiveNumber } from '../../utils/validation';
 import { useSearchParams } from 'react-router-dom';
 import Button from '../../components/common/Button/Button';
@@ -53,6 +55,9 @@ const HR = () => {
     const [deleteConfig, setDeleteConfig] = useState({ id: null, type: '', name: '' });
     const [payrollFormData, setPayrollFormData] = useState({ salary: 0, bonus: 0, deductions: 0, name: '' });
     const [activeContact, setActiveContact] = useState({});
+    const [createLoginAccount, setCreateLoginAccount] = useState(true);
+    const [accountPassword, setAccountPassword] = useState('Employee@2026');
+    const [accountRole, setAccountRole] = useState('employee');
 
     const handleContactClick = (e, emp, type) => {
         e.stopPropagation();
@@ -309,7 +314,33 @@ const HR = () => {
                     document_url: formData.documentUrl, is_manager: formData.isManager,
                     join_date: formData.joinDate
                 });
-                dispatch(addToast({ title: 'Employee Added', message: `${formData.name} has been added to the directory.`, type: 'success' }));
+
+                // Auto-provision Supabase Auth Login Account if enabled and email provided
+                if (createLoginAccount && formData.email) {
+                    try {
+                        await managerService.createEmployeeAccount({
+                            name: formData.name,
+                            email: formData.email,
+                            password: accountPassword || 'Employee@2026',
+                            role: accountRole || 'employee',
+                            permissions: accountRole === 'manager' ? ['hr.*', 'projects.*'] : ['projects.tasks']
+                        });
+                        dispatch(addToast({ 
+                            title: 'Employee Account Created!', 
+                            message: `Login account created for ${formData.email} (Password: ${accountPassword})`, 
+                            type: 'success' 
+                        }));
+                    } catch (authErr) {
+                        console.warn('[HR] Auto-create login account note:', authErr);
+                        dispatch(addToast({ 
+                            title: 'Employee Saved', 
+                            message: `Added to directory. Account note: ${authErr.message || 'Check auth setup'}`, 
+                            type: 'info' 
+                        }));
+                    }
+                } else {
+                    dispatch(addToast({ title: 'Employee Added', message: `${formData.name} has been added to the directory.`, type: 'success' }));
+                }
             }
             await loadEmployees();
         } catch (err) {
@@ -2065,6 +2096,54 @@ const HR = () => {
                             onChange={e => setFormData({ ...formData, skills: e.target.value })}
                         />
                     </div>
+
+                    {!editId && (
+                        <div style={{
+                            marginTop: '16px',
+                            padding: '16px',
+                            background: 'rgba(59, 130, 246, 0.05)',
+                            border: '1px solid rgba(59, 130, 246, 0.2)',
+                            borderRadius: '12px'
+                        }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '13px', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                                <input 
+                                    type="checkbox"
+                                    checked={createLoginAccount}
+                                    onChange={e => setCreateLoginAccount(e.target.checked)}
+                                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                />
+                                <span>Automatically Provision Login Account for this Employee</span>
+                            </label>
+                            <p style={{ margin: '4px 0 0 24px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Creates authentication credentials so this employee can immediately sign into the portal.
+                            </p>
+                            {createLoginAccount && (
+                                <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div className="dw-form-group">
+                                        <label className="dw-form-label">Initial Password</label>
+                                        <input 
+                                            type="text"
+                                            className="dw-form-input"
+                                            value={accountPassword}
+                                            onChange={e => setAccountPassword(e.target.value)}
+                                            placeholder="e.g. Employee@2026"
+                                        />
+                                    </div>
+                                    <div className="dw-form-group">
+                                        <label className="dw-form-label">Role Level</label>
+                                        <select
+                                            className="dw-form-input"
+                                            value={accountRole}
+                                            onChange={e => setAccountRole(e.target.value)}
+                                        >
+                                            <option value="employee">Standard Employee</option>
+                                            <option value="manager">Department Manager</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </Modal>
             <Modal

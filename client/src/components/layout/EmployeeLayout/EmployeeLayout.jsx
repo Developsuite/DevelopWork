@@ -12,14 +12,30 @@ import {
     LogOut,
     Sun,
     Moon,
-    Briefcase
+    Briefcase,
+    FolderKanban,
+    Users,
+    DollarSign,
+    Handshake,
+    FileText,
+    ExternalLink
 } from 'lucide-react';
+import { permissionsService } from '../../../services/permissionsService';
 import './EmployeeLayout.css';
 
 const navItems = [
     { label: 'Dashboard', path: '/employee/dashboard', icon: Home },
     { label: 'Settings', path: '/employee/settings', icon: Settings },
 ];
+
+const modIconMap = {
+    projects: FolderKanban,
+    hr: Users,
+    finance: DollarSign,
+    leads: Handshake,
+    clients: Users,
+    docs: FileText
+};
 
 const EmployeeLayout = () => {
     const dispatch = useDispatch();
@@ -29,14 +45,23 @@ const EmployeeLayout = () => {
     const theme = useSelector((state) => state.ui.theme);
 
     const [wsName, setWsName] = useState(() => localStorage.getItem('dw-workspace-name') || 'DevelopWork');
+    const [permittedModules, setPermittedModules] = useState(() => permissionsService.getAccessibleModules(user));
 
     useEffect(() => {
         const handleWsUpdate = () => {
             setWsName(localStorage.getItem('dw-workspace-name') || 'DevelopWork');
         };
+        const handlePermsUpdate = () => {
+            setPermittedModules(permissionsService.getAccessibleModules(user));
+        };
+
         window.addEventListener('workspaceUpdate', handleWsUpdate);
-        return () => window.removeEventListener('workspaceUpdate', handleWsUpdate);
-    }, []);
+        window.addEventListener('dwPermissionsUpdated', handlePermsUpdate);
+        return () => {
+            window.removeEventListener('workspaceUpdate', handleWsUpdate);
+            window.removeEventListener('dwPermissionsUpdated', handlePermsUpdate);
+        };
+    }, [user]);
 
     const handleLogout = async () => {
         if (!window.confirm('Are you sure you want to log out?')) return;
@@ -82,6 +107,37 @@ const EmployeeLayout = () => {
                         );
                     })}
                 </nav>
+
+                {/* RBAC Permitted Modules Navigation */}
+                {permittedModules.length > 0 && (
+                    <nav className="employee-sidebar__nav" style={{ marginTop: '16px' }}>
+                        <div className="employee-sidebar__nav-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '8px' }}>
+                            <span>Permitted Workspaces</span>
+                            <span style={{ fontSize: '10px', background: 'rgba(87, 155, 252, 0.15)', color: 'var(--primary-400)', padding: '2px 7px', borderRadius: '10px', fontWeight: 700 }}>
+                                {permittedModules.length}
+                            </span>
+                        </div>
+                        {permittedModules.map((mod) => {
+                            const ModIcon = modIconMap[mod.key] || FolderKanban;
+                            const modRoute = `/${mod.key}`;
+                            return (
+                                <button
+                                    key={mod.key}
+                                    className="employee-sidebar__nav-item"
+                                    onClick={() => navigate(modRoute)}
+                                    title={`Open ${mod.label}`}
+                                    style={{ justifyContent: 'space-between' }}
+                                >
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '10px', overflow: 'hidden' }}>
+                                        <ModIcon size={16} color={mod.color} style={{ flexShrink: 0 }} />
+                                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{mod.label}</span>
+                                    </span>
+                                    <ExternalLink size={12} style={{ opacity: 0.4, flexShrink: 0 }} />
+                                </button>
+                            );
+                        })}
+                    </nav>
+                )}
 
                 <div style={{ flex: 1 }} />
 

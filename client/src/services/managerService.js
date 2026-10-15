@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 
+import { permissionsService } from './permissionsService';
+
 // ========================
 // MANAGER SERVICE
 // Handles manager invitations, assignments, and module access
@@ -91,37 +93,56 @@ export const managerService = {
         return { userId, email, name, assignedModule };
     },
 
-    // Invite a new employee
-    async inviteEmployee({ name, email, password }) {
+    // Invite a new employee with optional granular permissions
+    async inviteEmployee({ name, email, password, permissions = [] }) {
+        return this.createEmployeeAccount({ name, email, password, role: 'employee', permissions });
+    },
+
+    // Create a new employee or manager user account with login credentials & permissions
+    async createEmployeeAccount({ name, email, password, role = 'employee', permissions = [] }) {
         const { data: { session: adminSession } } = await supabase.auth.getSession();
         let tenantId = null;
         if (adminSession) {
-            const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).single();
-            tenantId = profile?.tenant_id;
+            try {
+                const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).single();
+                tenantId = profile?.tenant_id;
+            } catch (err) {
+                console.warn('[RBAC] Could not fetch tenant_id, continuing:', err);
+            }
         }
 
         const { data: authData, error: authError } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: { name, tenant_id: tenantId, role: 'employee' } },
+            options: { data: { name, tenant_id: tenantId, role } },
         });
         if (authError) throw authError;
 
         const userId = authData.user?.id;
         if (!userId) throw new Error('Failed to create user account.');
 
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        // Wait a moment for the profile trigger to complete
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .update({
-                role: 'employee',
-                name: name,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId);
-        if (profileError) throw profileError;
+        try {
+            await supabase
+                .from('profiles')
+                .update({
+                    role: role,
+                    name: name,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', userId);
+        } catch (err) {
+            console.warn('[RBAC] Profile update warning (trigger may have set role already):', err);
+        }
 
+        // Save granular permissions for this user
+        if (permissions && permissions.length > 0) {
+            permissionsService.saveUserPermissions(userId, permissions);
+        }
+
+        // Restore admin session so admin stays logged in seamlessly
         if (adminSession) {
             await supabase.auth.setSession({
                 access_token: adminSession.access_token,
@@ -129,7 +150,7 @@ export const managerService = {
             });
         }
 
-        return { userId, email, name };
+        return { userId, email, name, role, permissions };
     },
 
     // Update a manager's assigned module

@@ -40,8 +40,10 @@ import {
     PieChart,
     LogOut,
     Folder,
+    Home,
 } from 'lucide-react';
 import Avatar from '../../common/Avatar/Avatar';
+import { permissionsService } from '../../../services/permissionsService';
 import './Sidebar.css';
 
 const moduleIconMap = {
@@ -181,26 +183,42 @@ const Sidebar = () => {
         }
     }, [selectedModule]);
 
-    const visibleModules = DEPARTMENT_MODULES.filter((mod) =>
-        activeModules.includes(mod.key) || (mod.key === 'clients' && activeModules.includes('support'))
-    );
+    // Live sync permissions state
+    const [userPermissions, setUserPermissions] = useState(() => permissionsService.getUserPermissions(user?.id));
+    useEffect(() => {
+        const handlePermsUpdate = () => {
+            setUserPermissions(permissionsService.getUserPermissions(user?.id));
+        };
+        window.addEventListener('dwPermissionsUpdated', handlePermsUpdate);
+        return () => window.removeEventListener('dwPermissionsUpdated', handlePermsUpdate);
+    }, [user?.id]);
+
+    const accessibleModuleKeys = user?.role === 'admin'
+        ? null
+        : permissionsService.getAccessibleModules(user).map((m) => m.key);
+
+    const visibleModules = DEPARTMENT_MODULES.filter((mod) => {
+        const isModuleActive = activeModules.includes(mod.key) || (mod.key === 'clients' && activeModules.includes('support'));
+        if (!isModuleActive) return false;
+        if (accessibleModuleKeys === null) return true;
+        return accessibleModuleKeys.includes(mod.key);
+    });
 
     // Auto-detect selected module from current route
     useEffect(() => {
         const path = location.pathname;
-        const matched = DEPARTMENT_MODULES.find(
+        const matched = visibleModules.find(
             (mod) =>
-                (activeModules.includes(mod.key) || (mod.key === 'clients' && activeModules.includes('support'))) &&
-                (path === mod.route ||
-                    path.startsWith('/board/') && mod.key === 'projects' ||
-                    (moduleSubPages[mod.key] || []).some((sub) => path === sub.path))
+                path === mod.route ||
+                (path.startsWith('/board/') && mod.key === 'projects') ||
+                (moduleSubPages[mod.key] || []).some((sub) => path === sub.path)
         );
         if (matched) {
             setSelectedModule(matched.key);
         } else {
             setSelectedModule(null);
         }
-    }, [location.pathname, activeModules]);
+    }, [location.pathname, activeModules, visibleModules]);
 
     // Close dropdown on outside click
     useEffect(() => {
@@ -238,7 +256,28 @@ const Sidebar = () => {
 
     const selectedModuleInfo = DEPARTMENT_MODULES.find((m) => m.key === selectedModule);
     const SelectedIcon = selectedModuleInfo ? (moduleIconMap[selectedModuleInfo.icon] || FileText) : null;
-    const subPages = selectedModule ? (dynamicSubPages[selectedModule] || []) : [];
+    
+    // RBAC Filter sub-pages for non-admin users
+    const rawSubPages = selectedModule ? (dynamicSubPages[selectedModule] || []) : [];
+    const subPages = user?.role === 'admin'
+        ? rawSubPages
+        : rawSubPages.filter((sub) => {
+            const accessibleFeatures = permissionsService.getAccessibleFeatures(user, selectedModule);
+            // If all features in module accessible (wildcard access)
+            const allFeaturesInMod = permissionsService.getSystemModules().find(m => m.key === selectedModule)?.features || [];
+            if (accessibleFeatures.length >= allFeaturesInMod.length) return true;
+
+            // Match by subpage query or path
+            return accessibleFeatures.some(f => {
+                if (f.path === sub.path) return true;
+                if (f.path.includes('?') && sub.path.includes('?')) {
+                    const fQuery = f.path.split('?')[1];
+                    const subQuery = sub.path.split('?')[1];
+                    return fQuery === subQuery;
+                }
+                return false;
+            });
+        });
 
     const renderSubPageItem = (item, level = 0) => {
         const SubIcon = item.icon;
@@ -394,14 +433,18 @@ const Sidebar = () => {
                                     </button>
                                 );
                             })}
-                            <div className="sidebar__hub-divider" />
-                            <button
-                                className="sidebar__hub-option sidebar__hub-option--manage"
-                                onClick={() => { setDropdownOpen(false); navigate('/modules'); }}
-                            >
-                                <Settings size={15} />
-                                <span>Manage Modules</span>
-                            </button>
+                            {user?.role === 'admin' && (
+                                <>
+                                    <div className="sidebar__hub-divider" />
+                                    <button
+                                        className="sidebar__hub-option sidebar__hub-option--manage"
+                                        onClick={() => { setDropdownOpen(false); navigate('/modules'); }}
+                                    >
+                                        <Settings size={15} />
+                                        <span>Manage Modules</span>
+                                    </button>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
@@ -428,6 +471,16 @@ const Sidebar = () => {
 
                 {/* Footer */}
                 <div className="sidebar__footer">
+                    {user?.role === 'employee' && (
+                        <button
+                            className="sidebar__nav-item"
+                            onClick={() => navigate('/employee/dashboard')}
+                            style={{ color: 'var(--primary-400)', fontWeight: 600, background: 'rgba(87, 155, 252, 0.08)', borderRadius: '8px', marginBottom: '4px' }}
+                        >
+                            <Home size={16} />
+                            <span>My Cockpit</span>
+                        </button>
+                    )}
                     <button
                         className="sidebar__nav-item"
                         onClick={() => navigate('/settings')}
@@ -448,10 +501,12 @@ const Sidebar = () => {
                         onClick={() => navigate('/settings')}
                         title="View Profile Settings"
                     >
-                        <Avatar name={user?.name || 'Admin'} src={user?.avatar} size="sm" />
+                        <Avatar name={user?.name || 'User'} src={user?.avatar} size="sm" />
                         <div style={{ overflow: 'hidden' }}>
                             <div style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.name}</div>
-                            <div style={{ fontSize: '11px', opacity: 0.6 }}>Workspace Admin</div>
+                            <div style={{ fontSize: '11px', opacity: 0.6 }}>
+                                {user?.role === 'admin' ? 'Workspace Admin' : user?.role === 'manager' ? 'Department Manager' : 'Team Member'}
+                            </div>
                         </div>
                     </div>
                 </div>

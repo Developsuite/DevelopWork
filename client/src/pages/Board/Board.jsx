@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { openItemDrawer, closeItemDrawer, addToast } from '../../store/slices/uiSlice';
 import { projectService } from '../../services/projectService';
+import { managerService } from '../../services/managerService';
 import { isEmpty } from '../../utils/validation';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
@@ -44,27 +45,30 @@ const Board = () => {
     const [project, setProject] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [sprint, setSprint] = useState(null);
+    const [teamMembers, setTeamMembers] = useState([]);
 
     // Task form state
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [taskForm, setTaskForm] = useState({
         title: '', status: 'Not Started', priority: 'Medium',
-        deadline: '', assignee_name: '', description: ''
+        deadline: '', assignee_id: '', assignee_name: '', description: ''
     });
 
     // Load project data
     const loadData = useCallback(async () => {
         if (!projectId) { setLoading(false); return; }
         try {
-            const [proj, projectTasks, sprints] = await Promise.all([
+            const [proj, projectTasks, sprints, users] = await Promise.all([
                 projectService.getById(projectId),
                 projectService.getTasks(projectId),
-                projectService.getSprints(projectId)
+                projectService.getSprints(projectId),
+                managerService.getAllUsers()
             ]);
             setProject(proj);
             setTasks(projectTasks);
             if (sprints.length > 0) setSprint(sprints.find(s => s.status === 'Active') || sprints[0]);
+            setTeamMembers(users || []);
         } catch (err) {
             console.error('Failed to load sprint board:', err);
             dispatch(addToast({ title: 'Error', message: 'Failed to load project data.', type: 'error' }));
@@ -115,13 +119,15 @@ const Board = () => {
             return;
         }
         try {
+            const selectedMember = teamMembers.find(m => m.id === taskForm.assignee_id);
             const payload = {
                 title: taskForm.title,
                 project_id: projectId,
                 status: taskForm.status,
                 priority: taskForm.priority,
                 deadline: taskForm.deadline || null,
-                assignee_name: taskForm.assignee_name || null,
+                assignee_id: taskForm.assignee_id || null,
+                assignee_name: selectedMember ? selectedMember.name : (taskForm.assignee_name || null),
                 description: taskForm.description || null,
             };
             if (editingTask) {
@@ -133,7 +139,7 @@ const Board = () => {
             }
             setIsTaskModalOpen(false);
             setEditingTask(null);
-            setTaskForm({ title: '', status: 'Not Started', priority: 'Medium', deadline: '', assignee_name: '', description: '' });
+            setTaskForm({ title: '', status: 'Not Started', priority: 'Medium', deadline: '', assignee_id: '', assignee_name: '', description: '' });
             await loadData();
         } catch (err) {
             dispatch(addToast({ title: 'Error', message: err.message || 'Failed to save task.', type: 'error' }));
@@ -142,7 +148,7 @@ const Board = () => {
 
     const openNewTaskModal = (status) => {
         setEditingTask(null);
-        setTaskForm({ title: '', status: status || 'Not Started', priority: 'Medium', deadline: '', assignee_name: '', description: '' });
+        setTaskForm({ title: '', status: status || 'Not Started', priority: 'Medium', deadline: '', assignee_id: '', assignee_name: '', description: '' });
         setIsTaskModalOpen(true);
     };
 
@@ -153,6 +159,7 @@ const Board = () => {
             status: task.status || 'Not Started',
             priority: task.priority || 'Medium',
             deadline: task.deadline || '',
+            assignee_id: task.assignee_id || '',
             assignee_name: task.assignee_name || '',
             description: task.description || ''
         });
@@ -428,8 +435,27 @@ const Board = () => {
                         <input className="dw-form-input" placeholder="What needs to be done?" value={taskForm.title} onChange={e => setTaskForm({...taskForm, title: e.target.value})} />
                     </div>
                     <div className="dw-form-group">
-                        <label className="dw-form-label">Assignee Name</label>
-                        <input className="dw-form-input" placeholder="e.g. Abbas Khan" value={taskForm.assignee_name} onChange={e => setTaskForm({...taskForm, assignee_name: e.target.value})} />
+                        <label className="dw-form-label">Assign To</label>
+                        <select
+                            className="dw-form-input"
+                            value={taskForm.assignee_id}
+                            onChange={(e) => {
+                                const mId = e.target.value;
+                                const selected = teamMembers.find(m => m.id === mId);
+                                setTaskForm({
+                                    ...taskForm,
+                                    assignee_id: mId,
+                                    assignee_name: selected ? selected.name : ''
+                                });
+                            }}
+                        >
+                            <option value="">Unassigned</option>
+                            {teamMembers.map((m) => (
+                                <option key={m.id} value={m.id}>
+                                    {m.name} &bull; {m.role === 'employee' ? 'Employee' : m.role === 'manager' ? 'Manager' : 'Admin'} ({m.email})
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                         <div className="dw-form-group">

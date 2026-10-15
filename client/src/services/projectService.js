@@ -86,13 +86,37 @@ export const projectService = {
     },
 
     async getTasksByAssignee(userId, userName) {
-        const { data, error } = await supabase
-            .from('tasks')
-            .select('*, projects!inner(name)')
-            .or(`assignee_id.eq.${userId},assignee_name.ilike.${userName}`)
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        return data.map(t => ({ ...t, project_name: t.projects?.name || 'Unknown' }));
+        try {
+            let query = supabase
+                .from('tasks')
+                .select('*, projects(name)')
+                .order('created_at', { ascending: false });
+
+            if (userId && userName) {
+                // PostgREST or() requires encoded/escaped strings when whitespace is present
+                query = query.or(`assignee_id.eq.${userId},assignee_name.ilike."*${userName}*"`);
+            } else if (userId) {
+                query = query.eq('assignee_id', userId);
+            } else if (userName) {
+                query = query.ilike('assignee_name', `%${userName}%`);
+            }
+
+            const { data, error } = await query;
+            if (error) {
+                console.warn('[projectService] getTasksByAssignee primary query error, using fallback:', error.message);
+                // Fallback to simpler assignee_id query
+                const { data: fallbackData, error: fbError } = await supabase
+                    .from('tasks')
+                    .select('*, projects(name)')
+                    .eq('assignee_id', userId);
+                if (fbError) throw fbError;
+                return (fallbackData || []).map(t => ({ ...t, project_name: t.projects?.name || 'General' }));
+            }
+            return (data || []).map(t => ({ ...t, project_name: t.projects?.name || 'General' }));
+        } catch (err) {
+            console.error('[projectService] getTasksByAssignee failed:', err);
+            return [];
+        }
     },
 
     async createTask(task) {

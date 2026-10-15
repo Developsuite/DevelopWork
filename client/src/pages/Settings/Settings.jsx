@@ -9,6 +9,7 @@ import Modal from '../../components/common/Modal/Modal';
 import { mockUser } from '../../utils/mockData';
 import { authService } from '../../services/authService';
 import { managerService } from '../../services/managerService';
+import { permissionsService, SYSTEM_MODULES } from '../../services/permissionsService';
 import { isValidEmail, isEmpty, isValidPassword } from '../../utils/validation';
 import { DEPARTMENT_MODULES } from '../../utils/constants';
 import {
@@ -165,6 +166,60 @@ const Settings = () => {
     const [inviteEmployeeForm, setInviteEmployeeForm] = useState({ name: '', email: '', password: 'Employee@123' });
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteSuccess, setInviteSuccess] = useState(null);
+
+    // Granular RBAC Permissions State
+    const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+    const [selectedUserForPermissions, setSelectedUserForPermissions] = useState(null);
+    const [userPermissionsState, setUserPermissionsState] = useState([]);
+
+    const handleOpenPermissionsModal = (targetUser) => {
+        const uId = targetUser.id || targetUser._id;
+        setSelectedUserForPermissions({ ...targetUser, id: uId });
+        let perms = permissionsService.getUserPermissions(uId);
+        if (perms.length === 0 && targetUser.assigned_module) {
+            perms = [`${targetUser.assigned_module}.*`];
+        }
+        setUserPermissionsState(perms);
+        setIsPermissionsModalOpen(true);
+    };
+
+    const handleTogglePermission = (key) => {
+        setUserPermissionsState(prev => 
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+        );
+    };
+
+    const handleToggleModuleAll = (moduleKey, features) => {
+        const allKeys = [moduleKey, `${moduleKey}.*`, ...features.map(f => f.key)];
+        const hasAll = features.every(f => userPermissionsState.includes(f.key));
+        if (hasAll) {
+            setUserPermissionsState(prev => prev.filter(k => !allKeys.includes(k)));
+        } else {
+            setUserPermissionsState(prev => Array.from(new Set([...prev, ...allKeys])));
+        }
+    };
+
+    const handleSelectAllPermissions = () => {
+        const allPerms = SYSTEM_MODULES.flatMap(m => [m.key, `${m.key}.*`, ...m.features.map(f => f.key)]);
+        setUserPermissionsState(allPerms);
+    };
+
+    const handleClearAllPermissions = () => {
+        setUserPermissionsState([]);
+    };
+
+    const handleSavePermissions = () => {
+        if (!selectedUserForPermissions) return;
+        const uId = selectedUserForPermissions.id || selectedUserForPermissions._id;
+        permissionsService.saveUserPermissions(uId, userPermissionsState);
+        dispatch(addToast({
+            title: 'Permissions Saved',
+            message: `Granular role-based access updated for ${selectedUserForPermissions.name}.`,
+            type: 'success'
+        }));
+        setIsPermissionsModalOpen(false);
+        loadData();
+    };
 
     // Profile state
     const [profileForm, setProfileForm] = useState({
@@ -668,8 +723,9 @@ const Settings = () => {
                                                 </div>
                                                 <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
                                                     <span style={{padding:'4px 12px', borderRadius:'6px', fontSize:'11px', fontWeight:700, textTransform:'uppercase', background: mod ? 'rgba(87,155,252,0.08)' : 'rgba(0,0,0,0.04)', color: mod?.color || 'var(--text-muted)'}}>
-                                                        {mod?.label || m.assigned_module || 'None'}
+                                                        {mod?.label || m.assigned_module || 'Custom Access'}
                                                     </span>
+                                                    <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(m)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
                                                     <button className="brd__icon-btn" onClick={() => { setEditingManager(m); setIsEditModuleModalOpen(true); }} title="Change module"><Pencil size={14}/></button>
                                                     <button className="brd__icon-btn danger" onClick={async () => {
                                                         if (!window.confirm(`Revoke manager access for ${m.name}? They will be demoted to employee.`)) return;
@@ -708,10 +764,13 @@ const Settings = () => {
                                                     <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'2px'}}>{e.email}</div>
                                                 </div>
                                             </div>
-                                                <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
-                                                    <div style={{fontSize:'13px', color:'var(--text-secondary)', display:'flex', alignItems:'center', gap:'6px'}}>
-                                                        <User size={14} /> Employee
-                                                    </div>
+                                                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                                                    <span style={{padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:600, background:'rgba(59,130,246,0.08)', color:'var(--primary-600)'}}>
+                                                        {permissionsService.getUserPermissions(e.id).length > 0 
+                                                            ? `${permissionsService.getUserPermissions(e.id).length} Permitted Features` 
+                                                            : 'Standard Access'}
+                                                    </span>
+                                                    <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(e)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
                                                     <button className="brd__icon-btn danger" onClick={async () => {
                                                         if (!window.confirm(`Are you sure you want to completely remove ${e.name}? They will lose all access.`)) return;
                                                         try {
@@ -931,6 +990,92 @@ const Settings = () => {
                                 }
                             }} fullWidth>Save Changes</Button>
                         </div>
+                    </div>
+                )}
+            </Modal>
+
+            {/* Granular Permissions Modal */}
+            <Modal 
+                isOpen={isPermissionsModalOpen} 
+                onClose={() => setIsPermissionsModalOpen(false)} 
+                title={`Granular Role-Based Access: ${selectedUserForPermissions?.name || 'User'}`}
+                footer={
+                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                            <strong>{userPermissionsState.length}</strong> permissions active
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <Button variant="ghost" onClick={() => setIsPermissionsModalOpen(false)}>Cancel</Button>
+                            <Button variant="primary" onClick={handleSavePermissions}>Save Permissions</Button>
+                        </div>
+                    </div>
+                }
+            >
+                {selectedUserForPermissions && (
+                    <div className="permissions-modal-container">
+                        <div className="permissions-user-header">
+                            <div>
+                                <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>
+                                    {selectedUserForPermissions.name}
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                    {selectedUserForPermissions.email} &bull; <span style={{ textTransform: 'capitalize' }}>{selectedUserForPermissions.role || 'Employee'}</span>
+                                </div>
+                            </div>
+                            <div className="permissions-quick-actions">
+                                <Button variant="secondary" size="sm" onClick={handleSelectAllPermissions}>Grant All</Button>
+                                <Button variant="ghost" size="sm" onClick={handleClearAllPermissions}>Clear All</Button>
+                            </div>
+                        </div>
+
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0' }}>
+                            Select entire modules or pick individual sub-features. Multiple employees can share control over any feature according to your desire.
+                        </div>
+
+                        {SYSTEM_MODULES.map(module => {
+                            const isModuleAllChecked = module.features.every(f => userPermissionsState.includes(f.key));
+
+                            return (
+                                <div key={module.key} className="permissions-module-card">
+                                    <div className="permissions-module-header">
+                                        <div className="permissions-module-title">
+                                            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: module.color }} />
+                                            <span>{module.label}</span>
+                                        </div>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', color: 'var(--primary-600)' }}>
+                                            <input 
+                                                type="checkbox"
+                                                checked={isModuleAllChecked}
+                                                onChange={() => handleToggleModuleAll(module.key, module.features)}
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                            <span>Entire Module</span>
+                                        </label>
+                                    </div>
+
+                                    <div className="permissions-features-grid">
+                                        {module.features.map(feature => {
+                                            const isChecked = userPermissionsState.includes(feature.key) || userPermissionsState.includes(module.key) || userPermissionsState.includes(`${module.key}.*`);
+
+                                            return (
+                                                <label 
+                                                    key={feature.key} 
+                                                    className={`permissions-feature-item ${isChecked ? 'checked' : ''}`}
+                                                >
+                                                    <input 
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => handleTogglePermission(feature.key)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                    <span>{feature.label}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </Modal>
