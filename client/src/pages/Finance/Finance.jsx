@@ -11,8 +11,9 @@ import {
     DollarSign, TrendingUp, TrendingDown, CreditCard, Wallet, Receipt, FileText,
     Download, Upload, Calendar, Search, MoreVertical, ArrowUpRight, ArrowDownRight,
     BarChart3, AlertCircle, Plus, Check, X, Clock, Trash2, Pencil,
-    Zap, Home, Briefcase, Filter
+    Zap, Home, Briefcase, Filter, ShieldAlert
 } from 'lucide-react';
+import { permissionsService } from '../../services/permissionsService';
 import './Finance.css';
 
 import img1 from '../../assets/finance/1.png';
@@ -114,8 +115,37 @@ const Finance = () => {
         const prefix = getCurrencyPrefix(currency);
         return `${prefix}${new Intl.NumberFormat('en-US').format(n || 0)}`;
     }, [currency]);
+
+    const allTabs = useMemo(() => [
+        { id: 'dashboard', label: 'Dashboard', icon: BarChart3, permission: 'finance.dashboard' },
+        { id: 'transactions', label: 'Transactions', icon: Receipt, permission: 'finance.transactions' },
+        { id: 'invoices', label: 'Invoices', icon: FileText, permission: 'finance.invoices' },
+        { id: 'expenses', label: 'Expenses', icon: CreditCard, permission: 'finance.expenses' },
+    ], []);
+
+    const tabs = useMemo(() => {
+        if (!user || user.role === 'admin') return allTabs;
+        const permitted = allTabs.filter(t => permissionsService.hasPermission(user, t.permission));
+        return permitted.length > 0 ? permitted : allTabs;
+    }, [user, allTabs]);
+
+    const canViewDashboard = user?.role === 'admin' || permissionsService.hasPermission(user, 'finance.dashboard') || permissionsService.hasPermission(user, 'finance.*') || permissionsService.hasPermission(user, 'finance');
+    const canManageTransactions = user?.role === 'admin' || permissionsService.hasPermission(user, 'finance.transactions') || permissionsService.hasPermission(user, 'finance.*') || permissionsService.hasPermission(user, 'finance');
+    const canManageInvoices = user?.role === 'admin' || permissionsService.hasPermission(user, 'finance.invoices') || permissionsService.hasPermission(user, 'finance.*') || permissionsService.hasPermission(user, 'finance');
+    const canManageExpenses = user?.role === 'admin' || permissionsService.hasPermission(user, 'finance.expenses') || permissionsService.hasPermission(user, 'finance.*') || permissionsService.hasPermission(user, 'finance');
+
     const [searchParams, setSearchParams] = useSearchParams();
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'dashboard');
+    const initialUrlTab = searchParams.get('tab');
+    const [activeTab, setActiveTab] = useState(() => {
+        if (initialUrlTab) return initialUrlTab;
+        if (user && user.role !== 'admin') {
+            const permitted = allTabs.filter(t => permissionsService.hasPermission(user, t.permission));
+            if (permitted.length > 0 && !permitted.some(t => t.id === 'dashboard')) {
+                return permitted[0].id;
+            }
+        }
+        return 'dashboard';
+    });
 
     const renderTag = (val) => {
         if (!val) return null;
@@ -128,14 +158,20 @@ const Finance = () => {
         );
     };
 
-
-    // Sync tab with URL
+    // Keep activeTab aligned with permitted tabs and URL
     useEffect(() => {
         const tab = searchParams.get('tab');
         if (tab && tab !== activeTab) {
             setActiveTab(tab);
+        } else if (user && user.role !== 'admin' && tabs.length > 0) {
+            const isPermitted = tabs.some(t => t.id === activeTab);
+            if (!isPermitted) {
+                const target = tabs[0].id;
+                setActiveTab(target);
+                setSearchParams({ tab: target }, { replace: true });
+            }
         }
-    }, [searchParams]);
+    }, [searchParams, user, tabs, activeTab, setSearchParams]);
 
     const handleTabChange = (tabId) => {
         setActiveTab(tabId);
@@ -248,13 +284,6 @@ const Finance = () => {
         };
         loadAll();
     }, [loadTransactions, loadInvoices, loadExpenses]);
-
-    const tabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-        { id: 'transactions', label: 'Transactions', icon: Receipt },
-        { id: 'invoices', label: 'Invoices', icon: FileText },
-        { id: 'expenses', label: 'Expenses', icon: CreditCard },
-    ];
 
     const chartData = useMemo(() => {
         const last6Months = [];
@@ -748,23 +777,25 @@ const Finance = () => {
             </div>
 
 
-            {/* Stats */}
-            <div className="finance-dashboard__stats">
-                {dashboardStats.map(stat => (
-                    <div key={stat.label} className="finance-dashboard__stat-card">
-                        <div className="finance-dashboard__stat-content">
-                            <div className="finance-dashboard__stat-label">{stat.label}</div>
-                            <div className="finance-dashboard__stat-value">{stat.value}</div>
-                            <span className={`finance-dashboard__stat-change ${stat.positive ? 'positive' : 'negative'}`}>
-                                {stat.positive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}{stat.change}
-                            </span>
+            {/* Stats - visible only if user has dashboard permission */}
+            {canViewDashboard && (
+                <div className="finance-dashboard__stats">
+                    {dashboardStats.map(stat => (
+                        <div key={stat.label} className="finance-dashboard__stat-card">
+                            <div className="finance-dashboard__stat-content">
+                                <div className="finance-dashboard__stat-label">{stat.label}</div>
+                                <div className="finance-dashboard__stat-value">{stat.value}</div>
+                                <span className={`finance-dashboard__stat-change ${stat.positive ? 'positive' : 'negative'}`}>
+                                    {stat.positive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}{stat.change}
+                                </span>
+                            </div>
+                            <div className="finance-dashboard__stat-image">
+                                <img src={stat.image} alt={stat.label} />
+                            </div>
                         </div>
-                        <div className="finance-dashboard__stat-image">
-                            <img src={stat.image} alt={stat.label} />
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* Controls Row */}
             <div className="fin-controls-row">
@@ -787,14 +818,21 @@ const Finance = () => {
                         <option value="last_month">Last Month</option>
                         <option value="this_year">This Year</option>
                     </select>
-                    <Button variant="ghost" icon={Upload} onClick={() => setIsImportModalOpen(true)}>Import</Button>
-                    <Button variant="ghost" icon={Download} onClick={handleExportCSV}>Export</Button>
-                    <Button variant="primary" icon={Receipt} onClick={handleAddTransaction}>New Transaction</Button>
+                    {canManageTransactions && (
+                        <>
+                            <Button variant="ghost" icon={Upload} onClick={() => setIsImportModalOpen(true)}>Import</Button>
+                            <Button variant="ghost" icon={Download} onClick={handleExportCSV}>Export</Button>
+                            <Button variant="primary" icon={Receipt} onClick={handleAddTransaction}>New Transaction</Button>
+                        </>
+                    )}
+                    {activeTab === 'expenses' && (
+                        <Button variant="primary" icon={Plus} onClick={() => { setEditExpenseId(null); setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '' }); setIsAddExpenseModalOpen(true); }}>New Expense</Button>
+                    )}
                 </div>
             </div>
 
             {/* === DASHBOARD === */}
-            {activeTab === 'dashboard' && (
+            {activeTab === 'dashboard' && canViewDashboard && (
                 <div className="fin-dashboard-grid">
                     <div className="fin-chart-card" style={{ gridColumn: 'span 2' }}>
                         <h3>Revenue vs Expenses Overview</h3>
@@ -862,7 +900,7 @@ const Finance = () => {
                                     />
                                     <Bar dataKey="netProfit" name="Net Profit" radius={[4, 4, 0, 0]}>
                                         {chartData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.netProfit >= 0 ? '#10b981' : '#f43f5e'} />
+                                             <Cell key={`cell-${index}`} fill={entry.netProfit >= 0 ? '#10b981' : '#f43f5e'} />
                                         ))}
                                     </Bar>
                                 </BarChart>
@@ -871,9 +909,16 @@ const Finance = () => {
                     </div>
                 </div>
             )}
+            {activeTab === 'dashboard' && !canViewDashboard && (
+                <div className="empty-settings" style={{ padding: '60px 20px', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-light)', marginTop: '20px' }}>
+                    <ShieldAlert size={44} style={{ color: 'var(--danger)', marginBottom: '16px', opacity: 0.8 }} />
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>Access Restricted</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>You do not have permission to view the financial dashboard overview.</p>
+                </div>
+            )}
 
             {/* === TRANSACTIONS === */}
-            {activeTab === 'transactions' && (
+            {activeTab === 'transactions' && canManageTransactions && (
                 <div className="fin-section">
                     <div className="fin-section__header">
                         <h2>All Transactions</h2>
@@ -907,9 +952,16 @@ const Finance = () => {
                     </table>
                 </div>
             )}
+            {activeTab === 'transactions' && !canManageTransactions && (
+                <div className="empty-settings" style={{ padding: '60px 20px', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-light)', marginTop: '20px' }}>
+                    <ShieldAlert size={44} style={{ color: 'var(--danger)', marginBottom: '16px', opacity: 0.8 }} />
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>Access Restricted</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>You do not have permission to view the transactions ledger.</p>
+                </div>
+            )}
 
             {/* === INVOICES === */}
-            {activeTab === 'invoices' && (
+            {activeTab === 'invoices' && canManageInvoices && (
                 <div className="fin-invoices-wrap">
                     <div className="fin-invoices-header">
                         <h2>Invoices</h2>
@@ -967,10 +1019,16 @@ const Finance = () => {
                     </div>
                 </div>
             )}
+            {activeTab === 'invoices' && !canManageInvoices && (
+                <div className="empty-settings" style={{ padding: '60px 20px', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-light)', marginTop: '20px' }}>
+                    <ShieldAlert size={44} style={{ color: 'var(--danger)', marginBottom: '16px', opacity: 0.8 }} />
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>Access Restricted</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>You do not have permission to view invoices.</p>
+                </div>
+            )}
 
-
-             {/* === EXPENSES === */}
-            {activeTab === 'expenses' && (
+            {/* === EXPENSES === */}
+            {activeTab === 'expenses' && canManageExpenses && (
                 <div className="fin-ledger-section">
                     <div className="fin-ledger-header">
                         <div className="fin-ledger-summary">
@@ -1053,6 +1111,13 @@ const Finance = () => {
                             );
                         })}
                     </div>
+                </div>
+            )}
+            {activeTab === 'expenses' && !canManageExpenses && (
+                <div className="empty-settings" style={{ padding: '60px 20px', textAlign: 'center', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border-light)', marginTop: '20px' }}>
+                    <ShieldAlert size={44} style={{ color: 'var(--danger)', marginBottom: '16px', opacity: 0.8 }} />
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>Access Restricted</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>You do not have permission to access expense requests.</p>
                 </div>
             )}
 

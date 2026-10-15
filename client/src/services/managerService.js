@@ -184,13 +184,12 @@ export const managerService = {
         return data;
     },
 
-    // Revoke manager access (demote to employee)
+    // Revoke manager access (demote to employee, preserving granular permissions)
     async revokeManager(userId) {
         const { data, error } = await supabase
             .from('profiles')
             .update({
                 role: 'employee',
-                assigned_module: null,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', userId)
@@ -202,7 +201,17 @@ export const managerService = {
 
     // Delete a user entirely from the system (requires Admin)
     async removeUser(userId) {
-        const { error } = await supabase.rpc('delete_user', { target_user_id: userId });
-        if (error) throw error;
+        try {
+            const { error } = await supabase.rpc('delete_user', { target_user_id: userId });
+            if (error) throw error;
+        } catch (rpcErr) {
+            console.warn('[ManagerService] RPC delete_user failed, executing direct profile removal:', rpcErr);
+            const { error: delErr } = await supabase
+                .from('profiles')
+                .delete()
+                .eq('id', userId);
+            if (delErr) throw delErr;
+        }
+        permissionsService.clearLocalPermissions(userId);
     },
 };

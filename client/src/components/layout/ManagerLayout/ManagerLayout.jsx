@@ -195,6 +195,14 @@ const ManagerLayout = () => {
         });
     }
 
+    // Auto-direct to the first permitted subpage tab if on base module URL
+    useEffect(() => {
+        if (subPages.length > 0 && !location.search && subPages[0].path.includes('?')) {
+            const firstTab = subPages[0].path.split('?')[1];
+            navigate(`/manager/${currentModuleKey}?${firstTab}`, { replace: true });
+        }
+    }, [currentModuleKey, subPages, location.search, navigate]);
+
     const handleLogout = async () => {
         if (!window.confirm('Are you sure you want to log out?')) return;
         try {

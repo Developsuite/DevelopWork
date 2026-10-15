@@ -291,10 +291,12 @@ export const permissionsService = {
             return true;
         }
 
-        // Module matching on assignedModule
+        // Module matching on legacy assignedModule: ONLY if plain string single module key (NOT a JSON array)
         const assignedMod = user.assignedModule || user.assigned_module;
-        if (assignedMod && (assignedMod === modKey || (typeof assignedMod === 'string' && assignedMod.includes(modKey)))) {
-            return true;
+        if (assignedMod && typeof assignedMod === 'string' && !assignedMod.startsWith('[')) {
+            if (assignedMod === modKey) {
+                return true;
+            }
         }
 
         return false;
@@ -308,15 +310,23 @@ export const permissionsService = {
         const userPerms = this.getUserPermissions(user);
         const assignedMod = user.assignedModule || user.assigned_module;
 
-        return SYSTEM_MODULES.filter(mod => {
-            // Check direct assigned module
-            if (assignedMod) {
+        const accessible = SYSTEM_MODULES.filter(mod => {
+            // Check direct legacy assigned module (only if plain string, not JSON array)
+            if (assignedMod && typeof assignedMod === 'string' && !assignedMod.startsWith('[')) {
                 if (assignedMod === mod.key) return true;
-                if (typeof assignedMod === 'string' && assignedMod.includes(mod.key)) return true;
             }
             // Check permissions array
             if (userPerms.includes(mod.key) || userPerms.includes(`${mod.key}.*`)) return true;
             return mod.features.some(f => userPerms.includes(f.key));
+        });
+
+        // Order so modules with full/wildcard access appear first (e.g., Leads before Finance when Finance is partial)
+        return accessible.sort((a, b) => {
+            const aFull = userPerms.includes(a.key) || userPerms.includes(`${a.key}.*`);
+            const bFull = userPerms.includes(b.key) || userPerms.includes(`${b.key}.*`);
+            if (aFull && !bFull) return -1;
+            if (!aFull && bFull) return 1;
+            return 0;
         });
     },
 
@@ -333,13 +343,26 @@ export const permissionsService = {
             return mod.features;
         }
 
-        // Check if assigned module directly matches moduleKey
+        // Check if legacy assigned module directly matches moduleKey
         const assignedMod = user.assignedModule || user.assigned_module;
-        if (assignedMod === moduleKey && userPerms.length === 0) {
+        if (assignedMod === moduleKey && (!userPerms || userPerms.length === 0)) {
             return mod.features;
         }
 
-        const filtered = mod.features.filter(f => userPerms.includes(f.key));
-        return filtered.length > 0 ? filtered : mod.features;
+        // Return only features specifically granted
+        return mod.features.filter(f => userPerms.includes(f.key));
+    },
+
+    // Clean up local cached permissions when user is deleted
+    clearLocalPermissions(userId, email = null) {
+        if (!userId) return;
+        try {
+            localStorage.removeItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${userId}`);
+            if (email) {
+                localStorage.removeItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${email}`);
+            }
+        } catch (e) {
+            console.warn('[RBAC] Error clearing local permissions:', e);
+        }
     }
 };

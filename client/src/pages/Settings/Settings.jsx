@@ -33,6 +33,9 @@ import {
     ShieldCheck,
     KeyRound,
     FileText,
+    AlertTriangle,
+    UserMinus,
+    ShieldAlert,
 } from 'lucide-react';
 import './Settings.css';
 
@@ -230,6 +233,115 @@ const Settings = () => {
         }
         setIsPermissionsModalOpen(false);
         loadData();
+    };
+
+    // Custom Themed Confirmation Warning Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        targetUser: null,
+        type: null, // 'manage_manager' | 'delete_employee'
+        loading: false
+    });
+
+    const handleConfirmDemoteManager = async () => {
+        if (!confirmModal.targetUser) return;
+        setConfirmModal(prev => ({ ...prev, loading: true }));
+        try {
+            await managerService.revokeManager(confirmModal.targetUser.id);
+            dispatch(addToast({
+                title: 'Manager Demoted',
+                message: `${confirmModal.targetUser.name} is now a staff employee. Their granular permissions remain preserved.`,
+                type: 'info'
+            }));
+            setConfirmModal({ isOpen: false, title: '', targetUser: null, type: null, loading: false });
+            loadData();
+        } catch (err) {
+            console.error('Demote manager error:', err);
+            dispatch(addToast({ title: 'Error', message: err.message || 'Failed to demote manager.', type: 'error' }));
+            setConfirmModal(prev => ({ ...prev, loading: false }));
+        }
+    };
+
+    const handleConfirmDeleteUser = async () => {
+        if (!confirmModal.targetUser) return;
+        setConfirmModal(prev => ({ ...prev, loading: true }));
+        try {
+            await managerService.removeUser(confirmModal.targetUser.id);
+            dispatch(addToast({
+                title: 'User Removed',
+                message: `${confirmModal.targetUser.name} has been permanently deleted from DevelopSuite.`,
+                type: 'info'
+            }));
+            setConfirmModal({ isOpen: false, title: '', targetUser: null, type: null, loading: false });
+            loadData();
+        } catch (err) {
+            console.error('Delete user error:', err);
+            dispatch(addToast({ title: 'Error', message: err.message || 'Failed to delete user.', type: 'error' }));
+            setConfirmModal(prev => ({ ...prev, loading: false }));
+        }
+    };
+
+    const renderUserModuleBadges = (targetUser) => {
+        const userPerms = permissionsService.getUserPermissions(targetUser);
+        const accessibleMods = permissionsService.getAccessibleModules(targetUser);
+
+        // Check if legacy plain single module string
+        if (targetUser.assigned_module && typeof targetUser.assigned_module === 'string' && !targetUser.assigned_module.startsWith('[')) {
+            const singleMod = DEPARTMENT_MODULES.find(dm => dm.key === targetUser.assigned_module);
+            if (singleMod) {
+                return (
+                    <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', background: `${singleMod.color}18`, color: singleMod.color, border: `1px solid ${singleMod.color}35` }}>
+                        {singleMod.label}
+                    </span>
+                );
+            }
+        }
+
+        if (accessibleMods.length === 0) {
+            return (
+                <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: 'rgba(0,0,0,0.05)', color: 'var(--text-muted)' }}>
+                    Standard Access
+                </span>
+            );
+        }
+
+        return (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                {accessibleMods.map(mod => {
+                    const hasFull = userPerms.includes(mod.key) || userPerms.includes(`${mod.key}.*`);
+                    const userFeaturesInMod = mod.features.filter(f => userPerms.includes(f.key));
+                    
+                    let badgeLabel = mod.label;
+                    if (!hasFull && userFeaturesInMod.length > 0) {
+                        badgeLabel = userFeaturesInMod.length === 1 
+                            ? `${userFeaturesInMod[0].label} (${mod.label})` 
+                            : `${mod.label} (${userFeaturesInMod.length} feats)`;
+                    }
+
+                    return (
+                        <span 
+                            key={mod.key} 
+                            style={{
+                                padding: '3px 8px',
+                                borderRadius: '6px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                background: `${mod.color}15`,
+                                color: mod.color,
+                                border: `1px solid ${mod.color}35`,
+                                letterSpacing: '0.02em',
+                                whiteSpace: 'nowrap'
+                            }}
+                            title={hasFull ? `Full access to ${mod.label}` : `Granular: ${userFeaturesInMod.map(f => f.label).join(', ')}`}
+                        >
+                            {badgeLabel}
+                        </span>
+                    );
+                })}
+            </div>
+        );
     };
 
     // Profile state
@@ -721,37 +833,35 @@ const Settings = () => {
 
                             {managers.length > 0 && (
                                 <div className="module-settings-list">
-                                    {managers.map(m => {
-                                        const mod = DEPARTMENT_MODULES.find(dm => dm.key === m.assigned_module || (m.assigned_module && m.assigned_module.includes(dm.key)));
-                                        return (
-                                            <div key={m.id} className="module-setting-item" style={{padding:'16px 20px'}}>
-                                                <div style={{display:'flex', alignItems:'center', gap:'14px', flex:1}}>
-                                                    <Avatar name={m.name || 'M'} size="sm" />
-                                                    <div>
-                                                        <div style={{fontWeight:700, fontSize:'14px', color:'var(--text-primary)'}}>{m.name}</div>
-                                                        <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'2px'}}>{m.email}</div>
-                                                    </div>
-                                                </div>
-                                                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                                                    <span style={{padding:'4px 12px', borderRadius:'6px', fontSize:'11px', fontWeight:700, textTransform:'uppercase', background: mod ? 'rgba(87,155,252,0.08)' : 'rgba(0,0,0,0.04)', color: mod?.color || 'var(--text-muted)'}}>
-                                                        {mod?.label || (m.assigned_module?.startsWith('[') ? 'Custom RBAC Access' : m.assigned_module) || 'Custom Access'}
-                                                    </span>
-                                                    <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(m)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
-                                                    <button className="brd__icon-btn" onClick={() => { setEditingManager(m); setIsEditModuleModalOpen(true); }} title="Change module"><Pencil size={14}/></button>
-                                                    <button className="brd__icon-btn danger" onClick={async () => {
-                                                        if (!window.confirm(`Revoke manager access for ${m.name}? They will be demoted to employee.`)) return;
-                                                        try {
-                                                            await managerService.revokeManager(m.id);
-                                                            dispatch(addToast({ title: 'Revoked', message: `${m.name} is no longer a manager.`, type: 'info' }));
-                                                            loadData();
-                                                        } catch(err) {
-                                                            dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
-                                                        }
-                                                    }} title="Revoke access"><Trash2 size={14}/></button>
+                                    {managers.map(m => (
+                                        <div key={m.id} className="module-setting-item" style={{padding:'16px 20px'}}>
+                                            <div style={{display:'flex', alignItems:'center', gap:'14px', flex:1}}>
+                                                <Avatar name={m.name || 'M'} size="sm" />
+                                                <div>
+                                                    <div style={{fontWeight:700, fontSize:'14px', color:'var(--text-primary)'}}>{m.name}</div>
+                                                    <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'2px'}}>{m.email}</div>
                                                 </div>
                                             </div>
-                                        );
-                                    })}
+                                            <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                                                {renderUserModuleBadges(m)}
+                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(m)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
+                                                <button className="brd__icon-btn" onClick={() => { setEditingManager(m); setIsEditModuleModalOpen(true); }} title="Change module"><Pencil size={14}/></button>
+                                                <button 
+                                                    className="brd__icon-btn danger" 
+                                                    onClick={() => setConfirmModal({
+                                                        isOpen: true,
+                                                        title: 'Manage Manager Account',
+                                                        targetUser: m,
+                                                        type: 'manage_manager',
+                                                        loading: false
+                                                    })} 
+                                                    title="Demote or Remove Manager"
+                                                >
+                                                    <Trash2 size={14}/>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 
@@ -775,27 +885,26 @@ const Settings = () => {
                                                     <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'2px'}}>{e.email}</div>
                                                 </div>
                                             </div>
-                                                <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                                                    <span style={{padding:'4px 10px', borderRadius:'6px', fontSize:'11px', fontWeight:600, background:'rgba(59,130,246,0.08)', color:'var(--primary-600)'}}>
-                                                        {permissionsService.getUserPermissions(e).length > 0 
-                                                            ? `${permissionsService.getUserPermissions(e).length} Permitted Features` 
-                                                            : 'Standard Access'}
-                                                    </span>
-                                                    <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(e)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
-                                                    <button className="brd__icon-btn danger" onClick={async () => {
-                                                        if (!window.confirm(`Are you sure you want to completely remove ${e.name}? They will lose all access.`)) return;
-                                                        try {
-                                                            await managerService.removeUser(e.id);
-                                                            dispatch(addToast({ title: 'Deleted', message: `${e.name} has been removed from the system.`, type: 'info' }));
-                                                            loadData();
-                                                        } catch(err) {
-                                                            dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
-                                                        }
-                                                    }} title="Remove Employee"><Trash2 size={14}/></button>
-                                                </div>
+                                            <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                                                {renderUserModuleBadges(e)}
+                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(e)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
+                                                <button 
+                                                    className="brd__icon-btn danger" 
+                                                    onClick={() => setConfirmModal({
+                                                        isOpen: true,
+                                                        title: 'Delete Employee Account',
+                                                        targetUser: e,
+                                                        type: 'delete_employee',
+                                                        loading: false
+                                                    })} 
+                                                    title="Remove Employee"
+                                                >
+                                                    <Trash2 size={14}/>
+                                                </button>
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     )}
@@ -1133,6 +1242,149 @@ const Settings = () => {
                                 </div>
                             );
                         })}
+                    </div>
+                )}
+            </Modal>
+
+            {/* Custom Warning Confirmation Modal */}
+            <Modal
+                isOpen={confirmModal.isOpen}
+                onClose={() => {
+                    if (!confirmModal.loading) {
+                        setConfirmModal({ isOpen: false, title: '', targetUser: null, type: null, loading: false });
+                    }
+                }}
+                title={confirmModal.title || 'Confirm Action'}
+            >
+                {confirmModal.targetUser && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {/* User Card */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', background: 'var(--bg-hover)', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
+                            <Avatar name={confirmModal.targetUser.name || 'U'} size="md" />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                                    {confirmModal.targetUser.name}
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                    {confirmModal.targetUser.email} &bull; <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{confirmModal.targetUser.role || 'employee'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {confirmModal.type === 'manage_manager' && (
+                            <>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', padding: '14px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                    <AlertTriangle size={20} color="#EF4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                    <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                                        <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '4px' }}>
+                                            Choose How to Handle Manager Access
+                                        </strong>
+                                        You can either demote <strong>{confirmModal.targetUser.name}</strong> to a Staff Employee (which preserves their granular permissions and task history), or permanently delete their user account entirely.
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '4px' }}>
+                                    <button
+                                        type="button"
+                                        disabled={confirmModal.loading}
+                                        onClick={handleConfirmDemoteManager}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '14px 16px',
+                                            borderRadius: '10px',
+                                            border: '1px solid var(--border-medium)',
+                                            background: 'var(--bg-surface)',
+                                            cursor: confirmModal.loading ? 'not-allowed' : 'pointer',
+                                            textAlign: 'left',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary-500)'}
+                                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-medium)'}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <UserMinus size={18} color="var(--primary-600)" />
+                                            <div>
+                                                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                                    Demote to Staff Employee (Recommended)
+                                                </div>
+                                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                    Keeps their account and permissions safe. Shifts login portal to Employee.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--primary-600)', background: 'rgba(59,130,246,0.1)', padding: '4px 8px', borderRadius: '6px' }}>Demote</span>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        disabled={confirmModal.loading}
+                                        onClick={handleConfirmDeleteUser}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '14px 16px',
+                                            borderRadius: '10px',
+                                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                                            background: 'rgba(239, 68, 68, 0.04)',
+                                            cursor: confirmModal.loading ? 'not-allowed' : 'pointer',
+                                            textAlign: 'left',
+                                            transition: 'all 0.2s ease'
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.borderColor = '#EF4444'}
+                                        onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)'}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <Trash2 size={18} color="#EF4444" />
+                                            <div>
+                                                <div style={{ fontSize: '13px', fontWeight: 700, color: '#EF4444' }}>
+                                                    Permanently Delete User Account
+                                                </div>
+                                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                    Completely removes user, login access, and permission configurations.
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#EF4444', background: 'rgba(239, 68, 68, 0.1)', padding: '4px 8px', borderRadius: '6px' }}>Delete</span>
+                                    </button>
+                                </div>
+                            </>
+                        )}
+
+                        {confirmModal.type === 'delete_employee' && (
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', padding: '16px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                                <AlertTriangle size={24} color="#EF4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                                <div style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)' }}>
+                                    <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '14px', marginBottom: '4px' }}>
+                                        Are you sure you want to delete this employee?
+                                    </strong>
+                                    This will permanently remove <strong>{confirmModal.targetUser.name}</strong> ({confirmModal.targetUser.email}) from DevelopSuite.
+                                    Their account credentials will be revoked, any assigned tasks will be unassigned, and their permission records will be cleared.
+                                </div>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                            <Button 
+                                variant="ghost" 
+                                disabled={confirmModal.loading} 
+                                onClick={() => setConfirmModal({ isOpen: false, title: '', targetUser: null, type: null, loading: false })}
+                            >
+                                Cancel
+                            </Button>
+                            {confirmModal.type === 'delete_employee' && (
+                                <Button 
+                                    variant="danger" 
+                                    disabled={confirmModal.loading} 
+                                    onClick={handleConfirmDeleteUser}
+                                    icon={Trash2}
+                                >
+                                    {confirmModal.loading ? 'Deleting...' : 'Delete Employee'}
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 )}
             </Modal>
