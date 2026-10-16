@@ -86,6 +86,18 @@ export const SYSTEM_MODULES = [
             { key: 'docs.all', label: 'All Documents', path: '/docs' },
             { key: 'docs.templates', label: 'Templates Library', path: '/docs?tab=templates' },
         ]
+    },
+    {
+        key: 'meetings',
+        label: 'Meetings Management',
+        description: 'Schedule, host, and track client consultations, agendas, video calls, and minutes of meeting.',
+        color: '#8B5CF6',
+        features: [
+            { key: 'meetings.upcoming', label: 'Upcoming Schedule', path: '/meetings?tab=upcoming' },
+            { key: 'meetings.clients', label: 'Client Meetings Hub', path: '/meetings?tab=clients' },
+            { key: 'meetings.calendar', label: 'Calendar Schedule', path: '/meetings?tab=calendar' },
+            { key: 'meetings.minutes', label: 'Minutes & Action Items', path: '/meetings?tab=minutes' },
+        ]
     }
 ];
 

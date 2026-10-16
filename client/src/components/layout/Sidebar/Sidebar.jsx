@@ -42,6 +42,7 @@ import {
     Folder,
     Home,
     CheckSquare,
+    Video,
 } from 'lucide-react';
 import Avatar from '../../common/Avatar/Avatar';
 import { permissionsService } from '../../../services/permissionsService';
@@ -56,6 +57,7 @@ const moduleIconMap = {
     Headphones,
     Briefcase,
     FileText,
+    Video,
 };
 
 const moduleSubPages = {
@@ -93,6 +95,12 @@ const moduleSubPages = {
         { label: 'Client List', path: '/clients?tab=all', icon: Users, id: 'client-all' },
         { label: 'Active Projects', path: '/clients?tab=projects', icon: FolderKanban, id: 'client-projects' },
         { label: 'Billing Status', path: '/clients?tab=billing', icon: DollarSign, id: 'client-billing' },
+    ],
+    meetings: [
+        { label: 'Upcoming Schedule', path: '/meetings?tab=upcoming', icon: Calendar, id: 'meetings-upcoming' },
+        { label: 'Client Meetings', path: '/meetings?tab=clients', icon: Handshake, id: 'meetings-clients' },
+        { label: 'Calendar View', path: '/meetings?tab=calendar', icon: LayoutGrid, id: 'meetings-calendar' },
+        { label: 'Minutes & Actions', path: '/meetings?tab=minutes', icon: FileText, id: 'meetings-minutes' },
     ],
     docs: [
         { 

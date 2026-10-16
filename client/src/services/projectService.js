@@ -97,34 +97,120 @@ export const projectService = {
         return data;
     },
 
-    async getTasksByAssignee(userId, userName) {
+    async getOrCreateDefaultProject() {
         try {
-            let query = supabase
-                .from('tasks')
-                .select('*, projects(name)')
-                .order('created_at', { ascending: false });
+            // First check if any project already exists
+            const { data: existing, error: findError } = await supabase
+                .from('projects')
+                .select('id, name')
+                .order('created_at', { ascending: true })
+                .limit(1);
 
-            if (userId && userName) {
-                // PostgREST or() requires encoded/escaped strings when whitespace is present
-                query = query.or(`assignee_id.eq.${userId},assignee_name.ilike."*${userName}*"`);
-            } else if (userId) {
-                query = query.eq('assignee_id', userId);
-            } else if (userName) {
-                query = query.ilike('assignee_name', `%${userName}%`);
+            if (!findError && existing && existing.length > 0) {
+                return existing[0];
             }
 
-            const { data, error } = await query;
-            if (error) {
-                console.warn('[projectService] getTasksByAssignee primary query error, using fallback:', error.message);
-                // Fallback to simpler assignee_id query
-                const { data: fallbackData, error: fbError } = await supabase
-                    .from('tasks')
-                    .select('*, projects(name)')
-                    .eq('assignee_id', userId);
-                if (fbError) throw fbError;
-                return (fallbackData || []).map(t => ({ ...t, project_name: t.projects?.name || 'General' }));
+            // Create default project "General Operations"
+            const { data: created, error: createError } = await supabase
+                .from('projects')
+                .insert({
+                    name: 'General Operations',
+                    description: 'Default operational workspace for general tasks, department deliverables, and organizational assignments.',
+                    status: 'In Progress',
+                    priority: 'Medium',
+                    color: '#579BFC'
+                })
+                .select('id, name')
+                .single();
+
+            if (!createError && created) {
+                return created;
             }
-            return (data || []).map(t => ({ ...t, project_name: t.projects?.name || 'General' }));
+        } catch (e) {
+            console.warn('[projectService] getOrCreateDefaultProject error:', e);
+        }
+        return null;
+    },
+
+    async getTasksByAssignee(userId, userName, userEmail) {
+        try {
+            const tasksMap = new Map();
+
+            // 1. Fetch by assignee_id (clean, exact match)
+            if (userId) {
+                try {
+                    const { data: idTasks, error: idError } = await supabase
+                        .from('tasks')
+                        .select('*, projects(name)')
+                        .eq('assignee_id', userId)
+                        .order('created_at', { ascending: false });
+
+                    if (!idError && idTasks) {
+                        idTasks.forEach(t => tasksMap.set(t.id, t));
+                    }
+                } catch (e) {
+                    console.warn('[projectService] getTasksByAssignee by assignee_id warning:', e);
+                }
+            }
+
+            // 2. Fetch by assignee_name (case-insensitive substring match)
+            if (userName && typeof userName === 'string' && userName.trim()) {
+                try {
+                    const cleanName = userName.trim();
+                    const { data: nameTasks, error: nameError } = await supabase
+                        .from('tasks')
+                        .select('*, projects(name)')
+                        .ilike('assignee_name', `%${cleanName}%`)
+                        .order('created_at', { ascending: false });
+
+                    if (!nameError && nameTasks) {
+                        nameTasks.forEach(t => tasksMap.set(t.id, t));
+                    }
+                } catch (e) {
+                    console.warn('[projectService] getTasksByAssignee by assignee_name warning:', e);
+                }
+            }
+
+            // 3. Fetch by assignee_name matching userEmail if available
+            if (userEmail && typeof userEmail === 'string' && userEmail.trim()) {
+                try {
+                    const cleanEmail = userEmail.trim();
+                    const { data: emailTasks, error: emailError } = await supabase
+                        .from('tasks')
+                        .select('*, projects(name)')
+                        .ilike('assignee_name', `%${cleanEmail}%`)
+                        .order('created_at', { ascending: false });
+
+                    if (!emailError && emailTasks) {
+                        emailTasks.forEach(t => tasksMap.set(t.id, t));
+                    }
+                } catch (e) {
+                    console.warn('[projectService] getTasksByAssignee by userEmail warning:', e);
+                }
+            }
+
+            // 4. Fallback: If foreign key join returned empty or had an issue, fetch without join
+            if (tasksMap.size === 0 && userId) {
+                try {
+                    const { data: fallbackTasks } = await supabase
+                        .from('tasks')
+                        .select('*')
+                        .eq('assignee_id', userId)
+                        .order('created_at', { ascending: false });
+
+                    if (fallbackTasks) {
+                        fallbackTasks.forEach(t => tasksMap.set(t.id, t));
+                    }
+                } catch (e) {
+                    console.warn('[projectService] getTasksByAssignee fallback warning:', e);
+                }
+            }
+
+            const taskList = Array.from(tasksMap.values());
+            return taskList.map(t => ({
+                ...t,
+                project_name: t.projects?.name || (t.project_id ? 'Project Deliverable' : 'Operational Task')
+            })).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
         } catch (err) {
             console.error('[projectService] getTasksByAssignee failed:', err);
             return [];
@@ -132,23 +218,110 @@ export const projectService = {
     },
 
     async createTask(task) {
-        const { data, error } = await supabase
-            .from('tasks')
-            .insert(task)
-            .select()
-            .single();
-        if (error) throw error;
-        return data;
+        let payload = { ...task };
+
+        // Clean empty project_id
+        if (payload.project_id === '' || payload.project_id === undefined) {
+            delete payload.project_id;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('tasks')
+                .insert(payload)
+                .select()
+                .single();
+
+            if (error) {
+                // If violated project_id not-null constraint (or if column not nullable yet)
+                const isNotNullConstraint = 
+                    error.code === '23502' ||
+                    error.message?.includes('project_id') ||
+                    error.message?.includes('not-null constraint');
+
+                if (isNotNullConstraint) {
+                    console.info('[projectService] Resolving default project for operational task...');
+                    const defaultProj = await this.getOrCreateDefaultProject();
+                    if (defaultProj?.id) {
+                        payload.project_id = defaultProj.id;
+                        const retry = await supabase
+                            .from('tasks')
+                            .insert(payload)
+                            .select()
+                            .single();
+                        if (retry.error) throw retry.error;
+                        window.dispatchEvent(new CustomEvent('dwTasksUpdated', { detail: retry.data }));
+                        return retry.data;
+                    }
+                }
+                throw error;
+            }
+
+            window.dispatchEvent(new CustomEvent('dwTasksUpdated', { detail: data }));
+            return data;
+        } catch (err) {
+            // Check if error caught from throw is not-null constraint
+            const isNotNullConstraint = 
+                err.code === '23502' ||
+                err.message?.includes('project_id') ||
+                err.message?.includes('not-null constraint');
+
+            if (isNotNullConstraint) {
+                const defaultProj = await this.getOrCreateDefaultProject();
+                if (defaultProj?.id) {
+                    payload.project_id = defaultProj.id;
+                    const { data: retryData, error: retryErr } = await supabase
+                        .from('tasks')
+                        .insert(payload)
+                        .select()
+                        .single();
+                    if (retryErr) throw retryErr;
+                    window.dispatchEvent(new CustomEvent('dwTasksUpdated', { detail: retryData }));
+                    return retryData;
+                }
+            }
+            throw err;
+        }
     },
 
     async updateTask(id, updates) {
+        let payload = { ...updates };
+        if (payload.project_id === '' || payload.project_id === undefined) {
+            delete payload.project_id;
+        }
+
         const { data, error } = await supabase
             .from('tasks')
-            .update(updates)
+            .update(payload)
             .eq('id', id)
             .select()
             .single();
-        if (error) throw error;
+
+        if (error) {
+            const isNotNullConstraint = 
+                error.code === '23502' ||
+                error.message?.includes('project_id') ||
+                error.message?.includes('not-null constraint');
+
+            if (isNotNullConstraint) {
+                const defaultProj = await this.getOrCreateDefaultProject();
+                if (defaultProj?.id) {
+                    payload.project_id = defaultProj.id;
+                    const retry = await supabase
+                        .from('tasks')
+                        .update(payload)
+                        .eq('id', id)
+                        .select()
+                        .single();
+                    if (retry.error) throw retry.error;
+                    window.dispatchEvent(new CustomEvent('dwTasksUpdated', { detail: retry.data }));
+                    return retry.data;
+                }
+            }
+            throw error;
+        }
+
+        window.dispatchEvent(new CustomEvent('dwTasksUpdated', { detail: data }));
         return data;
     },
 

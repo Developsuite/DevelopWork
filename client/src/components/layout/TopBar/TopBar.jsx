@@ -48,6 +48,8 @@ const TopBar = () => {
             parts.push({ label: 'Customer Support', path: '/support', current: true });
         } else if (path === '/docs') {
             parts.push({ label: 'Documentation', path: '/docs', current: true });
+        } else if (path === '/meetings') {
+            parts.push({ label: 'Meetings Management', path: '/meetings', current: true });
         } else if (path === '/settings') {
             parts.push({ label: 'Settings', path: '/settings', current: true });
         }

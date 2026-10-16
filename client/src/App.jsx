@@ -27,6 +27,7 @@ import TaskManagement from './pages/TaskManagement/TaskManagement';
 import Leads from './pages/Leads/Leads';
 import Clients from './pages/Clients/Clients';
 import Docs from './pages/Docs/Docs';
+import Meetings from './pages/Meetings/Meetings';
 import ManagerDashboard from './pages/ManagerDashboard/ManagerDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard/EmployeeDashboard';
 import Settings from './pages/Settings/Settings';
@@ -245,6 +246,7 @@ function App() {
           <Route path="/tasks" element={<TaskManagement />} />
           <Route path="/leads" element={<Leads />} />
           <Route path="/clients" element={<Clients />} />
+          <Route path="/meetings" element={<Meetings />} />
           <Route path="/docs" element={<Docs />} />
           <Route path="/settings" element={<Settings />} />
         </Route>

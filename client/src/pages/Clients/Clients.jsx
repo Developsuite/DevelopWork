@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { addToast } from '../../store/slices/uiSlice';
 import { clientsService } from '../../services/clientsService';
 import { projectService } from '../../services/projectService';
+import { meetingsService } from '../../services/meetingsService';
 import { isValidEmail, isEmpty } from '../../utils/validation';
 import { formatCurrency } from '../../utils/helpers';
 import Avatar from '../../components/common/Avatar/Avatar';
@@ -13,7 +14,7 @@ import {
     Users, Briefcase, DollarSign, Search, Plus, Filter,
     Mail, Phone, MapPin, Calendar, FileText, Trash2, Pencil,
     CheckCircle2, Clock, AlertCircle, Building2, ChevronRight,
-    LayoutGrid, List, ArrowUpDown, FolderOpen
+    LayoutGrid, List, ArrowUpDown, FolderOpen, Video
 } from 'lucide-react';
 import cl1 from '../../assets/client/1.png';
 import cl2 from '../../assets/client/2.png';
@@ -23,6 +24,7 @@ import './Clients.css';
 
 const Clients = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -32,6 +34,7 @@ const Clients = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
+    const [clientMeetings, setClientMeetings] = useState([]);
     const [editMode, setEditMode] = useState(false);
     const theme = useSelector((state) => state.ui.theme);
     const currency = useSelector((state) => state.ui.currency) || 'PKR';
@@ -114,7 +117,11 @@ const Clients = () => {
         return p.name.toLowerCase().includes(q) || p.clientName.toLowerCase().includes(q) || p.status.toLowerCase().includes(q);
     });
 
-    const handleViewClient = (client) => { setSelectedClient(client); setIsDetailModalOpen(true); };
+    const handleViewClient = (client) => {
+        setSelectedClient(client);
+        setIsDetailModalOpen(true);
+        meetingsService.getMeetingsByClient(client.id || client.name).then(res => setClientMeetings(res || []));
+    };
 
     const handleSaveClient = async () => {
         if (isEmpty(formData.name)) {
@@ -405,6 +412,18 @@ const Clients = () => {
                                                 <FolderOpen size={13} />
                                                 <span>{client.projects.length} {client.projects.length === 1 ? 'Project' : 'Projects'}</span>
                                             </div>
+                                            <div 
+                                                className="cl__card-stat" 
+                                                style={{ cursor: 'pointer', color: '#8B5CF6' }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/meetings?tab=upcoming&client=${client.id}`);
+                                                }}
+                                                title="View Scheduled Meetings"
+                                            >
+                                                <Video size={13} />
+                                                <span>Meetings</span>
+                                            </div>
                                             {renderTag(client.payment)}
                                         </div>
                                     </div>
@@ -446,6 +465,16 @@ const Clients = () => {
                                                 <td>{client.address}</td>
                                                 <td>
                                                     <div style={{ display: 'flex', gap: '6px' }}>
+                                                        <button 
+                                                            className="cl__icon-btn" 
+                                                            onClick={e => {
+                                                                e.stopPropagation();
+                                                                navigate(`/meetings?tab=upcoming&client=${client.id}`);
+                                                            }} 
+                                                            title="View Meetings"
+                                                        >
+                                                            <Video size={14} style={{ color: '#8B5CF6' }} />
+                                                        </button>
                                                         <button className="cl__icon-btn" onClick={e => {
                                                             e.stopPropagation();
                                                             setEditMode(true);
@@ -588,6 +617,67 @@ const Clients = () => {
                                 {selectedClient.projects.length === 0 && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No active projects.</span>}
                             </div>
                         </div>
+                        <div className="cl__detail-section">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <h4>Meetings & Consultations</h4>
+                                <button
+                                    type="button"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '4px 10px',
+                                        borderRadius: '6px',
+                                        background: 'rgba(139, 92, 246, 0.12)',
+                                        border: '1px solid rgba(139, 92, 246, 0.25)',
+                                        color: '#8B5CF6',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                    onClick={() => {
+                                        setIsDetailModalOpen(false);
+                                        navigate(`/meetings?tab=upcoming&client=${selectedClient.id}&schedule=true`);
+                                    }}
+                                >
+                                    <Video size={13} />
+                                    <span>Schedule Call</span>
+                                </button>
+                            </div>
+
+                            <div className="cl__detail-meetings" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {clientMeetings.length > 0 ? (
+                                    clientMeetings.map(m => (
+                                        <div
+                                            key={m.id}
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                padding: '10px 12px',
+                                                borderRadius: '8px',
+                                                background: 'var(--bg-secondary)',
+                                                border: '1px solid var(--border-color)',
+                                                cursor: 'pointer'
+                                            }}
+                                            onClick={() => {
+                                                setIsDetailModalOpen(false);
+                                                navigate(`/meetings?tab=upcoming&client=${selectedClient.id}`);
+                                            }}
+                                        >
+                                            <div>
+                                                <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>{m.title}</div>
+                                                <small style={{ color: 'var(--text-muted)' }}>{m.date} at {m.time} · {m.platform}</small>
+                                            </div>
+                                            {renderTag(m.status)}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No meetings scheduled yet with this client.</span>
+                                )}
+                            </div>
+                        </div>
+
                         <div className="cl__detail-section">
                             <h4>Internal Notes</h4>
                             <div className="cl__detail-notes">{selectedClient.notes || 'No notes added.'}</div>

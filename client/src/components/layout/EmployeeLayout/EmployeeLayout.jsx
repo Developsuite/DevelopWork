@@ -18,7 +18,8 @@ import {
     DollarSign,
     Handshake,
     FileText,
-    ExternalLink
+    ExternalLink,
+    Video
 } from 'lucide-react';
 import { permissionsService } from '../../../services/permissionsService';
 import { supabase } from '../../../lib/supabase';
@@ -36,7 +37,8 @@ const modIconMap = {
     finance: DollarSign,
     leads: Handshake,
     clients: Users,
-    docs: FileText
+    docs: FileText,
+    meetings: Video
 };
 
 const EmployeeLayout = () => {

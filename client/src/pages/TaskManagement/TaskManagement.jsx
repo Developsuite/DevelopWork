@@ -78,11 +78,20 @@ const TaskManagement = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [tasksData, projectsData, usersData] = await Promise.all([
+            let [tasksData, projectsData, usersData] = await Promise.all([
                 projectService.getAllTasks(),
-                projectService.getAll(),
-                managerService.getAllUsers()
+                projectService.getAll().catch(() => []),
+                managerService.getAllUsers().catch(() => [])
             ]);
+
+            // If workspace has no projects yet, ensure default project exists so tasks can be assigned without error
+            if (!projectsData || projectsData.length === 0) {
+                const defProj = await projectService.getOrCreateDefaultProject();
+                if (defProj) {
+                    projectsData = [defProj];
+                }
+            }
+
             setTasks(tasksData || []);
             setProjects(projectsData || []);
             setTeamMembers(usersData || []);
@@ -96,6 +105,11 @@ const TaskManagement = () => {
 
     useEffect(() => {
         loadData();
+        const handleTasksUpdate = () => loadData();
+        window.addEventListener('dwTasksUpdated', handleTasksUpdate);
+        return () => {
+            window.removeEventListener('dwTasksUpdated', handleTasksUpdate);
+        };
     }, []);
 
     const setTab = (tab) => {
@@ -182,7 +196,7 @@ const TaskManagement = () => {
         setTaskForm({
             title: task.title || '',
             description: task.description || '',
-            project_id: task.project_id || '',
+            project_id: task.project_id || (projects.length > 0 ? projects[0].id : ''),
             assignee_id: task.assignee_id || '',
             assignee_name: task.assignee_name || '',
             priority: task.priority || 'Medium',
@@ -201,10 +215,20 @@ const TaskManagement = () => {
 
         try {
             const selectedMember = teamMembers.find(m => m.id === taskForm.assignee_id);
+
+            // Resolve project_id cleanly so database NOT NULL constraint is never violated
+            let resolvedProjectId = taskForm.project_id || null;
+            if (!resolvedProjectId && projects.length > 0) {
+                resolvedProjectId = projects[0].id;
+            } else if (!resolvedProjectId) {
+                const defProj = await projectService.getOrCreateDefaultProject();
+                if (defProj?.id) resolvedProjectId = defProj.id;
+            }
+
             const payload = {
                 title: taskForm.title.trim(),
                 description: taskForm.description || null,
-                project_id: taskForm.project_id || (projects.length > 0 ? projects[0].id : null),
+                project_id: resolvedProjectId,
                 assignee_id: taskForm.assignee_id || null,
                 assignee_name: selectedMember ? selectedMember.name : (taskForm.assignee_name || null),
                 priority: taskForm.priority,
@@ -217,7 +241,7 @@ const TaskManagement = () => {
                 dispatch(addToast({ title: 'Task Updated', message: 'Task changes saved successfully.', type: 'success' }));
             } else {
                 await projectService.createTask(payload);
-                dispatch(addToast({ title: 'Task Delegated', message: `Task assigned to ${payload.assignee_name || 'team'}.`, type: 'success' }));
+                dispatch(addToast({ title: 'Task Delegated', message: `Task assigned to ${payload.assignee_name || 'team member'}.`, type: 'success' }));
             }
 
             setIsModalOpen(false);

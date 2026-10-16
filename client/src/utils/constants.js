@@ -87,6 +87,17 @@ export const DEPARTMENT_MODULES = [
         route: '/docs',
         memberCount: 18,
     },
+    {
+        key: 'meetings',
+        label: 'Meetings Management',
+        description: 'Schedule, host, and track client consultations, project syncs, and team scrums with instant MoM, agendas, and action items.',
+        icon: 'Video',
+        color: '#8B5CF6',
+        gradient: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+        image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800&h=400',
+        route: '/meetings',
+        memberCount: 16,
+    },
 ];
 
 // App modules for the icon rail
@@ -98,6 +109,7 @@ export const APP_MODULES = [
     { key: 'finance', label: 'Finance', icon: 'DollarSign', color: '#00C875', route: '/finance' },
     { key: 'leads', label: 'Leads', icon: 'Handshake', color: '#FDAB3D', route: '/leads' },
     { key: 'clients', label: 'Clients', icon: 'Briefcase', color: '#E2445C', route: '/clients' },
+    { key: 'meetings', label: 'Meetings', icon: 'Video', color: '#8B5CF6', route: '/meetings' },
     { key: 'docs', label: 'Docs', icon: 'FileText', color: '#0EA5E9', route: '/docs' },
 ];
 

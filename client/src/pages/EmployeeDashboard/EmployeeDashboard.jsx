@@ -23,7 +23,8 @@ import {
     ListTodo,
     AlertTriangle,
     Sparkles,
-    Briefcase
+    Briefcase,
+    Video
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import { permissionsService } from '../../services/permissionsService';
@@ -39,7 +40,8 @@ const modIconMap = {
     finance: DollarSign,
     leads: Handshake,
     clients: Users,
-    docs: FileText
+    docs: FileText,
+    meetings: Video
 };
 
 const EmployeeDashboard = () => {
@@ -122,7 +124,7 @@ const EmployeeDashboard = () => {
         if (!user) return;
         setLoadingTasks(true);
         try {
-            const data = await projectService.getTasksByAssignee(user.id, user.name);
+            const data = await projectService.getTasksByAssignee(user.id, user.name, user.email);
             setTasks(data || []);
         } catch (error) {
             console.error('Failed to load employee tasks:', error);
@@ -134,7 +136,36 @@ const EmployeeDashboard = () => {
 
     useEffect(() => {
         loadTasks();
-    }, [user]);
+
+        const handleTasksUpdate = () => loadTasks();
+        window.addEventListener('dwTasksUpdated', handleTasksUpdate);
+        window.addEventListener('focus', handleTasksUpdate);
+
+        // Realtime sync for tasks assigned by admin or project manager
+        let taskChannel = null;
+        try {
+            taskChannel = supabase
+                .channel(`emp-tasks-sync-${user?.id || 'emp'}`)
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'tasks' },
+                    () => {
+                        loadTasks();
+                    }
+                )
+                .subscribe();
+        } catch (err) {
+            console.warn('[EmployeeDashboard] Realtime task sync not available:', err);
+        }
+
+        return () => {
+            window.removeEventListener('dwTasksUpdated', handleTasksUpdate);
+            window.removeEventListener('focus', handleTasksUpdate);
+            if (taskChannel) {
+                supabase.removeChannel(taskChannel);
+            }
+        };
+    }, [user?.id, user?.name, user?.email]);
 
     const handleStatusChange = async (taskId, newStatus) => {
         try {

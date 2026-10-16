@@ -49,6 +49,7 @@ import {
     Key,
     Plus,
     CheckSquare,
+    Video,
 } from 'lucide-react';
 import './ModuleHub.css';
 
@@ -60,6 +61,7 @@ const iconMap = {
     Handshake,
     Headphones,
     FileText,
+    Video,
 };
 
 const ModuleHub = () => {

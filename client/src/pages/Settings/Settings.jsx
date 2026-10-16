@@ -36,6 +36,7 @@ import {
     AlertTriangle,
     UserMinus,
     ShieldAlert,
+    Video,
 } from 'lucide-react';
 import './Settings.css';
 
@@ -46,6 +47,7 @@ const moduleIconMap = {
     leads: Globe,
     clients: Users,
     docs: FileText,
+    meetings: Video,
 };
 
 const Settings = () => {

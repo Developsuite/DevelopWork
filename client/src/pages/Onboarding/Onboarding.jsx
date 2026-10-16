@@ -23,6 +23,7 @@ import {
     FileText,
     BarChart3,
     CheckCircle2,
+    Video,
     Sparkles,
 } from 'lucide-react';
 import './Onboarding.css';
@@ -100,6 +101,7 @@ const STEPS = [
             { key: 'leads', label: 'CRM & Leads', icon: Handshake },
             { key: 'support', label: 'Customer Support', icon: Headphones },
             { key: 'docs', label: 'Documentation', icon: FileText },
+            { key: 'meetings', label: 'Meetings Management', icon: Video },
         ],
         multiple: true,
         bgColor: '#FDCB6E',

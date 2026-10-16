@@ -4,12 +4,13 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
     // Active modules the admin has enabled
     activeModules: (() => {
-        const defaultMods = ['projects', 'tasks', 'hr', 'finance', 'leads', 'clients', 'docs'];
+        const defaultMods = ['projects', 'tasks', 'hr', 'finance', 'leads', 'clients', 'meetings', 'docs'];
         try {
             const saved = typeof window !== 'undefined' ? localStorage.getItem('dw-active-modules') : null;
             if (!saved) return defaultMods;
             const parsed = JSON.parse(saved);
             if (!parsed.includes('tasks')) parsed.splice(1, 0, 'tasks');
+            if (!parsed.includes('meetings')) parsed.push('meetings');
             return parsed;
         } catch (e) {
             return defaultMods;
@@ -57,6 +58,16 @@ const initialState = {
             userEmail: 'omar@developwork.com',
             role: 'manager',
             assignedAt: '2026-03-22T16:00:00Z',
+            status: 'active',
+        },
+        {
+            id: 'access-7',
+            moduleKey: 'meetings',
+            userId: 'user-2',
+            userName: 'Sarah Ahmed',
+            userEmail: 'sarah@developwork.com',
+            role: 'manager',
+            assignedAt: '2026-03-25T11:00:00Z',
             status: 'active',
         },
     ],

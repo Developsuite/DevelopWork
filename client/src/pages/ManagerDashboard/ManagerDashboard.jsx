@@ -12,6 +12,7 @@ import Finance from '../../pages/Finance/Finance';
 import Leads from '../../pages/Leads/Leads';
 import Clients from '../../pages/Clients/Clients';
 import Docs from '../../pages/Docs/Docs';
+import Meetings from '../../pages/Meetings/Meetings';
 
 import './ManagerDashboard.css';
 
@@ -29,6 +30,7 @@ const ManagerDashboard = () => {
         leads: <Leads />,
         clients: <Clients />,
         docs: <Docs />,
+        meetings: <Meetings />,
         support: <div className="pm__empty">Support module coming soon...</div>
     };
 

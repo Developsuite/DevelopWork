@@ -39,7 +39,8 @@ import {
     ChevronRight,
     TrendingUp,
     Award,
-    CheckSquare
+    CheckSquare,
+    Video,
 } from 'lucide-react';
 import { toggleTheme } from '../../../store/slices/uiSlice';
 import Avatar from '../../common/Avatar/Avatar';
@@ -55,6 +56,7 @@ const moduleIconMap = {
     Handshake,
     Headphones,
     FileText,
+    Video,
 };
 
 const moduleSubPages = {
@@ -92,6 +94,12 @@ const moduleSubPages = {
         { label: 'Client List', path: '/manager/clients?tab=all', matchTab: 'all', icon: Users, perm: 'clients.all' },
         { label: 'Active Projects', path: '/manager/clients?tab=projects', matchTab: 'projects', icon: FolderKanban, perm: 'clients.projects' },
         { label: 'Billing', path: '/manager/clients?tab=billing', matchTab: 'billing', icon: DollarSign, perm: 'clients.billing' },
+    ],
+    meetings: [
+        { label: 'Upcoming Schedule', path: '/manager/meetings?tab=upcoming', matchTab: 'upcoming', icon: Calendar, perm: 'meetings.upcoming' },
+        { label: 'Client Meetings', path: '/manager/meetings?tab=clients', matchTab: 'clients', icon: Handshake, perm: 'meetings.clients' },
+        { label: 'Calendar View', path: '/manager/meetings?tab=calendar', matchTab: 'calendar', icon: LayoutGrid, perm: 'meetings.calendar' },
+        { label: 'Minutes & Actions', path: '/manager/meetings?tab=minutes', matchTab: 'minutes', icon: FileText, perm: 'meetings.minutes' },
     ],
     docs: [
         { label: 'All Documents', path: '/manager/docs', matchTab: 'all', icon: Home, perm: 'docs.all' },
