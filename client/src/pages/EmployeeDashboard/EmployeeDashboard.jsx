@@ -270,10 +270,6 @@ const EmployeeDashboard = () => {
                     <div className="cockpit-welcome__user">
                         <Avatar name={user?.name || 'Employee'} src={user?.avatar} size="lg" />
                         <div>
-                            <div className="cockpit-welcome__role-tag">
-                                <Sparkles size={13} color="var(--primary-400)" />
-                                <span>{user?.jobTitle || 'Team Member'} &bull; {user?.department || 'Operations'}</span>
-                            </div>
                             <h1>Welcome back, {user?.name ? user.name.split(' ')[0] : 'Team Member'}!</h1>
                             <p>Here is your personal command center, task assignments, and permitted workspace tools.</p>
                         </div>

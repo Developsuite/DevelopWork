@@ -238,40 +238,34 @@
     align-items: center;
     gap: 6px;
     padding: 6px 13px;
-    border-radius: 8px;
+    border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
-    background: var(--bg-body);
+    background: var(--bg-surface);
     border: 1px solid var(--border-light);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 }
 
 .cockpit-scope-chip:hover {
-    border-color: var(--primary-400);
+    border-color: var(--border-medium, #CBD5E1);
     color: var(--text-primary);
 }
 
 .cockpit-scope-chip.active {
-    background: var(--primary-500);
-    color: #fff;
-    border-color: var(--primary-500);
-    box-shadow: 0 2px 8px rgba(0, 85, 254, 0.25);
+    background: var(--text-primary, #0F172A);
+    color: var(--bg-surface, #ffffff);
+    border-color: var(--text-primary, #0F172A);
+    box-shadow: none;
 }
 
-.cockpit-scope-chip.scope--op.active {
-    background: #0096c7;
-    color: #fff;
-    border-color: #0096c7;
-    box-shadow: 0 2px 8px rgba(0, 150, 199, 0.3);
-}
-
+.cockpit-scope-chip.scope--op.active,
 .cockpit-scope-chip.scope--proj.active {
-    background: #7b61ff;
+    background: var(--text-primary, #0F172A);
     color: #fff;
-    border-color: #7b61ff;
-    box-shadow: 0 2px 8px rgba(123, 97, 255, 0.3);
+    border-color: var(--text-primary, #0F172A);
+    box-shadow: none;
 }
 
 .cockpit-filter-tabs {
@@ -420,36 +414,39 @@
 }
 
 .priority-badge--urgent {
-    background: rgba(226, 68, 92, 0.15);
-    color: #E2445C;
-    border: 1px solid rgba(226, 68, 92, 0.3);
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
 }
 .priority-badge--urgent .priority-badge__dot {
-    background: #E2445C;
-    box-shadow: 0 0 6px #E2445C;
-    animation: pulse 1.5s infinite;
+    background: #DC2626;
 }
 
 .priority-badge--high {
-    background: rgba(253, 171, 61, 0.15);
-    color: #FDAB3D;
-    border: 1px solid rgba(253, 171, 61, 0.3);
+    background: #FFFBEB;
+    color: #D97706;
+    border: 1px solid #FDE68A;
 }
-.priority-badge--high .priority-badge__dot { background: #FDAB3D; }
+.priority-badge--high .priority-badge__dot { background: #D97706; }
 
 .priority-badge--medium {
-    background: rgba(87, 155, 252, 0.15);
-    color: #579BFC;
-    border: 1px solid rgba(87, 155, 252, 0.3);
+    background: #F8FAFC;
+    color: #475569;
+    border: 1px solid #CBD5E1;
 }
-.priority-badge--medium .priority-badge__dot { background: #579BFC; }
+.priority-badge--medium .priority-badge__dot { background: #64748B; }
 
 .priority-badge--low {
-    background: rgba(108, 122, 150, 0.15);
-    color: #6C7A96;
-    border: 1px solid rgba(108, 122, 150, 0.3);
+    background: #F8FAFC;
+    color: #64748B;
+    border: 1px solid #E2E8F0;
 }
-.priority-badge--low .priority-badge__dot { background: #6C7A96; }
+.priority-badge--low .priority-badge__dot { background: #94A3B8; }
+
+[data-theme='dark'] .priority-badge--urgent { background: rgba(220, 38, 38, 0.2); color: #FCA5A5; border-color: rgba(220, 38, 38, 0.4); }
+[data-theme='dark'] .priority-badge--high { background: rgba(217, 119, 6, 0.2); color: #FCD34D; border-color: rgba(217, 119, 6, 0.4); }
+[data-theme='dark'] .priority-badge--medium { background: rgba(100, 116, 139, 0.2); color: #CBD5E1; border-color: rgba(100, 116, 139, 0.4); }
+[data-theme='dark'] .priority-badge--low { background: rgba(71, 85, 105, 0.2); color: #94A3B8; border-color: rgba(71, 85, 105, 0.4); }
 
 .cockpit-project-pill {
     display: inline-flex;
@@ -464,12 +461,12 @@
     font-weight: 600;
 }
 
-/* Distinct Scope Pills (Daily General vs Project) */
+/* Distinct Scope Pills (Daily General vs Project) — Clean Outline / Non-Glowing */
 .cockpit-scope-pill {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 2px 9px;
+    padding: 3px 8px;
     border-radius: 6px;
     font-size: 11px;
     font-weight: 600;
@@ -477,43 +474,43 @@
 }
 
 .cockpit-scope-pill.scope--operational {
-    background: rgba(0, 180, 216, 0.12);
-    color: #0096c7;
-    border: 1px solid rgba(0, 180, 216, 0.25);
+    background: #F1F5F9;
+    color: #334155;
+    border: 1px solid #CBD5E1;
 }
 
 .cockpit-scope-pill.scope--operational svg {
-    color: #0096c7;
+    color: #475569;
 }
 
 .cockpit-scope-pill.scope--project {
-    background: rgba(123, 97, 255, 0.12);
-    color: #7b61ff;
-    border: 1px solid rgba(123, 97, 255, 0.25);
+    background: #F8FAFC;
+    color: #1E293B;
+    border: 1px solid #CBD5E1;
 }
 
 .cockpit-scope-pill.scope--project svg {
-    color: #7b61ff;
+    color: #475569;
 }
 
 [data-theme='dark'] .cockpit-scope-pill.scope--operational {
-    background: rgba(0, 180, 216, 0.16);
-    color: #48cae4;
-    border-color: rgba(0, 180, 216, 0.35);
+    background: #1E293B;
+    color: #CBD5E1;
+    border-color: #334155;
 }
 
 [data-theme='dark'] .cockpit-scope-pill.scope--operational svg {
-    color: #48cae4;
+    color: #94A3B8;
 }
 
 [data-theme='dark'] .cockpit-scope-pill.scope--project {
-    background: rgba(123, 97, 255, 0.16);
-    color: #9d8df1;
-    border-color: rgba(123, 97, 255, 0.35);
+    background: #0F172A;
+    color: #E2E8F0;
+    border-color: #334155;
 }
 
 [data-theme='dark'] .cockpit-scope-pill.scope--project svg {
-    color: #9d8df1;
+    color: #94A3B8;
 }
 
 .cockpit-deadline-pill {

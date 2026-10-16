@@ -47,12 +47,12 @@ import {
 import './Meetings.css';
 
 const MEETING_TYPES = [
-    { label: 'Client Discovery', color: '#FDAB3D', bg: 'rgba(253, 171, 61, 0.15)' },
-    { label: 'Project Review', color: '#579BFC', bg: 'rgba(87, 155, 252, 0.15)' },
-    { label: 'Sprint Sync', color: '#A25DDC', bg: 'rgba(162, 93, 220, 0.15)' },
-    { label: 'Contract Negotiation', color: '#E2445C', bg: 'rgba(226, 68, 92, 0.15)' },
-    { label: 'Milestone Check-in', color: '#00C875', bg: 'rgba(0, 200, 117, 0.15)' },
-    { label: 'QBR', color: '#00D2D2', bg: 'rgba(0, 210, 210, 0.15)' },
+    { label: 'Client Discovery', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
+    { label: 'Project Review', color: '#0055FE', bg: '#EFF6FF', border: '#BFDBFE' },
+    { label: 'Sprint Sync', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
+    { label: 'Contract Negotiation', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' },
+    { label: 'Milestone Check-in', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
+    { label: 'QBR', color: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD' },
 ];
 
 const PLATFORMS = [
@@ -427,7 +427,7 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
 
     // Get color for meeting type
     const getTypeMeta = (type) => {
-        return MEETING_TYPES.find(t => t.label === type) || { label: type, color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.15)' };
+        return MEETING_TYPES.find(t => t.label === type) || { label: type, color: '#475569', bg: '#F8FAFC', border: '#CBD5E1' };
     };
 
     return (
@@ -436,7 +436,7 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
             <div className="meetings-header">
                 <div className="meetings-header__intro">
                     <div className="meetings-header__badge">
-                        <Sparkles size={14} className="sparkle-icon" />
+                        <Video size={13} color="var(--primary-500)" />
                         <span>Workplace Communication Suite</span>
                     </div>
                     <h1 className="meetings-header__title">Meetings Management</h1>
@@ -680,7 +680,7 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
 
                                             <div
                                                 className="meeting-card__type-badge"
-                                                style={{ color: typeMeta.color, backgroundColor: typeMeta.bg }}
+                                                style={{ color: typeMeta.color, backgroundColor: typeMeta.bg, borderColor: typeMeta.border || typeMeta.color }}
                                             >
                                                 {meeting.type}
                                             </div>

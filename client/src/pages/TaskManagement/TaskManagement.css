@@ -419,17 +419,22 @@
     border-radius: 50%;
 }
 
-.task-priority--urgent { background: rgba(226, 68, 92, 0.12); color: #E2445C; border: 1px solid rgba(226, 68, 92, 0.25); }
-.task-priority--urgent .task-priority-dot { background: #E2445C; }
+.task-priority--urgent { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+.task-priority--urgent .task-priority-dot { background: #DC2626; }
 
-.task-priority--high { background: rgba(253, 171, 61, 0.12); color: #FDAB3D; border: 1px solid rgba(253, 171, 61, 0.25); }
-.task-priority--high .task-priority-dot { background: #FDAB3D; }
+.task-priority--high { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+.task-priority--high .task-priority-dot { background: #D97706; }
 
-.task-priority--medium { background: rgba(0, 85, 254, 0.1); color: var(--primary-500, #0055FE); border: 1px solid rgba(0, 85, 254, 0.2); }
-.task-priority--medium .task-priority-dot { background: var(--primary-500, #0055FE); }
+.task-priority--medium { background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; }
+.task-priority--medium .task-priority-dot { background: #64748B; }
 
-.task-priority--low { background: rgba(108, 122, 150, 0.12); color: #6C7A96; border: 1px solid rgba(108, 122, 150, 0.25); }
-.task-priority--low .task-priority-dot { background: #6C7A96; }
+.task-priority--low { background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; }
+.task-priority--low .task-priority-dot { background: #94A3B8; }
+
+[data-theme='dark'] .task-priority--urgent { background: rgba(220, 38, 38, 0.2); color: #FCA5A5; border-color: rgba(220, 38, 38, 0.4); }
+[data-theme='dark'] .task-priority--high { background: rgba(217, 119, 6, 0.2); color: #FCD34D; border-color: rgba(217, 119, 6, 0.4); }
+[data-theme='dark'] .task-priority--medium { background: rgba(100, 116, 139, 0.2); color: #CBD5E1; border-color: rgba(100, 116, 139, 0.4); }
+[data-theme='dark'] .task-priority--low { background: rgba(71, 85, 105, 0.2); color: #94A3B8; border-color: rgba(71, 85, 105, 0.4); }
 
 /* Deadline Pills */
 .task-deadline-pill {
@@ -1000,43 +1005,43 @@
 }
 
 .task-scope-pill.scope--operational {
-    background: rgba(0, 180, 216, 0.12);
-    color: #0096c7;
-    border: 1px solid rgba(0, 180, 216, 0.25);
+    background: #F1F5F9;
+    color: #334155;
+    border: 1px solid #CBD5E1;
 }
 
 .task-scope-pill.scope--operational svg {
-    color: #0096c7;
+    color: #475569;
 }
 
 .task-scope-pill.scope--project {
-    background: rgba(123, 97, 255, 0.12);
-    color: #7b61ff;
-    border: 1px solid rgba(123, 97, 255, 0.25);
+    background: #F8FAFC;
+    color: #1E293B;
+    border: 1px solid #CBD5E1;
 }
 
 .task-scope-pill.scope--project svg {
-    color: #7b61ff;
+    color: #475569;
 }
 
 /* Dark mode fine-tuning */
 [data-theme='dark'] .task-scope-pill.scope--operational {
-    background: rgba(0, 180, 216, 0.16);
-    color: #48cae4;
-    border-color: rgba(0, 180, 216, 0.35);
+    background: #1E293B;
+    color: #CBD5E1;
+    border-color: #334155;
 }
 
 [data-theme='dark'] .task-scope-pill.scope--operational svg {
-    color: #48cae4;
+    color: #94A3B8;
 }
 
 [data-theme='dark'] .task-scope-pill.scope--project {
-    background: rgba(123, 97, 255, 0.16);
-    color: #9d8df1;
-    border-color: rgba(123, 97, 255, 0.35);
+    background: #0F172A;
+    color: #E2E8F0;
+    border-color: #334155;
 }
 
 [data-theme='dark'] .task-scope-pill.scope--project svg {
-    color: #9d8df1;
+    color: #94A3B8;
 }
 
