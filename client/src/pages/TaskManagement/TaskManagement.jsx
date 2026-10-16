@@ -25,7 +25,8 @@ import {
     Briefcase,
     TrendingUp,
     Shield,
-    Loader2
+    Loader2,
+    ClipboardList
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import { managerService } from '../../services/managerService';
@@ -57,6 +58,7 @@ const TaskManagement = () => {
 
     // Filters
     const [searchQuery, setSearchQuery] = useState('');
+    const [scopeFilter, setScopeFilter] = useState('all'); // 'all' | 'operational' | 'project'
     const [statusFilter, setStatusFilter] = useState('all');
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [assigneeFilter, setAssigneeFilter] = useState('all');
@@ -78,19 +80,11 @@ const TaskManagement = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            let [tasksData, projectsData, usersData] = await Promise.all([
+            const [tasksData, projectsData, usersData] = await Promise.all([
                 projectService.getAllTasks(),
                 projectService.getAll().catch(() => []),
                 managerService.getAllUsers().catch(() => [])
             ]);
-
-            // If workspace has no projects yet, ensure default project exists so tasks can be assigned without error
-            if (!projectsData || projectsData.length === 0) {
-                const defProj = await projectService.getOrCreateDefaultProject();
-                if (defProj) {
-                    projectsData = [defProj];
-                }
-            }
 
             setTasks(tasksData || []);
             setProjects(projectsData || []);
@@ -119,6 +113,8 @@ const TaskManagement = () => {
     // KPI Counters
     const stats = useMemo(() => {
         const total = tasks.length;
+        const operationalCount = tasks.filter(t => t.is_operational).length;
+        const projectCount = tasks.filter(t => !t.is_operational).length;
         const inProgress = tasks.filter(t => (t.status || '').toLowerCase() === 'in progress').length;
         const inReview = tasks.filter(t => (t.status || '').toLowerCase() === 'in review').length;
         const done = tasks.filter(t => (t.status || '').toLowerCase() === 'done').length;
@@ -126,7 +122,7 @@ const TaskManagement = () => {
         const urgent = tasks.filter(t => (t.priority || '').toLowerCase() === 'urgent' && (t.status || '').toLowerCase() !== 'done').length;
 
         const completionRate = total > 0 ? Math.round((done / total) * 100) : 0;
-        return { total, inProgress, inReview, done, notStarted, urgent, completionRate };
+        return { total, operationalCount, projectCount, inProgress, inReview, done, notStarted, urgent, completionRate };
     }, [tasks]);
 
     // Filtered tasks
@@ -134,6 +130,10 @@ const TaskManagement = () => {
         return tasks.filter((t) => {
             const tStatus = t.status || 'Not Started';
             const tPriority = t.priority || 'Medium';
+
+            // Scope filter (Daily Operational vs Project tasks)
+            if (scopeFilter === 'operational' && !t.is_operational) return false;
+            if (scopeFilter === 'project' && t.is_operational) return false;
 
             // Status filter
             if (statusFilter !== 'all' && tStatus.toLowerCase() !== statusFilter.toLowerCase()) return false;
@@ -158,7 +158,7 @@ const TaskManagement = () => {
 
             return true;
         });
-    }, [tasks, statusFilter, priorityFilter, assigneeFilter, searchQuery]);
+    }, [tasks, scopeFilter, statusFilter, priorityFilter, assigneeFilter, searchQuery]);
 
     // Workload per team member for Delegation Center
     const workloadByMember = useMemo(() => {
@@ -181,7 +181,7 @@ const TaskManagement = () => {
         setTaskForm({
             title: '',
             description: '',
-            project_id: projects.length > 0 ? projects[0].id : '',
+            project_id: '', // Defaults to General / Daily Operational task
             assignee_id: prefillAssignee ? prefillAssignee.id : '',
             assignee_name: prefillAssignee ? prefillAssignee.name : '',
             priority: 'Medium',
@@ -196,7 +196,7 @@ const TaskManagement = () => {
         setTaskForm({
             title: task.title || '',
             description: task.description || '',
-            project_id: task.project_id || (projects.length > 0 ? projects[0].id : ''),
+            project_id: task.is_operational ? '' : (task.project_id || ''),
             assignee_id: task.assignee_id || '',
             assignee_name: task.assignee_name || '',
             priority: task.priority || 'Medium',
@@ -216,14 +216,8 @@ const TaskManagement = () => {
         try {
             const selectedMember = teamMembers.find(m => m.id === taskForm.assignee_id);
 
-            // Resolve project_id cleanly so database NOT NULL constraint is never violated
-            let resolvedProjectId = taskForm.project_id || null;
-            if (!resolvedProjectId && projects.length > 0) {
-                resolvedProjectId = projects[0].id;
-            } else if (!resolvedProjectId) {
-                const defProj = await projectService.getOrCreateDefaultProject();
-                if (defProj?.id) resolvedProjectId = defProj.id;
-            }
+            // Clean project_id: standalone operational tasks have project_id null
+            const resolvedProjectId = taskForm.project_id && taskForm.project_id.trim() ? taskForm.project_id.trim() : null;
 
             const payload = {
                 title: taskForm.title.trim(),
@@ -431,6 +425,16 @@ const TaskManagement = () => {
                         <div className="task-filters-group">
                             <select
                                 className="task-filter-select"
+                                value={scopeFilter}
+                                onChange={(e) => setScopeFilter(e.target.value)}
+                            >
+                                <option value="all">All Task Scopes ({tasks.length})</option>
+                                <option value="operational">📋 Daily General Tasks ({tasks.filter(t => t.is_operational).length})</option>
+                                <option value="project">📁 Project Tasks ({tasks.filter(t => !t.is_operational).length})</option>
+                            </select>
+
+                            <select
+                                className="task-filter-select"
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                             >
@@ -467,11 +471,12 @@ const TaskManagement = () => {
                                 ))}
                             </select>
 
-                            {(searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all') && (
+                            {(searchQuery || scopeFilter !== 'all' || statusFilter !== 'all' || priorityFilter !== 'all' || assigneeFilter !== 'all') && (
                                 <button
                                     className="task-clear-btn"
                                     onClick={() => {
                                         setSearchQuery('');
+                                        setScopeFilter('all');
                                         setStatusFilter('all');
                                         setPriorityFilter('all');
                                         setAssigneeFilter('all');
@@ -505,7 +510,7 @@ const TaskManagement = () => {
                                     <tr>
                                         <th>Task Name & Deliverables</th>
                                         <th>Assignee</th>
-                                        <th>Project</th>
+                                        <th>Scope & Type</th>
                                         <th>Priority</th>
                                         <th>Deadline</th>
                                         <th>Status</th>
@@ -532,10 +537,17 @@ const TaskManagement = () => {
                                             </td>
 
                                             <td>
-                                                <span className="task-project-tag">
-                                                    <FolderKanban size={12} />
-                                                    {task.project_name || 'General'}
-                                                </span>
+                                                {task.is_operational ? (
+                                                    <span className="task-scope-pill scope--operational" title="General daily task completed by employee independently of projects">
+                                                        <ClipboardList size={12} />
+                                                        <span>Daily General Task</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="task-scope-pill scope--project" title={`Project task: ${task.project_name}`}>
+                                                        <FolderKanban size={12} />
+                                                        <span>{task.project_name}</span>
+                                                    </span>
+                                                )}
                                             </td>
 
                                             <td>{getPriorityBadge(task.priority)}</td>
@@ -675,10 +687,17 @@ const TaskManagement = () => {
                                         colTasks.map((task) => (
                                             <div key={task.id} className="kanban-task-card">
                                                 <div className="kanban-card-top">
-                                                    <span className="task-project-tag">
-                                                        <FolderKanban size={11} />
-                                                        {task.project_name || 'General'}
-                                                    </span>
+                                                    {task.is_operational ? (
+                                                        <span className="task-scope-pill scope--operational" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                                                            <ClipboardList size={11} />
+                                                            <span>Daily General</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="task-scope-pill scope--project" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                                                            <FolderKanban size={11} />
+                                                            <span>{task.project_name}</span>
+                                                        </span>
+                                                    )}
                                                     {getPriorityBadge(task.priority)}
                                                 </div>
 
@@ -819,17 +838,24 @@ const TaskManagement = () => {
                         </div>
 
                         <div className="dw-form-group">
-                            <label className="dw-form-label">Associated Project (Optional)</label>
+                            <label className="dw-form-label">Task Scope & Association</label>
                             <select
                                 className="dw-form-input"
                                 value={taskForm.project_id}
                                 onChange={(e) => setTaskForm({ ...taskForm, project_id: e.target.value })}
                             >
-                                <option value="">Operational Task (No Project)</option>
-                                {projects.map((p) => (
-                                    <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
+                                <option value="">📋 General / Daily Task (Standalone Operational Deliverable)</option>
+                                {projects.length > 0 && (
+                                    <optgroup label="Or attach to an active Project:">
+                                        {projects.map((p) => (
+                                            <option key={p.id} value={p.id}>📁 {p.name}</option>
+                                        ))}
+                                    </optgroup>
+                                )}
                             </select>
+                            <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                                General tasks are independent daily deliverables for employees. Project tasks link directly to Project Management.
+                            </span>
                         </div>
                     </div>
 

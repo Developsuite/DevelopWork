@@ -24,7 +24,8 @@ import {
     AlertTriangle,
     Sparkles,
     Briefcase,
-    Video
+    Video,
+    ClipboardList
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import { permissionsService } from '../../services/permissionsService';
@@ -51,6 +52,7 @@ const EmployeeDashboard = () => {
 
     const [tasks, setTasks] = useState([]);
     const [loadingTasks, setLoadingTasks] = useState(true);
+    const [scopeFilter, setScopeFilter] = useState('all'); // 'all' | 'operational' | 'project'
     const [statusFilter, setStatusFilter] = useState('all');
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
@@ -183,12 +185,14 @@ const EmployeeDashboard = () => {
     // Calculate KPI counts
     const counts = useMemo(() => {
         const total = tasks.length;
+        const operational = tasks.filter((t) => t.is_operational).length;
+        const project = tasks.filter((t) => !t.is_operational).length;
         const inProgress = tasks.filter((t) => (t.status || '').toLowerCase() === 'in progress').length;
         const inReview = tasks.filter((t) => (t.status || '').toLowerCase() === 'in review').length;
         const notStarted = tasks.filter((t) => (t.status || '').toLowerCase() === 'not started' || !t.status).length;
         const done = tasks.filter((t) => (t.status || '').toLowerCase() === 'done').length;
         const urgent = tasks.filter((t) => (t.priority || '').toLowerCase() === 'urgent' && (t.status || '').toLowerCase() !== 'done').length;
-        return { total, inProgress, inReview, notStarted, done, urgent };
+        return { total, operational, project, inProgress, inReview, notStarted, done, urgent };
     }, [tasks]);
 
     // Filtered tasks based on search & filters
@@ -196,6 +200,10 @@ const EmployeeDashboard = () => {
         return tasks.filter((t) => {
             const tStatus = (t.status || 'not started').toLowerCase();
             const tPriority = (t.priority || 'medium').toLowerCase();
+
+            // Scope filter (Daily Operational vs Project tasks)
+            if (scopeFilter === 'operational' && !t.is_operational) return false;
+            if (scopeFilter === 'project' && t.is_operational) return false;
 
             // Status filter
             if (statusFilter === 'active' && tStatus === 'done') return false;
@@ -215,7 +223,7 @@ const EmployeeDashboard = () => {
 
             return true;
         });
-    }, [tasks, statusFilter, priorityFilter, searchQuery]);
+    }, [tasks, scopeFilter, statusFilter, priorityFilter, searchQuery]);
 
     const getPriorityBadgeClass = (priority) => {
         switch ((priority || '').toLowerCase()) {
@@ -343,6 +351,33 @@ const EmployeeDashboard = () => {
 
                     {/* Filter Tabs & Search Controls */}
                     <div className="cockpit-controls-bar">
+                        {/* Scope Selector: All vs Daily General Tasks vs Project Tasks */}
+                        <div className="cockpit-scope-selector-strip">
+                            <button
+                                type="button"
+                                className={`cockpit-scope-chip ${scopeFilter === 'all' ? 'active' : ''}`}
+                                onClick={() => setScopeFilter('all')}
+                            >
+                                All Assigned ({tasks.length})
+                            </button>
+                            <button
+                                type="button"
+                                className={`cockpit-scope-chip scope--op ${scopeFilter === 'operational' ? 'active' : ''}`}
+                                onClick={() => setScopeFilter('operational')}
+                            >
+                                <ClipboardList size={13} />
+                                Daily General Tasks ({counts.operational})
+                            </button>
+                            <button
+                                type="button"
+                                className={`cockpit-scope-chip scope--proj ${scopeFilter === 'project' ? 'active' : ''}`}
+                                onClick={() => setScopeFilter('project')}
+                            >
+                                <FolderKanban size={13} />
+                                Project Tasks ({counts.project})
+                            </button>
+                        </div>
+
                         <div className="cockpit-filter-tabs">
                             <button
                                 className={`cockpit-tab ${statusFilter === 'all' ? 'active' : ''}`}
@@ -413,7 +448,7 @@ const EmployeeDashboard = () => {
                                 <CheckCircle2 size={40} color="var(--success)" style={{ opacity: 0.8 }} />
                                 <h3>No tasks found</h3>
                                 <p>
-                                    {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all'
+                                    {searchQuery || statusFilter !== 'all' || priorityFilter !== 'all' || scopeFilter !== 'all'
                                         ? 'No tasks match your active filters.'
                                         : 'You have no assigned tasks right now! Check back later or notify your manager.'}
                                 </p>
@@ -432,10 +467,17 @@ const EmployeeDashboard = () => {
                                                         <span className="priority-badge__dot" />
                                                         {task.priority || 'Medium'}
                                                     </span>
-                                                    <span className="cockpit-project-pill">
-                                                        <FolderKanban size={12} />
-                                                        {task.project_name || 'Project'}
-                                                    </span>
+                                                    {task.is_operational ? (
+                                                        <span className="cockpit-scope-pill scope--operational" title="General daily task completed by employee independently of projects">
+                                                            <ClipboardList size={12} />
+                                                            Daily General Task
+                                                        </span>
+                                                    ) : (
+                                                        <span className="cockpit-scope-pill scope--project" title={`Project task: ${task.project_name}`}>
+                                                            <FolderKanban size={12} />
+                                                            Project: {task.project_name}
+                                                        </span>
+                                                    )}
                                                     <span className={`cockpit-deadline-pill ${deadlineInfo.className}`}>
                                                         <Clock size={12} />
                                                         {deadlineInfo.text}

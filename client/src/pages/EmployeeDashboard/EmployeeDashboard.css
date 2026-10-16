@@ -225,6 +225,55 @@
     border-bottom: 1px solid var(--border-light);
 }
 
+/* Scope Selector Chips: All vs Daily General vs Project */
+.cockpit-scope-selector-strip {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.cockpit-scope-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--bg-body);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cockpit-scope-chip:hover {
+    border-color: var(--primary-400);
+    color: var(--text-primary);
+}
+
+.cockpit-scope-chip.active {
+    background: var(--primary-500);
+    color: #fff;
+    border-color: var(--primary-500);
+    box-shadow: 0 2px 8px rgba(0, 85, 254, 0.25);
+}
+
+.cockpit-scope-chip.scope--op.active {
+    background: #0096c7;
+    color: #fff;
+    border-color: #0096c7;
+    box-shadow: 0 2px 8px rgba(0, 150, 199, 0.3);
+}
+
+.cockpit-scope-chip.scope--proj.active {
+    background: #7b61ff;
+    color: #fff;
+    border-color: #7b61ff;
+    box-shadow: 0 2px 8px rgba(123, 97, 255, 0.3);
+}
+
 .cockpit-filter-tabs {
     display: flex;
     gap: 8px;
@@ -413,6 +462,58 @@
     color: var(--text-secondary);
     font-size: 11px;
     font-weight: 600;
+}
+
+/* Distinct Scope Pills (Daily General vs Project) */
+.cockpit-scope-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.cockpit-scope-pill.scope--operational {
+    background: rgba(0, 180, 216, 0.12);
+    color: #0096c7;
+    border: 1px solid rgba(0, 180, 216, 0.25);
+}
+
+.cockpit-scope-pill.scope--operational svg {
+    color: #0096c7;
+}
+
+.cockpit-scope-pill.scope--project {
+    background: rgba(123, 97, 255, 0.12);
+    color: #7b61ff;
+    border: 1px solid rgba(123, 97, 255, 0.25);
+}
+
+.cockpit-scope-pill.scope--project svg {
+    color: #7b61ff;
+}
+
+[data-theme='dark'] .cockpit-scope-pill.scope--operational {
+    background: rgba(0, 180, 216, 0.16);
+    color: #48cae4;
+    border-color: rgba(0, 180, 216, 0.35);
+}
+
+[data-theme='dark'] .cockpit-scope-pill.scope--operational svg {
+    color: #48cae4;
+}
+
+[data-theme='dark'] .cockpit-scope-pill.scope--project {
+    background: rgba(123, 97, 255, 0.16);
+    color: #9d8df1;
+    border-color: rgba(123, 97, 255, 0.35);
+}
+
+[data-theme='dark'] .cockpit-scope-pill.scope--project svg {
+    color: #9d8df1;
 }
 
 .cockpit-deadline-pill {

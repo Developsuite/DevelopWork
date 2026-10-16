@@ -982,3 +982,61 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* --------------------------------------------------------------------------
+   Distinct Scope & Association Pills (Daily General vs Project)
+   -------------------------------------------------------------------------- */
+.task-scope-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.task-scope-pill.scope--operational {
+    background: rgba(0, 180, 216, 0.12);
+    color: #0096c7;
+    border: 1px solid rgba(0, 180, 216, 0.25);
+}
+
+.task-scope-pill.scope--operational svg {
+    color: #0096c7;
+}
+
+.task-scope-pill.scope--project {
+    background: rgba(123, 97, 255, 0.12);
+    color: #7b61ff;
+    border: 1px solid rgba(123, 97, 255, 0.25);
+}
+
+.task-scope-pill.scope--project svg {
+    color: #7b61ff;
+}
+
+/* Dark mode fine-tuning */
+[data-theme='dark'] .task-scope-pill.scope--operational {
+    background: rgba(0, 180, 216, 0.16);
+    color: #48cae4;
+    border-color: rgba(0, 180, 216, 0.35);
+}
+
+[data-theme='dark'] .task-scope-pill.scope--operational svg {
+    color: #48cae4;
+}
+
+[data-theme='dark'] .task-scope-pill.scope--project {
+    background: rgba(123, 97, 255, 0.16);
+    color: #9d8df1;
+    border-color: rgba(123, 97, 255, 0.35);
+}
+
+[data-theme='dark'] .task-scope-pill.scope--project svg {
+    color: #9d8df1;
+}
+

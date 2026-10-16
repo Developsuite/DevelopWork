@@ -82,9 +82,10 @@ const ProjectManagement = () => {
 
     useEffect(() => { loadAllData(); }, []);
 
-    // Filtered projects
+    // Filtered projects — only actual projects (exclude internal General Operations container)
     const filteredProjects = useMemo(() => {
         return projectList.filter(p => {
+            if (p.name === 'General Operations' || p.name === 'General Operational') return false;
             const matchSearch = !searchQuery || p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || p.description?.toLowerCase().includes(searchQuery.toLowerCase());
             const matchStatus = statusFilter === 'all' || p.status === statusFilter;
             const matchPriority = priorityFilter === 'all' || p.priority === priorityFilter;
@@ -92,9 +93,12 @@ const ProjectManagement = () => {
         });
     }, [projectList, searchQuery, statusFilter, priorityFilter]);
 
-    // Filtered tasks
+    // Filtered tasks — ONLY show real Project Tasks, exclude General/Operational tasks
     const filteredTasks = useMemo(() => {
         return tasks.filter(t => {
+            const isOperational = t.task_type === 'operational' || t.is_operational || !t.project_id || !t.project_name || t.project_name === 'General Operations' || t.project_name === 'General Operational';
+            if (isOperational) return false;
+
             const matchSearch = !searchQuery || t.title?.toLowerCase().includes(searchQuery.toLowerCase()) || t.project_name?.toLowerCase().includes(searchQuery.toLowerCase());
             const matchStatus = statusFilter === 'all' || t.status === statusFilter;
             const matchPriority = priorityFilter === 'all' || t.priority === priorityFilter;
@@ -203,26 +207,29 @@ const ProjectManagement = () => {
 
     // --- OVERVIEW VIEW ---
     const renderOverview = () => {
-        const totalProjects = projectList.length;
-        const completedProjects = projectList.filter(p => p.status === 'Completed').length;
-        const activeProjects = projectList.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
-        const onHoldProjects = projectList.filter(p => p.status === 'On Hold').length;
-        const atRisk = projectList.filter(p => p.due_date && new Date(p.due_date) < new Date() && p.status !== 'Completed').length;
+        const realProjects = projectList.filter(p => p.name !== 'General Operations' && p.name !== 'General Operational');
+        const realTasks = tasks.filter(t => t.task_type !== 'operational' && !t.is_operational && t.project_id && t.project_name && t.project_name !== 'General Operations' && t.project_name !== 'General Operational');
+
+        const totalProjects = realProjects.length;
+        const completedProjects = realProjects.filter(p => p.status === 'Completed').length;
+        const activeProjects = realProjects.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
+        const onHoldProjects = realProjects.filter(p => p.status === 'On Hold').length;
+        const atRisk = realProjects.filter(p => p.due_date && new Date(p.due_date) < new Date() && p.status !== 'Completed').length;
         
-        const doneTasks = tasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
+        const doneTasks = realTasks.filter(t => t.status === 'Done' || t.status === 'Completed').length;
 
         // Completion percentage: accurately factor in project progress/completion and task progress
         const projectAvgProgress = totalProjects > 0
-            ? Math.round(projectList.reduce((acc, p) => acc + (p.status === 'Completed' ? 100 : (p.progress || 0)), 0) / totalProjects)
+            ? Math.round(realProjects.reduce((acc, p) => acc + (p.status === 'Completed' ? 100 : (p.progress || 0)), 0) / totalProjects)
             : 0;
 
-        const taskProgress = tasks.length > 0
-            ? Math.round((doneTasks / tasks.length) * 100)
+        const taskProgress = realTasks.length > 0
+            ? Math.round((doneTasks / realTasks.length) * 100)
             : 0;
 
-        const completionPct = tasks.length > 0 && totalProjects > 0
+        const completionPct = realTasks.length > 0 && totalProjects > 0
             ? Math.round((projectAvgProgress + taskProgress) / 2)
-            : (totalProjects > 0 ? projectAvgProgress : (tasks.length > 0 ? taskProgress : 0));
+            : (totalProjects > 0 ? projectAvgProgress : (realTasks.length > 0 ? taskProgress : 0));
 
         const stats = [
             { 
@@ -233,7 +240,7 @@ const ProjectManagement = () => {
             },
             { 
                 label: 'Total Tasks', 
-                value: tasks.length, 
+                value: realTasks.length, 
                 img: '/assets/project/new/2.png', 
                 change: `${doneTasks} done` 
             },
@@ -252,7 +259,7 @@ const ProjectManagement = () => {
         ];
 
         // Build real upcoming deadlines from tasks with deadlines
-        const upcomingDeadlines = tasks
+        const upcomingDeadlines = realTasks
             .filter(t => t.deadline && new Date(t.deadline) >= new Date() && t.status !== 'Done' && t.status !== 'Completed')
             .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
             .slice(0, 5)

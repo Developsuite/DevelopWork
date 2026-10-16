@@ -11,7 +11,8 @@ export const projectService = {
             .select('*, project_members(user_id, role)')
             .order('created_at', { ascending: false });
         if (error) throw error;
-        return data;
+        // Never return the internal 'General Operations' container as a user-facing project
+        return (data || []).filter(p => p.name !== 'General Operations');
     },
 
     async getById(id) {
@@ -31,7 +32,7 @@ export const projectService = {
             .eq('client_id', clientId)
             .order('created_at', { ascending: false });
         if (error) throw error;
-        return data;
+        return (data || []).filter(p => p.name !== 'General Operations');
     },
 
     async create(project) {
@@ -76,9 +77,26 @@ export const projectService = {
                     .from('tasks')
                     .select('*')
                     .order('created_at', { ascending: false });
-                return (fallbackData || []).map(t => ({ ...t, project_name: 'General Operational' }));
+                return (fallbackData || []).map(t => {
+                    const isOp = !t.project_id || t.project_name === 'General Operations' || t.project_name === 'General Operational';
+                    return {
+                        ...t,
+                        task_type: isOp ? 'operational' : 'project',
+                        is_operational: isOp,
+                        project_name: isOp ? null : (t.project_name || 'Project Deliverable')
+                    };
+                });
             }
-            return (data || []).map(t => ({ ...t, project_name: t.projects?.name || 'General Operational' }));
+            return (data || []).map(t => {
+                const rawName = t.projects?.name;
+                const isOp = !t.project_id || !rawName || rawName === 'General Operations' || rawName === 'General Operational';
+                return {
+                    ...t,
+                    task_type: isOp ? 'operational' : 'project',
+                    is_operational: isOp,
+                    project_name: isOp ? null : rawName
+                };
+            });
         } catch (err) {
             console.error('[projectService] getAllTasks error:', err);
             return [];
@@ -99,11 +117,11 @@ export const projectService = {
 
     async getOrCreateDefaultProject() {
         try {
-            // First check if any project already exists
+            // First check if hidden system project "General Operations" already exists
             const { data: existing, error: findError } = await supabase
                 .from('projects')
                 .select('id, name')
-                .order('created_at', { ascending: true })
+                .eq('name', 'General Operations')
                 .limit(1);
 
             if (!findError && existing && existing.length > 0) {
@@ -207,10 +225,16 @@ export const projectService = {
             }
 
             const taskList = Array.from(tasksMap.values());
-            return taskList.map(t => ({
-                ...t,
-                project_name: t.projects?.name || (t.project_id ? 'Project Deliverable' : 'Operational Task')
-            })).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+            return taskList.map(t => {
+                const rawName = t.projects?.name;
+                const isOp = !t.project_id || !rawName || rawName === 'General Operations' || rawName === 'General Operational';
+                return {
+                    ...t,
+                    task_type: isOp ? 'operational' : 'project',
+                    is_operational: isOp,
+                    project_name: isOp ? null : rawName
+                };
+            }).sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
         } catch (err) {
             console.error('[projectService] getTasksByAssignee failed:', err);
             return [];
