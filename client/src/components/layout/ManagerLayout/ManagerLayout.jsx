@@ -41,6 +41,7 @@ import {
     Award,
     CheckSquare,
     Video,
+    LayoutGrid,
 } from 'lucide-react';
 import { toggleTheme } from '../../../store/slices/uiSlice';
 import Avatar from '../../common/Avatar/Avatar';
