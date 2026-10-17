@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import './Leads.css';
 
+const isUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
 const Leads = () => {
     const dispatch = useDispatch();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -131,7 +133,7 @@ const Leads = () => {
                 value: leadFormData.value !== '' ? parseInt(leadFormData.value) || 0 : 0,
             };
 
-            if (editMode && selectedLead?.id) {
+            if (editMode && selectedLead?.id && isUuid(selectedLead.id)) {
                 await leadsService.updateLead(selectedLead.id, payload);
                 dispatch(addToast({ title: 'Lead Updated', message: 'Lead information has been updated.', type: 'success' }));
             } else {
@@ -139,7 +141,7 @@ const Leads = () => {
                     ...payload,
                     last_contact: 'Just now',
                 });
-                dispatch(addToast({ title: 'Lead Added', message: 'New lead has been created.', type: 'success' }));
+                dispatch(addToast({ title: editMode ? 'Lead Saved' : 'Lead Added', message: editMode ? 'Lead saved to database.' : 'New lead has been created.', type: 'success' }));
             }
             await loadLeads();
             setIsAddLeadModalOpen(false);
@@ -171,12 +173,21 @@ const Leads = () => {
 
     const handleDeleteLead = async (e, id) => {
         e.stopPropagation();
+        // Optimistically remove from state immediately
+        setLeads(prev => prev.filter(l => l.id !== id && l.id?.toString() !== id?.toString()));
+        
         try {
-            await leadsService.deleteLead(id);
-            await loadLeads();
+            if (isUuid(id)) {
+                await leadsService.deleteLead(id);
+                await loadLeads();
+            }
             dispatch(addToast({ title: 'Lead Deleted', message: 'Lead has been removed from the system.', type: 'info' }));
         } catch (err) {
-            dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
+            console.error('Delete lead error:', err);
+            if (isUuid(id)) {
+                dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
+                await loadLeads();
+            }
         }
     };
 
@@ -230,7 +241,10 @@ const Leads = () => {
             setIsDetailModalOpen(false);
             
             // Optionally, delete the lead after conversion:
-            await leadsService.deleteLead(selectedLead.id);
+            if (isUuid(selectedLead.id)) {
+                await leadsService.deleteLead(selectedLead.id);
+            }
+            setLeads(prev => prev.filter(l => l.id !== selectedLead.id));
             await loadLeads();
         } catch (err) {
             dispatch(addToast({ title: 'Error', message: 'Failed to convert lead to client.', type: 'error' }));
@@ -278,38 +292,51 @@ const Leads = () => {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (e) => {
-            const text = e.target.result;
-            const rows = text.split('\n').slice(1); // Skip header
-            const newLeads = rows.filter(row => row.trim()).map(row => {
-                const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
-                return {
-                    id: Date.now() + Math.random(),
-                    name: cols[0],
-                    company: cols[1],
-                    contact: cols[2],
-                    email: cols[3],
-                    phone: cols[4],
-                    stage: cols[5] || 'New',
-                    value: parseInt(cols[6]) || 0,
-                    priority: cols[7] || 'Medium',
-                    location: cols[8] || 'Unknown',
-                    lastContact: 'Imported'
-                };
-            });
+        reader.onload = async (e) => {
+            try {
+                const text = e.target.result;
+                const rows = text.split('\n').slice(1); // Skip header
+                const validRows = rows.filter(row => row && row.trim().length > 0);
 
-            if (newLeads.length > 0) {
-                setLeads([...newLeads, ...leads]);
-                dispatch(addToast({ title: 'Import Successful', message: `${newLeads.length} leads imported successfully.`, type: 'success' }));
+                if (validRows.length === 0) {
+                    dispatch(addToast({ title: 'Import Notice', message: 'No valid data rows found in CSV.', type: 'warning' }));
+                    return;
+                }
+
+                const payloads = validRows.map(row => {
+                    const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                    return {
+                        name: cols[0] || 'Unnamed Lead',
+                        company: cols[1] || '',
+                        contact_person: cols[2] || '',
+                        email: cols[3] || '',
+                        phone: cols[4] || '',
+                        stage: cols[5] || 'New',
+                        value: parseInt(cols[6]) || 0,
+                        priority: cols[7] || 'Medium',
+                        location: cols[8] || '',
+                        last_contact: 'Just now',
+                    };
+                });
+
+                await leadsService.createLeads(payloads);
+                await loadLeads();
+                dispatch(addToast({ title: 'Import Successful', message: `${payloads.length} lead${payloads.length > 1 ? 's' : ''} imported successfully.`, type: 'success' }));
+            } catch (err) {
+                console.error('CSV import error:', err);
+                dispatch(addToast({ title: 'Import Failed', message: err.message || 'Failed to import leads.', type: 'error' }));
             }
         };
         reader.readAsText(file);
+        event.target.value = '';
     };
 
     const updateLeadStage = async (leadId, newStage) => {
         // Optimistic UI Update for buttery smooth drag-and-drop
         const previousLeads = [...leads];
         setLeads(leads.map(l => l.id.toString() === leadId.toString() ? { ...l, stage: newStage } : l));
+
+        if (!isUuid(leadId)) return;
 
         try {
             await leadsService.updateLead(leadId, { stage: newStage });

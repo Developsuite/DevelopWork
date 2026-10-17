@@ -14,6 +14,12 @@ export const leadsService = {
         return data;
     },
 
+    async createLeads(leads) {
+        const { data, error } = await supabase.from('leads').insert(leads).select();
+        if (error) throw error;
+        return data;
+    },
+
     async updateLead(id, updates) {
         const { data, error } = await supabase.from('leads').update(updates).eq('id', id).select().single();
         if (error) throw error;
