@@ -1,5 +1,14 @@
 export const isValidEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!email || typeof email !== 'string') return false;
+    return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+};
+
+export const isValidPhone = (phone) => {
+    if (!phone || typeof phone !== 'string') return false;
+    const trimmed = phone.trim();
+    const validPattern = /^[+]?[\d\s\-()]{7,25}$/.test(trimmed);
+    const digitsCount = (trimmed.match(/\d/g) || []).length;
+    return validPattern && digitsCount >= 7 && digitsCount <= 16;
 };
 
 export const isValidPassword = (password) => {

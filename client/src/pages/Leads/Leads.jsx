@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { addToast } from '../../store/slices/uiSlice';
 import { leadsService } from '../../services/leadsService';
 import { clientsService } from '../../services/clientsService';
-import { isValidEmail, isEmpty, isPositiveNumber } from '../../utils/validation';
+import { isValidEmail, isEmpty, isPositiveNumber, isValidPhone } from '../../utils/validation';
 import { formatCurrency } from '../../utils/helpers';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Avatar from '../../components/common/Avatar/Avatar';
@@ -15,7 +15,7 @@ import {
     Mail, Phone, MapPin, Building2, MoreVertical, LayoutGrid, List,
     ChevronRight, Star, FileText, Send, BarChart3, Trash2, Pencil,
     ArrowRight, CheckCircle2, AlertCircle, Briefcase, UserCircle2,
-    Calendar, DollarSign, GripVertical, Download, Upload, FileJson
+    Calendar, DollarSign, GripVertical, Download, Upload, FileJson, X
 } from 'lucide-react';
 import './Leads.css';
 
@@ -69,6 +69,7 @@ const Leads = () => {
     const [leadFormData, setLeadFormData] = useState({
         name: '', contact: '', email: '', phone: '', company: '', stage: 'New', value: '', priority: 'Medium', location: ''
     });
+    const [leadFormErrors, setLeadFormErrors] = useState({});
 
     const [contactFormData, setContactFormData] = useState({
         name: '', role: '', company: '', email: '', phone: ''
@@ -96,47 +97,74 @@ const Leads = () => {
     };
 
     const handleAddLead = async () => {
+        const errors = {};
         if (isEmpty(leadFormData.name)) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Lead name is required.', type: 'warning' }));
-            return;
+            errors.name = 'Opportunity / Lead name is required.';
         }
         if (leadFormData.email && !isValidEmail(leadFormData.email)) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            errors.email = 'Please enter a valid email address (e.g. name@company.com).';
+        }
+        if (leadFormData.phone && !isValidPhone(leadFormData.phone)) {
+            errors.phone = 'Please enter a valid phone number (at least 7 digits, e.g. +92 300 1234567).';
+        }
+        if (leadFormData.value !== '' && leadFormData.value !== null && leadFormData.value !== undefined && !isPositiveNumber(leadFormData.value)) {
+            errors.value = 'Est. Value must be a positive number.';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            setLeadFormErrors(errors);
+            const firstError = Object.values(errors)[0];
+            dispatch(addToast({ title: 'Validation Error', message: firstError, type: 'warning' }));
             return;
         }
-        if (leadFormData.value && !isPositiveNumber(leadFormData.value)) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Value must be a positive number.', type: 'warning' }));
-            return;
-        }
+
         try {
-            if (editMode) {
-                await leadsService.updateLead(selectedLead.id, {
-                    name: leadFormData.name, contact_person: leadFormData.contact, email: leadFormData.email,
-                    phone: leadFormData.phone, company: leadFormData.company, stage: leadFormData.stage,
-                    value: parseInt(leadFormData.value) || 0, priority: leadFormData.priority, location: leadFormData.location,
-                });
+            const payload = {
+                name: (leadFormData.name || '').trim(),
+                company: (leadFormData.company || '').trim(),
+                contact_person: (leadFormData.contact || '').trim(),
+                email: (leadFormData.email || '').trim(),
+                phone: (leadFormData.phone || '').trim(),
+                location: (leadFormData.location || '').trim(),
+                stage: leadFormData.stage || 'New',
+                priority: leadFormData.priority || 'Medium',
+                value: leadFormData.value !== '' ? parseInt(leadFormData.value) || 0 : 0,
+            };
+
+            if (editMode && selectedLead?.id) {
+                await leadsService.updateLead(selectedLead.id, payload);
                 dispatch(addToast({ title: 'Lead Updated', message: 'Lead information has been updated.', type: 'success' }));
             } else {
                 await leadsService.createLead({
-                    name: leadFormData.name, contact_person: leadFormData.contact, email: leadFormData.email,
-                    phone: leadFormData.phone, company: leadFormData.company, stage: leadFormData.stage || 'New',
-                    value: parseInt(leadFormData.value) || 0, priority: leadFormData.priority || 'Medium', location: leadFormData.location,
+                    ...payload,
                     last_contact: 'Just now',
                 });
                 dispatch(addToast({ title: 'Lead Added', message: 'New lead has been created.', type: 'success' }));
             }
             await loadLeads();
+            setIsAddLeadModalOpen(false);
+            setEditMode(false);
+            setLeadFormErrors({});
         } catch (err) {
-            dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
+            dispatch(addToast({ title: 'Error', message: err.message || 'Failed to save lead.', type: 'error' }));
         }
-        setIsAddLeadModalOpen(false);
-        setEditMode(false);
     };
 
     const handleEditLead = (e, lead) => {
         e.stopPropagation();
         setSelectedLead(lead);
-        setLeadFormData(lead);
+        setLeadFormData({
+            name: lead.name || '',
+            company: lead.company || '',
+            contact: lead.contact || lead.contact_person || '',
+            email: lead.email || '',
+            phone: lead.phone || '',
+            location: lead.location || '',
+            value: lead.value ?? '',
+            stage: lead.stage || 'New',
+            priority: lead.priority || 'Medium',
+        });
+        setLeadFormErrors({});
         setEditMode(true);
         setIsAddLeadModalOpen(true);
     };
@@ -159,6 +187,10 @@ const Leads = () => {
         }
         if (contactFormData.email && !isValidEmail(contactFormData.email)) {
             dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
+        if (contactFormData.phone && !isValidPhone(contactFormData.phone)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Please enter a valid phone number (at least 7 digits).', type: 'warning' }));
             return;
         }
         try {
@@ -299,61 +331,107 @@ const Leads = () => {
         updateLeadStage(draggableId, destination.droppableId);
     };
 
+    // Filtered leads matching search query across name, company, contact, phone, email, location, stage
+    const filteredLeads = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return leads;
+        const qDigits = q.replace(/\D/g, '');
+
+        return leads.filter(l => {
+            const nameMatch = l.name?.toLowerCase().includes(q);
+            const companyMatch = l.company?.toLowerCase().includes(q);
+            const contactMatch = (l.contact || l.contact_person)?.toLowerCase().includes(q);
+            const emailMatch = l.email?.toLowerCase().includes(q);
+            const locationMatch = l.location?.toLowerCase().includes(q);
+            const stageMatch = l.stage?.toLowerCase().includes(q);
+
+            // Phone search: direct substring match OR normalized digits match
+            const phoneStr = (l.phone || '').toLowerCase();
+            const phoneDigits = phoneStr.replace(/\D/g, '');
+            const phoneMatch = phoneStr.includes(q) || (qDigits.length > 0 && phoneDigits.includes(qDigits));
+
+            return Boolean(nameMatch || companyMatch || contactMatch || emailMatch || locationMatch || stageMatch || phoneMatch);
+        });
+    }, [leads, searchQuery]);
+
+    // Filtered contacts matching search query across name, role, company, phone, email
+    const filteredContacts = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        if (!q) return contacts;
+        const qDigits = q.replace(/\D/g, '');
+
+        return contacts.filter(c => {
+            const nameMatch = c.name?.toLowerCase().includes(q);
+            const companyMatch = c.company?.toLowerCase().includes(q);
+            const roleMatch = c.role?.toLowerCase().includes(q);
+            const emailMatch = c.email?.toLowerCase().includes(q);
+
+            const phoneStr = (c.phone || '').toLowerCase();
+            const phoneDigits = phoneStr.replace(/\D/g, '');
+            const phoneMatch = phoneStr.includes(q) || (qDigits.length > 0 && phoneDigits.includes(qDigits));
+
+            return Boolean(nameMatch || companyMatch || roleMatch || emailMatch || phoneMatch);
+        });
+    }, [contacts, searchQuery]);
+
     // --- PIPELINE VIEW ---
     const renderPipeline = () => (
         <DragDropContext onDragEnd={onDragEnd}>
             <div className="ld__pipeline">
-                {stages.map(stage => (
-                    <Droppable key={stage} droppableId={stage}>
-                        {(provided, snapshot) => (
-                            <div 
-                                {...provided.droppableProps}
-                                ref={provided.innerRef}
-                                className={`ld__pipeline-column ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
-                            >
-                                <div className="ld__pipeline-header">
-                                    <h3>{stage}</h3>
-                                    <span className="ld__pipeline-count">{leads.filter(l => l.stage === stage).length}</span>
-                                </div>
-                                <div className="ld__pipeline-cards">
-                                    {leads.filter(l => l.stage === stage).map((lead, index) => (
-                                        <Draggable key={lead.id} draggableId={lead.id.toString()} index={index}>
-                                            {(provided, snapshot) => (
-                                                <div 
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                    className={`ld__lead-card ${snapshot.isDragging ? 'dragging' : ''}`} 
-                                                    onClick={() => { setSelectedLead(lead); setIsDetailModalOpen(true); }}
-                                                >
-                                                    <div className="ld__lead-card-header">
-                                                        <span className="ld__lead-card-company">{lead.company}</span>
-                                                        {renderTag(lead.priority)}
-                                                    </div>
-                                                    <h4 className="ld__lead-card-name">{lead.name}</h4>
-                                                    <div className="ld__lead-card-meta">
-                                                        <span style={{ fontWeight: 600 }}>{formatCurrency(lead.value || 0, currency)}</span>
-                                                        <span><Clock size={12} /> {lead.lastContact}</span>
-                                                    </div>
-                                                    <div className="ld__lead-card-footer">
-                                                        <Avatar name={lead.contact} size="xs" />
-                                                        <div className="ld__lead-card-actions">
-                                                            <button onClick={(e) => handleEditLead(e, lead)}><Pencil size={12}/></button>
-                                                            <div className="ld__drag-indicator">
-                                                                <GripVertical size={14} />
+                {stages.map(stage => {
+                    const stageLeads = filteredLeads.filter(l => l.stage === stage);
+                    return (
+                        <Droppable key={stage} droppableId={stage}>
+                            {(provided, snapshot) => (
+                                <div 
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                    className={`ld__pipeline-column ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
+                                >
+                                    <div className="ld__pipeline-header">
+                                        <h3>{stage}</h3>
+                                        <span className="ld__pipeline-count">{stageLeads.length}</span>
+                                    </div>
+                                    <div className="ld__pipeline-cards">
+                                        {stageLeads.map((lead, index) => (
+                                            <Draggable key={lead.id} draggableId={lead.id.toString()} index={index}>
+                                                {(provided, snapshot) => (
+                                                    <div 
+                                                        ref={provided.innerRef}
+                                                        {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
+                                                        className={`ld__lead-card ${snapshot.isDragging ? 'dragging' : ''}`} 
+                                                        onClick={() => { setSelectedLead(lead); setIsDetailModalOpen(true); }}
+                                                    >
+                                                        <div className="ld__lead-card-header">
+                                                            <span className="ld__lead-card-company">{lead.company}</span>
+                                                            {renderTag(lead.priority)}
+                                                        </div>
+                                                        <h4 className="ld__lead-card-name">{lead.name}</h4>
+                                                        <div className="ld__lead-card-meta">
+                                                            <span style={{ fontWeight: 600 }}>{formatCurrency(lead.value || 0, currency)}</span>
+                                                            <span><Clock size={12} /> {lead.lastContact}</span>
+                                                        </div>
+                                                        <div className="ld__lead-card-footer">
+                                                            <Avatar name={lead.contact} size="xs" />
+                                                            <div className="ld__lead-card-actions">
+                                                                <button onClick={(e) => handleEditLead(e, lead)}><Pencil size={12}/></button>
+                                                                <div className="ld__drag-indicator">
+                                                                    <GripVertical size={14} />
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </Draggable>
-                                    ))}
-                                    {provided.placeholder}
+                                                )}
+                                            </Draggable>
+                                        ))}
+                                        {provided.placeholder}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </Droppable>
-                ))}
+                            )}
+                        </Droppable>
+                    );
+                })}
             </div>
         </DragDropContext>
     );
@@ -374,32 +452,40 @@ const Leads = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {leads.filter(l => l.name.toLowerCase().includes(searchQuery.toLowerCase())).map(lead => (
-                        <tr key={lead.id} onClick={() => { setSelectedLead(lead); setIsDetailModalOpen(true); }}>
-                            <td>
-                                <div className="ld__table-lead">
-                                    <strong>{lead.name}</strong>
-                                    <span>{lead.company} · {lead.location}</span>
-                                </div>
-                            </td>
-                            <td>{renderTag(lead.stage)}</td>
-                            <td><strong className="ld__table-value">{formatCurrency(lead.value || 0, currency)}</strong></td>
-                            <td>
-                                <div className="ld__table-contact">
-                                    <span>{lead.contact}</span>
-                                    <small>{lead.email}</small>
-                                </div>
-                            </td>
-                            <td>{renderTag(lead.priority)}</td>
-                            <td><span className="ld__table-time">{lead.lastContact}</span></td>
-                            <td>
-                                <div className="ld__table-actions">
-                                    <button className="ld__icon-btn" onClick={(e) => handleEditLead(e, lead)}><Pencil size={14}/></button>
-                                    <button className="ld__icon-btn ld__icon-btn--danger" onClick={(e) => handleDeleteLead(e, lead.id)}><Trash2 size={14}/></button>
-                                </div>
+                    {filteredLeads.length === 0 ? (
+                        <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
+                                {searchQuery ? `No leads found matching "${searchQuery}"` : 'No leads found.'}
                             </td>
                         </tr>
-                    ))}
+                    ) : (
+                        filteredLeads.map(lead => (
+                            <tr key={lead.id} onClick={() => { setSelectedLead(lead); setIsDetailModalOpen(true); }}>
+                                <td>
+                                    <div className="ld__table-lead">
+                                        <strong>{lead.name}</strong>
+                                        <span>{lead.company} {lead.location ? `· ${lead.location}` : ''}</span>
+                                    </div>
+                                </td>
+                                <td>{renderTag(lead.stage)}</td>
+                                <td><strong className="ld__table-value">{formatCurrency(lead.value || 0, currency)}</strong></td>
+                                <td>
+                                    <div className="ld__table-contact">
+                                        <span>{lead.contact || 'No contact name'}</span>
+                                        <small>{lead.phone ? `${lead.phone}${lead.email ? ' · ' + lead.email : ''}` : lead.email || ''}</small>
+                                    </div>
+                                </td>
+                                <td>{renderTag(lead.priority)}</td>
+                                <td><span className="ld__table-time">{lead.lastContact}</span></td>
+                                <td>
+                                    <div className="ld__table-actions">
+                                        <button className="ld__icon-btn" onClick={(e) => handleEditLead(e, lead)}><Pencil size={14}/></button>
+                                        <button className="ld__icon-btn ld__icon-btn--danger" onClick={(e) => handleDeleteLead(e, lead.id)}><Trash2 size={14}/></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))
+                    )}
                 </tbody>
             </table>
         </div>
@@ -408,7 +494,12 @@ const Leads = () => {
     // --- CONTACTS VIEW ---
     const renderContacts = () => (
         <div className="ld__contacts-grid">
-            {contacts.map(contact => (
+            {filteredContacts.length === 0 && searchQuery && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
+                    No contacts found matching "{searchQuery}"
+                </div>
+            )}
+            {filteredContacts.map(contact => (
                 <div key={contact.id} className="ld__contact-card">
                     <div className="ld__contact-card-header">
                         <Avatar name={contact.name} size="md" />
@@ -418,8 +509,8 @@ const Leads = () => {
                         </div>
                     </div>
                     <div className="ld__contact-details">
-                        <div className="ld__contact-detail"><Mail size={14}/> {contact.email}</div>
-                        <div className="ld__contact-detail"><Phone size={14}/> {contact.phone}</div>
+                        <div className="ld__contact-detail"><Mail size={14}/> {contact.email || 'No email'}</div>
+                        <div className="ld__contact-detail"><Phone size={14}/> {contact.phone || 'No phone'}</div>
                     </div>
                     <div className="ld__contact-footer">
                         <div style={{display: 'flex', gap: '10px'}}>
@@ -482,7 +573,20 @@ const Leads = () => {
                 <div className="ld__actions">
                     <div className="ld__search">
                         <Search size={15} />
-                        <input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                        <input
+                            placeholder="Search leads, phone, company..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <button
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
+                                onClick={() => setSearchQuery('')}
+                                title="Clear search"
+                            >
+                                <X size={13} />
+                            </button>
+                        )}
                     </div>
                     <div className="ld__tool-group">
                         <Button variant="ghost" icon={FileJson} onClick={downloadTemplate} title="Download Template">Template</Button>
@@ -492,7 +596,13 @@ const Leads = () => {
                             <input type="file" accept=".csv" onChange={handleImportLeads} />
                         </div>
                     </div>
-                    <Button variant="primary" icon={Plus} onClick={() => { setEditMode(false); setLeadFormData({ name: '', contact: '', email: '', phone: '', company: '', stage: 'New', value: '', priority: 'Medium', location: '' }); setIsAddLeadModalOpen(true); }}>Add Lead</Button>
+                    <Button variant="primary" icon={Plus} onClick={() => {
+                        setEditMode(false);
+                        setSelectedLead(null);
+                        setLeadFormData({ name: '', contact: '', email: '', phone: '', company: '', stage: 'New', value: '', priority: 'Medium', location: '' });
+                        setLeadFormErrors({});
+                        setIsAddLeadModalOpen(true);
+                    }}>Add Lead</Button>
                 </div>
             </div>
 
@@ -506,24 +616,116 @@ const Leads = () => {
             {/* Add/Edit Lead Modal */}
             <Modal
                 isOpen={isAddLeadModalOpen}
-                onClose={() => setIsAddLeadModalOpen(false)}
+                onClose={() => { setIsAddLeadModalOpen(false); setLeadFormErrors({}); }}
                 title={editMode ? 'Edit Lead' : 'Add New Lead'}
-                footer={<><Button variant="ghost" onClick={() => setIsAddLeadModalOpen(false)}>Cancel</Button><Button variant="primary" onClick={handleAddLead}>{editMode ? 'Save Changes' : 'Create Lead'}</Button></>}
+                footer={<><Button variant="ghost" onClick={() => { setIsAddLeadModalOpen(false); setLeadFormErrors({}); }}>Cancel</Button><Button variant="primary" onClick={handleAddLead}>{editMode ? 'Save Changes' : 'Create Lead'}</Button></>}
             >
                 <div className="dw-form">
                     <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div className="dw-form-group"><label className="dw-form-label">Opportunity Name</label><input className="dw-form-input" value={leadFormData.name} onChange={e => setLeadFormData({...leadFormData, name: e.target.value})} /></div>
-                        <div className="dw-form-group"><label className="dw-form-label">Company</label><input className="dw-form-input" value={leadFormData.company} onChange={e => setLeadFormData({...leadFormData, company: e.target.value})} /></div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Opportunity Name *</label>
+                            <input
+                                className={`dw-form-input ${leadFormErrors.name ? 'dw-form-input--error' : ''}`}
+                                placeholder="e.g. Website Reference"
+                                value={leadFormData.name}
+                                onChange={e => {
+                                    setLeadFormData({...leadFormData, name: e.target.value});
+                                    if (leadFormErrors.name) setLeadFormErrors({...leadFormErrors, name: null});
+                                }}
+                            />
+                            {leadFormErrors.name && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block' }}>{leadFormErrors.name}</span>}
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Company</label>
+                            <input
+                                className="dw-form-input"
+                                placeholder="e.g. Developsuite"
+                                value={leadFormData.company}
+                                onChange={e => setLeadFormData({...leadFormData, company: e.target.value})}
+                            />
+                        </div>
                     </div>
+
                     <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div className="dw-form-group"><label className="dw-form-label">Primary Contact</label><input className="dw-form-input" value={leadFormData.contact} onChange={e => setLeadFormData({...leadFormData, contact: e.target.value})} /></div>
-                        <div className="dw-form-group"><label className="dw-form-label">Email</label><input className="dw-form-input" value={leadFormData.email} onChange={e => setLeadFormData({...leadFormData, email: e.target.value})} /></div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Primary Contact</label>
+                            <input
+                                className="dw-form-input"
+                                placeholder="e.g. John Doe"
+                                value={leadFormData.contact}
+                                onChange={e => setLeadFormData({...leadFormData, contact: e.target.value})}
+                            />
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Location</label>
+                            <input
+                                className="dw-form-input"
+                                placeholder="e.g. New York, Islamabad"
+                                value={leadFormData.location}
+                                onChange={e => setLeadFormData({...leadFormData, location: e.target.value})}
+                            />
+                        </div>
                     </div>
+
                     <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div className="dw-form-group"><label className="dw-form-label">Est. Value ({currency === 'USD' ? '$' : 'PKR'})</label><input type="number" className="dw-form-input" value={leadFormData.value} onChange={e => setLeadFormData({...leadFormData, value: parseInt(e.target.value)})} /></div>
-                        <div className="dw-form-group"><label className="dw-form-label">Stage</label>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Email</label>
+                            <input
+                                type="email"
+                                className={`dw-form-input ${leadFormErrors.email ? 'dw-form-input--error' : ''}`}
+                                placeholder="e.g. contact@company.com"
+                                value={leadFormData.email}
+                                onChange={e => {
+                                    setLeadFormData({...leadFormData, email: e.target.value});
+                                    if (leadFormErrors.email) setLeadFormErrors({...leadFormErrors, email: null});
+                                }}
+                            />
+                            {leadFormErrors.email && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block' }}>{leadFormErrors.email}</span>}
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Phone</label>
+                            <input
+                                type="tel"
+                                className={`dw-form-input ${leadFormErrors.phone ? 'dw-form-input--error' : ''}`}
+                                placeholder="e.g. +92 322 8015195"
+                                value={leadFormData.phone}
+                                onChange={e => {
+                                    setLeadFormData({...leadFormData, phone: e.target.value});
+                                    if (leadFormErrors.phone) setLeadFormErrors({...leadFormErrors, phone: null});
+                                }}
+                            />
+                            {leadFormErrors.phone && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block' }}>{leadFormErrors.phone}</span>}
+                        </div>
+                    </div>
+
+                    <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Est. Value ({currency === 'USD' ? '$' : 'PKR'})</label>
+                            <input
+                                type="number"
+                                className={`dw-form-input ${leadFormErrors.value ? 'dw-form-input--error' : ''}`}
+                                placeholder="0"
+                                value={leadFormData.value}
+                                onChange={e => {
+                                    setLeadFormData({...leadFormData, value: e.target.value});
+                                    if (leadFormErrors.value) setLeadFormErrors({...leadFormErrors, value: null});
+                                }}
+                            />
+                            {leadFormErrors.value && <span style={{ color: 'var(--danger)', fontSize: '11px', marginTop: '4px', display: 'block' }}>{leadFormErrors.value}</span>}
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Stage</label>
                             <select className="dw-form-input" value={leadFormData.stage} onChange={e => setLeadFormData({...leadFormData, stage: e.target.value})}>
                                 {stages.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Priority</label>
+                            <select className="dw-form-input" value={leadFormData.priority || 'Medium'} onChange={e => setLeadFormData({...leadFormData, priority: e.target.value})}>
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Critical">Critical</option>
                             </select>
                         </div>
                     </div>
@@ -548,9 +750,11 @@ const Leads = () => {
                             <div style={{marginLeft:'auto'}}>{renderTag(selectedLead.stage)}</div>
                         </div>
                         <div className="ld__detail-grid">
-                            <div className="ld__detail-item"><label>Contact</label><div>{selectedLead.contact}</div></div>
-                            <div className="ld__detail-item"><label>Email</label><div>{selectedLead.email}</div></div>
-                            <div className="ld__detail-item"><label>Phone</label><div>{selectedLead.phone}</div></div>
+                            <div className="ld__detail-item"><label>Contact</label><div>{selectedLead.contact || 'None'}</div></div>
+                            <div className="ld__detail-item"><label>Email</label><div>{selectedLead.email || 'None'}</div></div>
+                            <div className="ld__detail-item"><label>Phone</label><div>{selectedLead.phone || 'None'}</div></div>
+                            <div className="ld__detail-item"><label>Location</label><div>{selectedLead.location || 'Not specified'}</div></div>
+                            <div className="ld__detail-item"><label>Priority</label><div>{renderTag(selectedLead.priority || 'Medium')}</div></div>
                             <div className="ld__detail-item"><label>Value</label><div className="highlight">{formatCurrency(selectedLead.value || 0, currency)}</div></div>
                         </div>
                         <div className="ld__detail-actions">

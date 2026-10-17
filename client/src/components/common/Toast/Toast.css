@@ -78,16 +78,15 @@
 /* Icon badge */
 .dw-toast__icon-wrapper {
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--toast-bg-tint);
+    background: transparent;
     color: var(--toast-accent);
-    border: 1px solid color-mix(in srgb, var(--toast-accent) 24%, transparent);
-    box-shadow: 0 2px 8px var(--toast-glow);
+    border: none;
+    box-shadow: none;
     margin-top: 1px;
 }
 

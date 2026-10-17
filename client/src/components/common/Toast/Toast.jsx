@@ -57,7 +57,7 @@ const ToastItem = ({ toast, onClose }) => {
             role="alert"
         >
             <div className="dw-toast__icon-wrapper">
-                <Icon size={16} strokeWidth={2.4} />
+                <Icon size={18} strokeWidth={2.4} />
             </div>
 
             <div className="dw-toast__content">

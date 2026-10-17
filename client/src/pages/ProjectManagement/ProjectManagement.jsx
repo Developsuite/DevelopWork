@@ -25,7 +25,7 @@ const ProjectManagement = () => {
     const theme = useSelector((state) => state.ui.theme);
     const currency = useSelector((state) => state.ui.currency) || 'PKR';
     
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'projects');
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
     const [viewMode, setViewMode] = useState('grid');
     const [searchQuery, setSearchQuery] = useState('');
     const [isAddProjectModalOpen, setIsAddProjectModalOpen] = useState(false);
@@ -107,8 +107,8 @@ const ProjectManagement = () => {
     }, [tasks, searchQuery, statusFilter, priorityFilter]);
 
     useEffect(() => {
-        const tab = searchParams.get('tab');
-        if (tab && tab !== activeTab) setActiveTab(tab);
+        const tab = searchParams.get('tab') || 'overview';
+        if (tab !== activeTab) setActiveTab(tab);
     }, [searchParams]);
 
     const handleTabChange = (tab) => {

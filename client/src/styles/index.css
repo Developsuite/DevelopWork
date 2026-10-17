@@ -399,6 +399,16 @@ ol {
     box-shadow: 0 0 0 4px var(--primary-50);
 }
 
+.dw-form-input--error {
+    border-color: var(--danger) !important;
+    background: rgba(226, 68, 92, 0.04);
+}
+
+.dw-form-input--error:focus {
+    border-color: var(--danger) !important;
+    box-shadow: 0 0 0 4px rgba(226, 68, 92, 0.12) !important;
+}
+
 .dw-form-textarea {
     min-height: 80px;
     resize: vertical;

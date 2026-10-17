@@ -322,8 +322,8 @@ const Sidebar = () => {
             // Leads/Clients defaults
             if (item.id === 'leads-pipeline' && location.pathname === '/leads' && !location.search) isActive = true;
             if (item.id === 'client-all' && location.pathname === '/clients' && !location.search) isActive = true;
-            if (item.id === 'proj-all' && location.pathname === '/projects' && (location.search.includes('tab=projects') || !location.search)) isActive = true;
-            if (item.id === 'proj-overview' && location.pathname === '/projects' && location.search.includes('tab=overview')) isActive = true;
+            if (item.id === 'proj-all' && location.pathname === '/projects' && location.search.includes('tab=projects')) isActive = true;
+            if (item.id === 'proj-overview' && location.pathname === '/projects' && (location.search.includes('tab=overview') || !location.search)) isActive = true;
             if (item.id === 'proj-tasks' && location.pathname === '/projects' && location.search.includes('tab=tasks')) isActive = true;
             if (item.id === 'proj-sprint' && location.pathname.startsWith('/board/')) isActive = true;
 
