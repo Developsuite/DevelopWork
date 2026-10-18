@@ -279,7 +279,7 @@ const Board = () => {
                         <div className="brd__kanban">
                             {kanbanColumns.map((column) => (
                                 <div key={column.label} className="brd__column">
-                                    <div className="brd__column-header" style={{ borderTop: `3px solid ${column.color}` }}>
+                                    <div className="brd__column-header">
                                         <div className="brd__column-title">
                                             <div className="brd__column-dot" style={{ background: column.color }} />
                                             <span>{column.label}</span>
