@@ -265,27 +265,29 @@ const EmployeeDashboard = () => {
     return (
         <div className="employee-cockpit">
             {/* Top Welcome & KPI Header */}
-            <div className="cockpit-welcome">
+            <div className="cockpit-welcome glass-card">
                 <div className="cockpit-welcome__main">
                     <div className="cockpit-welcome__user">
                         <Avatar name={user?.name || 'Employee'} src={user?.avatar} size="lg" />
                         <div>
-                            <h1>Welcome back, {user?.name ? user.name.split(' ')[0] : 'Team Member'}!</h1>
-                            <p>Here is your personal command center, task assignments, and permitted workspace tools.</p>
+                            <h1 className="cockpit-welcome__greeting">
+                                Welcome back, <span>{user?.name ? user.name.split(' ')[0] : 'Team Member'}</span>! 👋
+                            </h1>
+                            <p className="cockpit-welcome__sub">Here is your personal command center, task assignments, and permitted workspace tools.</p>
                         </div>
                     </div>
 
                     <div className="cockpit-welcome__date">
-                        <CalendarDays size={16} strokeWidth={1.8} />
+                        <CalendarDays size={15} />
                         <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                 </div>
 
                 {/* KPI Stat Cards Row */}
                 <div className="cockpit-kpi-grid">
-                    <div className="cockpit-kpi-card" onClick={() => setStatusFilter('all')}>
-                        <div className="cockpit-kpi-icon" style={{ color: 'var(--primary-600, #2563eb)' }}>
-                            <ListTodo size={20} strokeWidth={1.8} />
+                    <div className={`cockpit-kpi-card ${statusFilter === 'all' ? 'active-filter' : ''}`} onClick={() => setStatusFilter('all')}>
+                        <div className="cockpit-kpi-icon kpi-icon--total">
+                            <ListTodo size={20} strokeWidth={2} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.total}</span>
@@ -293,9 +295,9 @@ const EmployeeDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="cockpit-kpi-card" onClick={() => setStatusFilter('in progress')}>
-                        <div className="cockpit-kpi-icon" style={{ color: '#d97706' }}>
-                            <Clock size={20} strokeWidth={1.8} />
+                    <div className={`cockpit-kpi-card ${statusFilter === 'in progress' ? 'active-filter' : ''}`} onClick={() => setStatusFilter('in progress')}>
+                        <div className="cockpit-kpi-icon kpi-icon--progress">
+                            <Clock size={20} strokeWidth={2} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.inProgress}</span>
@@ -303,9 +305,9 @@ const EmployeeDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="cockpit-kpi-card" onClick={() => setStatusFilter('in review')}>
-                        <div className="cockpit-kpi-icon" style={{ color: '#7c3aed' }}>
-                            <AlertCircle size={20} strokeWidth={1.8} />
+                    <div className={`cockpit-kpi-card ${statusFilter === 'in review' ? 'active-filter' : ''}`} onClick={() => setStatusFilter('in review')}>
+                        <div className="cockpit-kpi-icon kpi-icon--review">
+                            <AlertCircle size={20} strokeWidth={2} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.inReview}</span>
@@ -313,9 +315,9 @@ const EmployeeDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="cockpit-kpi-card" onClick={() => setStatusFilter('done')}>
-                        <div className="cockpit-kpi-icon" style={{ color: '#059669' }}>
-                            <CheckCircle2 size={20} strokeWidth={1.8} />
+                    <div className={`cockpit-kpi-card ${statusFilter === 'done' ? 'active-filter' : ''}`} onClick={() => setStatusFilter('done')}>
+                        <div className="cockpit-kpi-icon kpi-icon--done">
+                            <CheckCircle2 size={20} strokeWidth={2} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.done}</span>
@@ -328,7 +330,7 @@ const EmployeeDashboard = () => {
             {/* Main Content Layout: Tasks + RBAC Workspaces */}
             <div className="cockpit-layout-grid">
                 {/* Left/Main Column: Interactive Task Board */}
-                <div className="cockpit-tasks-section">
+                <div className="cockpit-tasks-section glass-card">
                     <div className="cockpit-section-header">
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -569,11 +571,11 @@ const EmployeeDashboard = () => {
 
                 {/* Right Column: RBAC Permitted Workspaces & Modules */}
                 <div className="cockpit-sidebar-section">
-                    <div className="cockpit-rbac-card">
+                    <div className="cockpit-rbac-card glass-card">
                         <div className="cockpit-section-header">
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Shield size={18} strokeWidth={1.8} color="var(--primary-600)" />
+                                    <Shield size={18} strokeWidth={2} color="var(--primary-500)" />
                                     <h3>Permitted Workspaces</h3>
                                 </div>
                                 <p className="cockpit-section-sub">Granular modules granted by Workspace Admin</p>
@@ -597,8 +599,15 @@ const EmployeeDashboard = () => {
                                     return (
                                         <div key={mod.key} className="cockpit-module-card">
                                             <div className="cockpit-module-card__top">
-                                                <div className="cockpit-module-icon" style={{ color: mod.color }}>
-                                                    <ModIcon size={18} strokeWidth={1.8} />
+                                                <div
+                                                    className="cockpit-module-icon"
+                                                    style={{
+                                                        background: `${mod.color}15`,
+                                                        color: mod.color,
+                                                        border: `1px solid ${mod.color}25`
+                                                    }}
+                                                >
+                                                    <ModIcon size={18} strokeWidth={2} />
                                                 </div>
                                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                                     <h4 className="cockpit-module-title">{mod.label}</h4>
@@ -611,7 +620,7 @@ const EmployeeDashboard = () => {
                                                     onClick={() => navigate(`/${mod.key}`)}
                                                     title={`Launch ${mod.label}`}
                                                 >
-                                                    <ArrowUpRight size={15} strokeWidth={1.8} />
+                                                    <ArrowUpRight size={15} strokeWidth={2} />
                                                 </button>
                                             </div>
 
@@ -641,12 +650,12 @@ const EmployeeDashboard = () => {
                     </div>
 
                     {/* Quick Guidance / Tip Widget */}
-                    <div className="cockpit-tip-card">
+                    <div className="cockpit-tip-card glass-card">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <AlertTriangle size={15} strokeWidth={1.8} color="#D97706" />
-                            <h4 style={{ fontSize: '13px', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Workflow Tip</h4>
+                            <AlertTriangle size={16} strokeWidth={2} color="var(--warning)" />
+                            <h4 style={{ fontSize: '13px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Workflow Tip</h4>
                         </div>
-                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                        <p style={{ fontSize: '12.5px', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
                             When you finish task deliverables, update the status to <strong>In Review</strong> so your manager is notified for sign-off.
                         </p>
                     </div>
