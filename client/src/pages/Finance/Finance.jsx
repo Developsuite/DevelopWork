@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 import { addToast } from '../../store/slices/uiSlice';
@@ -220,6 +220,7 @@ const Finance = () => {
     const [invoices, setInvoices] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [dataLoading, setDataLoading] = useState(true);
+    const syncedTxIdsRef = useRef(new Set());
 
     const isWithinDateFilter = useCallback((dateString) => {
         if (!dateString) return true;
@@ -356,6 +357,53 @@ const Finance = () => {
         };
         loadAll();
     }, [loadTransactions, loadInvoices, loadExpenses]);
+
+    // Auto-sync any existing expense transactions that have mismatched dates
+    useEffect(() => {
+        if (!transactions.length || !expenses.length) return;
+
+        const syncMismatches = async () => {
+            let hasChanges = false;
+            for (const exp of expenses) {
+                if (!exp.date) continue;
+                const expDateStr = exp.date.split('T')[0];
+
+                // Find matching transaction by reference or description
+                const matchingTx = transactions.find(t =>
+                    t.type === 'expense' &&
+                    !syncedTxIdsRef.current.has(t.id) &&
+                    (
+                        t.reference === `EXP-${exp.id}` ||
+                        t.reference === `EXP-AUTO-${exp.id}` ||
+                        t.description === `Expense: ${exp.reason}` ||
+                        (exp.reason && t.description && t.description.toLowerCase().trim() === `Expense: ${exp.reason}`.toLowerCase().trim())
+                    )
+                );
+
+                if (matchingTx && matchingTx.date) {
+                    const txDateStr = matchingTx.date.split('T')[0];
+                    if (txDateStr !== expDateStr) {
+                        try {
+                            syncedTxIdsRef.current.add(matchingTx.id);
+                            await financeService.updateTransaction(matchingTx.id, {
+                                date: expDateStr,
+                                created_at: new Date(expDateStr + 'T12:00:00Z').toISOString()
+                            });
+                            hasChanges = true;
+                        } catch (err) {
+                            console.error('Failed to sync transaction date:', err);
+                        }
+                    }
+                }
+            }
+
+            if (hasChanges) {
+                await loadTransactions();
+            }
+        };
+
+        syncMismatches();
+    }, [expenses, transactions, loadTransactions]);
 
     const chartData = useMemo(() => {
         const now = new Date();
@@ -802,7 +850,18 @@ const Finance = () => {
                 await loadInvoices();
             } else if (type === 'expense') {
                 await financeService.deleteExpense(id);
-                await loadExpenses();
+                // Also clean up any linked transaction
+                const linkedTx = transactions.find(t => 
+                    t.type === 'expense' && (t.reference === `EXP-${id}` || t.reference === `EXP-AUTO-${id}`)
+                );
+                if (linkedTx) {
+                    try {
+                        await financeService.deleteTransaction(linkedTx.id);
+                    } catch (e) {
+                        console.error('Failed to delete linked transaction', e);
+                    }
+                }
+                await Promise.all([loadExpenses(), loadTransactions()]);
             }
             dispatch(addToast({ title: 'Deleted', message: `${title} has been deleted.`, type: 'info' }));
         } catch (err) {
@@ -882,12 +941,16 @@ const Finance = () => {
             status: editExpenseId ? undefined : (expenseFormData.type === 'company' ? 'Approved' : 'Pending')
         };
 
+        let savedExpenseId = editExpenseId;
         try {
             if (editExpenseId) {
                 await financeService.updateExpense(editExpenseId, expData);
                 dispatch(addToast({ title: 'Expense Updated', message: 'The expense record has been updated.', type: 'success' }));
             } else {
-                await financeService.createExpense(expData);
+                const created = await financeService.createExpense(expData);
+                if (created && created.id) {
+                    savedExpenseId = created.id;
+                }
                 dispatch(addToast({ title: 'Expense Added', message: 'New expense record created.', type: 'success' }));
             }
             await loadExpenses();
@@ -895,28 +958,48 @@ const Finance = () => {
             console.error('Error saving expense:', err);
             dispatch(addToast({ title: 'Error', message: 'Failed to save expense record.', type: 'error' }));
         }
+
+        // If expense type is company and auto-approved, create or update matching transaction
+        if (expenseFormData.type === 'company') {
+            try {
+                const existingTx = transactions.find(t =>
+                    t.type === 'expense' &&
+                    (
+                        (savedExpenseId && (t.reference === `EXP-${savedExpenseId}` || t.reference === `EXP-AUTO-${savedExpenseId}`)) ||
+                        t.description === `Expense: ${expenseFormData.description}`
+                    )
+                );
+
+                if (existingTx) {
+                    await financeService.updateTransaction(existingTx.id, {
+                        category: expenseFormData.category || 'Operations',
+                        description: `Expense: ${expenseFormData.description}`,
+                        amount: parseInt(expenseFormData.amount) || 0,
+                        date: expenseDate,
+                        created_at: expenseDate ? new Date(expenseDate + 'T12:00:00Z').toISOString() : undefined,
+                        reference: savedExpenseId ? `EXP-${savedExpenseId}` : existingTx.reference
+                    });
+                } else if (!editExpenseId) {
+                    await financeService.createTransaction({
+                        type: 'expense',
+                        category: expenseFormData.category || 'Operations',
+                        description: `Expense: ${expenseFormData.description}`,
+                        amount: parseInt(expenseFormData.amount) || 0,
+                        date: expenseDate,
+                        created_at: expenseDate ? new Date(expenseDate + 'T12:00:00Z').toISOString() : undefined,
+                        status: 'completed',
+                        reference: savedExpenseId ? `EXP-${savedExpenseId}` : `EXP-AUTO-${Date.now().toString().slice(-6)}`
+                    });
+                }
+                await loadTransactions();
+            } catch (err) {
+                console.error('Error syncing expense transaction:', err);
+            }
+        }
         
         setIsAddExpenseModalOpen(false);
         setEditExpenseId(null);
         setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '', date: '' });
-
-        // If expense type is company and auto-approved, also create a transaction with the matching expense date
-        if (!editExpenseId && expenseFormData.type === 'company') {
-            try {
-                await financeService.createTransaction({
-                    type: 'expense',
-                    category: expenseFormData.category || 'Operations',
-                    description: `Expense: ${expenseFormData.description}`,
-                    amount: parseInt(expenseFormData.amount) || 0,
-                    date: expenseDate,
-                    status: 'completed',
-                    reference: `EXP-AUTO-${Date.now().toString().slice(-6)}`
-                });
-                await loadTransactions();
-            } catch (err) {
-                console.error('Error creating expense transaction:', err);
-            }
-        }
     };
 
     const handleExportPDF = () => {
@@ -987,6 +1070,7 @@ const Finance = () => {
                 description: `Expense: ${exp.reason || exp.description} (${exp.requester})`,
                 amount: exp.amount,
                 date: expDate,
+                created_at: expDate ? new Date(expDate + 'T12:00:00Z').toISOString() : undefined,
                 status: 'completed',
                 reference: `EXP-${exp.id}`
             });
