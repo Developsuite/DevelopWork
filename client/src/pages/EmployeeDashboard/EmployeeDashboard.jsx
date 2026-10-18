@@ -265,7 +265,7 @@ const EmployeeDashboard = () => {
     return (
         <div className="employee-cockpit">
             {/* Top Welcome & KPI Header */}
-            <div className="cockpit-welcome glass-card">
+            <div className="cockpit-welcome">
                 <div className="cockpit-welcome__main">
                     <div className="cockpit-welcome__user">
                         <Avatar name={user?.name || 'Employee'} src={user?.avatar} size="lg" />
@@ -276,7 +276,7 @@ const EmployeeDashboard = () => {
                     </div>
 
                     <div className="cockpit-welcome__date">
-                        <CalendarDays size={18} />
+                        <CalendarDays size={16} strokeWidth={1.8} />
                         <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     </div>
                 </div>
@@ -284,8 +284,8 @@ const EmployeeDashboard = () => {
                 {/* KPI Stat Cards Row */}
                 <div className="cockpit-kpi-grid">
                     <div className="cockpit-kpi-card" onClick={() => setStatusFilter('all')}>
-                        <div className="cockpit-kpi-icon" style={{ background: 'rgba(87, 155, 252, 0.12)', color: '#579BFC' }}>
-                            <ListTodo size={20} />
+                        <div className="cockpit-kpi-icon" style={{ color: 'var(--primary-600, #2563eb)' }}>
+                            <ListTodo size={20} strokeWidth={1.8} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.total}</span>
@@ -294,8 +294,8 @@ const EmployeeDashboard = () => {
                     </div>
 
                     <div className="cockpit-kpi-card" onClick={() => setStatusFilter('in progress')}>
-                        <div className="cockpit-kpi-icon" style={{ background: 'rgba(253, 171, 61, 0.12)', color: '#FDAB3D' }}>
-                            <Clock size={20} />
+                        <div className="cockpit-kpi-icon" style={{ color: '#d97706' }}>
+                            <Clock size={20} strokeWidth={1.8} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.inProgress}</span>
@@ -304,8 +304,8 @@ const EmployeeDashboard = () => {
                     </div>
 
                     <div className="cockpit-kpi-card" onClick={() => setStatusFilter('in review')}>
-                        <div className="cockpit-kpi-icon" style={{ background: 'rgba(162, 93, 220, 0.12)', color: '#A25DDC' }}>
-                            <AlertCircle size={20} />
+                        <div className="cockpit-kpi-icon" style={{ color: '#7c3aed' }}>
+                            <AlertCircle size={20} strokeWidth={1.8} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.inReview}</span>
@@ -314,8 +314,8 @@ const EmployeeDashboard = () => {
                     </div>
 
                     <div className="cockpit-kpi-card" onClick={() => setStatusFilter('done')}>
-                        <div className="cockpit-kpi-icon" style={{ background: 'rgba(0, 200, 117, 0.12)', color: '#00C875' }}>
-                            <CheckCircle2 size={20} />
+                        <div className="cockpit-kpi-icon" style={{ color: '#059669' }}>
+                            <CheckCircle2 size={20} strokeWidth={1.8} />
                         </div>
                         <div className="cockpit-kpi-content">
                             <span className="cockpit-kpi-value">{counts.done}</span>
@@ -328,11 +328,11 @@ const EmployeeDashboard = () => {
             {/* Main Content Layout: Tasks + RBAC Workspaces */}
             <div className="cockpit-layout-grid">
                 {/* Left/Main Column: Interactive Task Board */}
-                <div className="cockpit-tasks-section glass-card">
+                <div className="cockpit-tasks-section">
                     <div className="cockpit-section-header">
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <CheckSquare size={20} color="var(--primary-400)" />
+                                <CheckSquare size={18} strokeWidth={1.8} color="var(--primary-600)" />
                                 <h2>My Assigned Tasks</h2>
                                 <span className="cockpit-count-badge">{filteredTasks.length}</span>
                             </div>
@@ -340,7 +340,7 @@ const EmployeeDashboard = () => {
                         </div>
 
                         <button className="cockpit-refresh-btn" onClick={loadTasks} title="Refresh tasks">
-                            <RefreshCw size={15} className={loadingTasks ? 'spinning' : ''} />
+                            <RefreshCw size={14} className={loadingTasks ? 'spinning' : ''} />
                             <span>Refresh</span>
                         </button>
                     </div>
@@ -361,7 +361,7 @@ const EmployeeDashboard = () => {
                                 className={`cockpit-scope-chip scope--op ${scopeFilter === 'operational' ? 'active' : ''}`}
                                 onClick={() => setScopeFilter('operational')}
                             >
-                                <ClipboardList size={13} />
+                                <ClipboardList size={13} strokeWidth={1.8} />
                                 Daily General Tasks ({counts.operational})
                             </button>
                             <button
@@ -369,41 +369,52 @@ const EmployeeDashboard = () => {
                                 className={`cockpit-scope-chip scope--proj ${scopeFilter === 'project' ? 'active' : ''}`}
                                 onClick={() => setScopeFilter('project')}
                             >
-                                <FolderKanban size={13} />
+                                <FolderKanban size={13} strokeWidth={1.8} />
                                 Project Tasks ({counts.project})
                             </button>
                         </div>
 
+                        {/* Underline Filter Tabs */}
                         <div className="cockpit-filter-tabs">
                             <button
+                                type="button"
                                 className={`cockpit-tab ${statusFilter === 'all' ? 'active' : ''}`}
                                 onClick={() => setStatusFilter('all')}
                             >
-                                All ({counts.total})
+                                <span>All</span>
+                                <span className="cockpit-tab-badge">{counts.total}</span>
                             </button>
                             <button
+                                type="button"
                                 className={`cockpit-tab ${statusFilter === 'active' ? 'active' : ''}`}
                                 onClick={() => setStatusFilter('active')}
                             >
-                                Active ({counts.total - counts.done})
+                                <span>Active</span>
+                                <span className="cockpit-tab-badge">{counts.total - counts.done}</span>
                             </button>
                             <button
+                                type="button"
                                 className={`cockpit-tab ${statusFilter === 'in progress' ? 'active' : ''}`}
                                 onClick={() => setStatusFilter('in progress')}
                             >
-                                In Progress ({counts.inProgress})
+                                <span>In Progress</span>
+                                <span className="cockpit-tab-badge">{counts.inProgress}</span>
                             </button>
                             <button
+                                type="button"
                                 className={`cockpit-tab ${statusFilter === 'in review' ? 'active' : ''}`}
                                 onClick={() => setStatusFilter('in review')}
                             >
-                                In Review ({counts.inReview})
+                                <span>In Review</span>
+                                <span className="cockpit-tab-badge">{counts.inReview}</span>
                             </button>
                             <button
+                                type="button"
                                 className={`cockpit-tab ${statusFilter === 'done' ? 'active' : ''}`}
                                 onClick={() => setStatusFilter('done')}
                             >
-                                Done ({counts.done})
+                                <span>Done</span>
+                                <span className="cockpit-tab-badge">{counts.done}</span>
                             </button>
                         </div>
 
@@ -558,11 +569,11 @@ const EmployeeDashboard = () => {
 
                 {/* Right Column: RBAC Permitted Workspaces & Modules */}
                 <div className="cockpit-sidebar-section">
-                    <div className="cockpit-rbac-card glass-card">
+                    <div className="cockpit-rbac-card">
                         <div className="cockpit-section-header">
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <Shield size={18} color="var(--primary-400)" />
+                                    <Shield size={18} strokeWidth={1.8} color="var(--primary-600)" />
                                     <h3>Permitted Workspaces</h3>
                                 </div>
                                 <p className="cockpit-section-sub">Granular modules granted by Workspace Admin</p>
@@ -571,7 +582,7 @@ const EmployeeDashboard = () => {
 
                         {permittedModules.length === 0 ? (
                             <div className="cockpit-no-perms-card">
-                                <Shield size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
+                                <Shield size={32} strokeWidth={1.5} style={{ opacity: 0.3, marginBottom: '8px' }} />
                                 <h4>Core Task Access Active</h4>
                                 <p>
                                     You currently have direct access to your task cockpit. If you need access to Recruitment, Invoices, or Projects, contact your Workspace Admin.
@@ -586,8 +597,8 @@ const EmployeeDashboard = () => {
                                     return (
                                         <div key={mod.key} className="cockpit-module-card">
                                             <div className="cockpit-module-card__top">
-                                                <div className="cockpit-module-icon" style={{ background: `${mod.color}1a`, color: mod.color }}>
-                                                    <ModIcon size={18} />
+                                                <div className="cockpit-module-icon" style={{ color: mod.color }}>
+                                                    <ModIcon size={18} strokeWidth={1.8} />
                                                 </div>
                                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                                     <h4 className="cockpit-module-title">{mod.label}</h4>
@@ -600,7 +611,7 @@ const EmployeeDashboard = () => {
                                                     onClick={() => navigate(`/${mod.key}`)}
                                                     title={`Launch ${mod.label}`}
                                                 >
-                                                    <ArrowUpRight size={16} />
+                                                    <ArrowUpRight size={15} strokeWidth={1.8} />
                                                 </button>
                                             </div>
 
@@ -630,10 +641,10 @@ const EmployeeDashboard = () => {
                     </div>
 
                     {/* Quick Guidance / Tip Widget */}
-                    <div className="cockpit-tip-card glass-card">
+                    <div className="cockpit-tip-card">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                            <AlertTriangle size={16} color="#FDAB3D" />
-                            <h4 style={{ fontSize: '13px', fontWeight: 700, margin: 0 }}>Workflow Tip</h4>
+                            <AlertTriangle size={15} strokeWidth={1.8} color="#D97706" />
+                            <h4 style={{ fontSize: '13px', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>Workflow Tip</h4>
                         </div>
                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0 }}>
                             When you finish task deliverables, update the status to <strong>In Review</strong> so your manager is notified for sign-off.
