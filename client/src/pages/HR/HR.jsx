@@ -1540,7 +1540,7 @@ const HR = () => {
                 <div className="recruitment-container">
                     {/* Recruitment Metrics Bar */}
                     <div className="recruitment-metrics">
-                        <div className="recruitment-metric-card">
+                        <div className="recruitment-metric-card recruitment-metric-card--jobs">
                             <div className="recruitment-metric-card__info">
                                 <span className="recruitment-metric-card__val">{recruitmentMetrics.activeJobs}</span>
                                 <span className="recruitment-metric-card__lbl">Active Openings</span>
@@ -1549,7 +1549,7 @@ const HR = () => {
                                 <Briefcase size={20} />
                             </div>
                         </div>
-                        <div className="recruitment-metric-card">
+                        <div className="recruitment-metric-card recruitment-metric-card--candidates">
                             <div className="recruitment-metric-card__info">
                                 <span className="recruitment-metric-card__val">{recruitmentMetrics.totalCandidates}</span>
                                 <span className="recruitment-metric-card__lbl">Total Candidates</span>
@@ -1558,7 +1558,7 @@ const HR = () => {
                                 <Users size={20} />
                             </div>
                         </div>
-                        <div className="recruitment-metric-card">
+                        <div className="recruitment-metric-card recruitment-metric-card--interview">
                             <div className="recruitment-metric-card__info">
                                 <span className="recruitment-metric-card__val">{recruitmentMetrics.inInterview}</span>
                                 <span className="recruitment-metric-card__lbl">In Interview</span>
@@ -1567,7 +1567,7 @@ const HR = () => {
                                 <Clock size={20} />
                             </div>
                         </div>
-                        <div className="recruitment-metric-card">
+                        <div className="recruitment-metric-card recruitment-metric-card--hired">
                             <div className="recruitment-metric-card__info">
                                 <span className="recruitment-metric-card__val">{recruitmentMetrics.hiredCount}</span>
                                 <span className="recruitment-metric-card__lbl">Hired / Placed</span>

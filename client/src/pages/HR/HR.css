@@ -925,42 +925,93 @@
 .recruitment-metrics {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-bottom: 4px;
+    gap: 16px;
+    margin-bottom: 18px;
 }
 
 .recruitment-metric-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px 18px;
+    background: #FFFFFF;
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.recruitment-metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
+    border-top-left-radius: 14px;
+    border-bottom-left-radius: 14px;
     transition: all 0.2s ease;
+}
+
+.recruitment-metric-card--jobs::before {
+    background: #3B82F6;
+}
+
+.recruitment-metric-card--candidates::before {
+    background: #8B5CF6;
+}
+
+.recruitment-metric-card--interview::before {
+    background: #06B6D4;
+}
+
+.recruitment-metric-card--hired::before {
+    background: #10B981;
 }
 
 .recruitment-metric-card:hover {
     transform: translateY(-2px);
-    border-color: var(--primary-300);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    background: #FFFFFF;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.recruitment-metric-card--jobs:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.recruitment-metric-card--candidates:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.recruitment-metric-card--interview:hover {
+    border-color: rgba(6, 182, 212, 0.4);
+}
+
+.recruitment-metric-card--hired:hover {
+    border-color: rgba(16, 185, 129, 0.4);
 }
 
 .recruitment-metric-card__info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
+    padding-left: 4px;
 }
 
 .recruitment-metric-card__val {
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--text-primary);
-    line-height: 1.2;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
 }
 
 .recruitment-metric-card__lbl {
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -968,13 +1019,37 @@
 }
 
 .recruitment-metric-card__icon-wrapper {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.recruitment-metric-card:hover .recruitment-metric-card__icon-wrapper {
+    transform: scale(1.08);
+}
+
+/* Dark Mode Overrides for Recruitment Metrics */
+[data-theme="dark"] .recruitment-metric-card {
+    background: #141721;
+    background: linear-gradient(180deg, #191C28 0%, #131520 100%);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .recruitment-metric-card:hover {
+    background: #1C2030;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .recruitment-metric-card__icon-wrapper {
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Pipeline Kanban Board */
