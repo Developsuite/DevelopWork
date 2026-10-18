@@ -293,10 +293,26 @@ const Finance = () => {
         try {
             const data = await financeService.getInvoices();
             setInvoices(data.map(inv => {
-                let itemsCount = 0;
+                let itemsList = [];
+                let advancePayment = 0;
+                let balanceDue = inv.amount;
+                let projectName = '';
+                let issueDate = inv.created_at ? inv.created_at.split('T')[0] : '';
+                let taxRate = 0;
+                let notes = '';
                 try {
-                    const parsedItems = typeof inv.items === 'string' ? JSON.parse(inv.items) : inv.items;
-                    itemsCount = Array.isArray(parsedItems) ? parsedItems.length : 0;
+                    const parsed = typeof inv.items === 'string' ? JSON.parse(inv.items) : inv.items;
+                    if (Array.isArray(parsed)) {
+                        itemsList = parsed;
+                    } else if (parsed && typeof parsed === 'object') {
+                        itemsList = Array.isArray(parsed.items) ? parsed.items : [];
+                        advancePayment = Number(parsed.advancePayment) || 0;
+                        balanceDue = parsed.balanceDue !== undefined ? Number(parsed.balanceDue) : (inv.amount - advancePayment);
+                        projectName = parsed.projectName || '';
+                        if (parsed.issueDate) issueDate = parsed.issueDate;
+                        taxRate = Number(parsed.taxRate) || 0;
+                        notes = parsed.notes || '';
+                    }
                 } catch (e) {
                     console.error('Failed to parse invoice items', e);
                 }
@@ -305,7 +321,15 @@ const Finance = () => {
                     ...inv,
                     client: inv.client_name,
                     dueDate: inv.due_date,
-                    itemsCount // Add a new safe count property
+                    date: issueDate || (inv.created_at ? inv.created_at.split('T')[0] : (inv.date ? inv.date.split('T')[0] : '')),
+                    itemsList,
+                    itemsCount: itemsList.length,
+                    advancePayment,
+                    balanceDue,
+                    projectName,
+                    issueDate,
+                    taxRate,
+                    notes
                 };
             }));
         } catch (err) { console.error('Error loading invoices:', err); }
@@ -1371,7 +1395,6 @@ const Finance = () => {
                 <div className="fin-invoices-wrap">
                     <div className="fin-invoices-header">
                         <h2>Invoices</h2>
-                        <Button variant="primary" size="sm" icon={Plus} onClick={() => setIsInvoiceBuilderOpen(true)}>Create Invoice</Button>
                     </div>
                     <div className="fin-invoice-grid">
                         {filteredInvoices.map(inv => (
@@ -1381,7 +1404,19 @@ const Finance = () => {
                                     {renderTag(inv.status)}
                                 </div>
                                 <div className="fin-invoice-card__client">{inv.client}</div>
+                                {inv.projectName && (
+                                    <div className="fin-invoice-card__project">
+                                        <Briefcase size={11} />
+                                        <span>{inv.projectName}</span>
+                                    </div>
+                                )}
                                 <div className="fin-invoice-card__amount">{formatCurrency(inv.amount)}</div>
+                                {inv.advancePayment > 0 && (
+                                    <div className="fin-invoice-card__advance-info">
+                                        <span className="fin-advance-pill">Adv: {formatCurrency(inv.advancePayment)}</span>
+                                        <span className="fin-balance-pill">Due: {formatCurrency(inv.balanceDue)}</span>
+                                    </div>
+                                )}
                                 <div className="fin-invoice-card__meta">
                                     <span><Calendar size={12} /> Due: {new Date(inv.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                                     <span><FileText size={12} /> {inv.itemsCount} items</span>
@@ -1399,18 +1434,21 @@ const Finance = () => {
                                         e.stopPropagation(); 
                                         try {
                                             await financeService.updateInvoice(inv.id, { status: 'Paid' });
-                                            // Create income transaction for this paid invoice
-                                            await financeService.createTransaction({
-                                                type: 'income',
-                                                category: 'Sales',
-                                                description: `Invoice ${inv.id} - ${inv.client}`,
-                                                amount: inv.amount,
-                                                date: new Date().toISOString().split('T')[0],
-                                                status: 'completed',
-                                                reference: `INV-${inv.id}`
-                                            });
+                                            // Check if transaction already recorded to avoid duplicate
+                                            const existingTx = transactions.find(t => t.reference === `INV-${inv.id}` || t.reference === inv.id);
+                                            if (!existingTx) {
+                                                await financeService.createTransaction({
+                                                    type: 'income',
+                                                    category: 'Sales',
+                                                    description: `Invoice ${inv.id} - ${inv.client}${inv.projectName ? ` (${inv.projectName})` : ''}`,
+                                                    amount: inv.amount,
+                                                    date: inv.date || new Date().toISOString().split('T')[0],
+                                                    status: 'completed',
+                                                    reference: `INV-${inv.id}`
+                                                });
+                                            }
                                             await Promise.all([loadInvoices(), loadTransactions()]);
-                                            dispatch(addToast({title:'Payment Recorded', message:`${inv.id} marked as paid. Revenue of ${formatCurrency(inv.amount)} recorded.`, type:'success'}));
+                                            dispatch(addToast({title:'Payment Recorded', message:`${inv.id} marked as paid.`, type:'success'}));
                                         } catch (err) { dispatch(addToast({title:'Error', message:'Failed to mark as paid.', type:'error'})); }
                                     }}>Mark Paid</Button>}
                                     {inv.status === 'Overdue' && <Button variant="primary" size="sm" onClick={(e) => { 
@@ -1668,39 +1706,65 @@ const Finance = () => {
                             <div className="fin-info-block">
                                 <label>Bill To</label>
                                 <strong>{selectedInvoice.client}</strong>
-                                <span>Accounting Team</span>
+                                {selectedInvoice.projectName && (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '6px', fontSize: '12px', color: 'var(--primary-color, #0055fe)', fontWeight: 600 }}>
+                                        <Briefcase size={13} />
+                                        <span>Project: {selectedInvoice.projectName}</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="fin-info-block text-right">
                                 <label>Invoice Number</label>
                                 <strong>{selectedInvoice.id}</strong>
-                                <label style={{ marginTop: '12px' }}>Due Date</label>
-                                <strong>{new Date(selectedInvoice.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>
+                                <label style={{ marginTop: '10px' }}>Issue Date</label>
+                                <span>{selectedInvoice.issueDate || selectedInvoice.date ? new Date(selectedInvoice.issueDate || selectedInvoice.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}</span>
+                                <label style={{ marginTop: '6px' }}>Due Date</label>
+                                <strong>{new Date(selectedInvoice.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
                             </div>
                         </div>
 
                         <div className="fin-invoice-items">
-                            <div className="fin-item-header">
+                            <div className="fin-item-header" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '10px 16px' }}>
                                 <span>Description</span>
-                                <span>Amount</span>
+                                <span style={{ textAlign: 'center' }}>Qty</span>
+                                <span style={{ textAlign: 'right' }}>Rate</span>
+                                <span style={{ textAlign: 'right' }}>Amount</span>
                             </div>
-                            <div className="fin-item-row">
-                                <span>Professional Services - Consulting</span>
-                                <span>{formatCurrency(selectedInvoice.amount)}</span>
-                            </div>
+                            {selectedInvoice.itemsList && selectedInvoice.itemsList.length > 0 ? (
+                                selectedInvoice.itemsList.map((item, idx) => (
+                                    <div key={idx} className="fin-item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '12px 16px', borderTop: '1px solid var(--border-color)' }}>
+                                        <span>{item.description || 'Service item'}</span>
+                                        <span style={{ textAlign: 'center' }}>{item.quantity || 1}</span>
+                                        <span style={{ textAlign: 'right' }}>{formatCurrency(item.rate !== undefined ? item.rate : item.price || 0)}</span>
+                                        <span style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency((item.quantity || 1) * (item.rate !== undefined ? item.rate : item.price || 0))}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="fin-item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '12px 16px', borderTop: '1px solid var(--border-color)' }}>
+                                    <span>Professional Services</span>
+                                    <span style={{ textAlign: 'center' }}>1</span>
+                                    <span style={{ textAlign: 'right' }}>{formatCurrency(selectedInvoice.amount)}</span>
+                                    <span style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(selectedInvoice.amount)}</span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="fin-invoice-summary">
                             <div className="fin-summary-row">
-                                <span>Subtotal</span>
+                                <span>Gross Total</span>
                                 <span>{formatCurrency(selectedInvoice.amount)}</span>
                             </div>
-                            <div className="fin-summary-row">
-                                <span>Tax (0%)</span>
-                                <span>{formatCurrency(0)}</span>
-                            </div>
-                            <div className="fin-summary-row total">
-                                <span>Total Amount</span>
-                                <span>{formatCurrency(selectedInvoice.amount)}</span>
+                            {selectedInvoice.advancePayment > 0 && (
+                                <div className="fin-summary-row" style={{ color: '#10b981', fontWeight: 600 }}>
+                                    <span>Less: Advance Paid</span>
+                                    <span>- {formatCurrency(selectedInvoice.advancePayment)}</span>
+                                </div>
+                            )}
+                            <div className="fin-summary-row total" style={{ borderTop: '2px solid var(--border-color)', paddingTop: '10px' }}>
+                                <span style={{ fontWeight: 700 }}>Balance Due</span>
+                                <span style={{ fontWeight: 800, color: (selectedInvoice.balanceDue > 0 || (selectedInvoice.balanceDue === undefined && selectedInvoice.amount > 0)) ? 'var(--text-primary)' : '#10b981' }}>
+                                    {formatCurrency(selectedInvoice.balanceDue !== undefined ? selectedInvoice.balanceDue : selectedInvoice.amount)}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -1902,12 +1966,39 @@ const Finance = () => {
                             client_name: newInvoice.client,
                             amount: newInvoice.amount,
                             due_date: newInvoice.dueDate,
-                            status: 'Draft',
-                            items: JSON.stringify(newInvoice.items)
+                            status: newInvoice.status || 'Draft',
+                            items: JSON.stringify({
+                                items: newInvoice.items,
+                                advancePayment: newInvoice.advancePayment,
+                                balanceDue: newInvoice.balanceDue,
+                                projectId: newInvoice.projectId,
+                                projectName: newInvoice.projectName,
+                                issueDate: newInvoice.date,
+                                taxRate: newInvoice.taxRate,
+                                notes: newInvoice.notes
+                            })
                         };
                         await financeService.createInvoice(dbInvoice);
-                        await loadInvoices();
-                        dispatch(addToast({ type: 'success', message: `Invoice ${newInvoice.id} created successfully` }));
+
+                        // Automatically record revenue transaction for this invoice on its specified date/month
+                        const invoiceDate = newInvoice.date || new Date().toISOString().split('T')[0];
+                        await financeService.createTransaction({
+                            type: 'income',
+                            category: 'Sales',
+                            description: `Invoice ${newInvoice.id} - ${newInvoice.client}${newInvoice.projectName ? ` (${newInvoice.projectName})` : ''}`,
+                            amount: Number(newInvoice.amount) || 0,
+                            date: invoiceDate,
+                            status: 'completed',
+                            reference: `INV-${newInvoice.id}`
+                        });
+
+                        await Promise.all([loadInvoices(), loadTransactions()]);
+                        const monthName = new Date(invoiceDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                        dispatch(addToast({ 
+                            type: 'success', 
+                            title: 'Invoice Created',
+                            message: `Invoice ${newInvoice.id} created & revenue of ${formatCurrency(newInvoice.amount)} added to ${monthName} financial condition!` 
+                        }));
                     } catch (err) {
                         console.error('Error creating invoice:', err);
                         dispatch(addToast({ type: 'error', message: 'Failed to create invoice' }));

@@ -330,7 +330,56 @@
 .fin-invoice-card__client { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fin-invoice-card__amount { font-size: 20px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; letter-spacing: -0.5px; }
 .fin-invoice-card__meta { display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
-.fin-invoice-card__meta span { display: flex; align-items: center; gap: 4px; }
+.fin-invoice-card__project {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--primary-color, #0055fe);
+    background: rgba(0, 85, 254, 0.08);
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fin-invoice-card__advance-info {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+.fin-advance-pill {
+    font-size: 11px;
+    font-weight: 600;
+    color: #059669;
+    background: rgba(16, 185, 129, 0.12);
+    padding: 2px 7px;
+    border-radius: 5px;
+}
+.fin-balance-pill {
+    font-size: 11px;
+    font-weight: 600;
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.12);
+    padding: 2px 7px;
+    border-radius: 5px;
+}
+[data-theme="dark"] .fin-invoice-card__project {
+    background: rgba(0, 85, 254, 0.2);
+    color: #60a5fa;
+}
+[data-theme="dark"] .fin-advance-pill {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+[data-theme="dark"] .fin-balance-pill {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
 .fin-invoice-card__actions { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); }
 
 /* Budgets */

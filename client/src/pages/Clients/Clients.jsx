@@ -14,13 +14,111 @@ import {
     Users, Briefcase, DollarSign, Search, Plus, Filter,
     Mail, Phone, MapPin, Calendar, FileText, Trash2, Pencil,
     CheckCircle2, Clock, AlertCircle, Building2, ChevronRight,
-    LayoutGrid, List, ArrowUpDown, FolderOpen, Video
+    LayoutGrid, List, ArrowUpDown, FolderOpen, Video, CreditCard, Check
 } from 'lucide-react';
 import cl1 from '../../assets/client/1.png';
 import cl2 from '../../assets/client/2.png';
 import cl3 from '../../assets/client/3.png';
 import cl4 from '../../assets/client/4.png';
 import './Clients.css';
+
+// Parse client notes to extract manual payment metadata if present
+const parseClientNotes = (notes) => {
+    if (!notes) return { noteText: '', paidAmount: null, pendingAmount: null };
+    try {
+        const match = notes.match(/<!--PAYMENT_META:(.*?)-->/);
+        if (match) {
+            const meta = JSON.parse(match[1]);
+            const cleanText = notes.replace(/<!--PAYMENT_META:.*?-->/g, '').trim();
+            return {
+                noteText: cleanText,
+                paidAmount: typeof meta.paid_amount === 'number' ? meta.paid_amount : null,
+                pendingAmount: typeof meta.pending_amount === 'number' ? meta.pending_amount : null,
+            };
+        }
+        if (typeof notes === 'string' && notes.trim().startsWith('{') && notes.trim().endsWith('}')) {
+            const parsed = JSON.parse(notes);
+            return {
+                noteText: parsed.note || parsed.user_notes || '',
+                paidAmount: typeof parsed.paid_amount === 'number' ? parsed.paid_amount : null,
+                pendingAmount: typeof parsed.pending_amount === 'number' ? parsed.pending_amount : null,
+            };
+        }
+    } catch {}
+    return { noteText: notes, paidAmount: null, pendingAmount: null };
+};
+
+const serializeClientNotes = (rawNote, paidAmount, pendingAmount) => {
+    const { noteText } = parseClientNotes(rawNote);
+    const meta = {
+        paid_amount: Number(paidAmount) || 0,
+        pending_amount: Number(pendingAmount) || 0,
+        updated_at: new Date().toISOString()
+    };
+    if (!noteText) {
+        return `<!--PAYMENT_META:${JSON.stringify(meta)}-->`;
+    }
+    return `${noteText}\n<!--PAYMENT_META:${JSON.stringify(meta)}-->`;
+};
+
+const getClientFinancials = (client) => {
+    const clientTotal = (client.projects || []).reduce((s, p) => s + (p.amount || 0), 0);
+    const { noteText, paidAmount, pendingAmount } = parseClientNotes(client.notes);
+
+    let storedPaid = paidAmount;
+    let storedPending = pendingAmount;
+
+    if (storedPaid === null && typeof window !== 'undefined' && client.id) {
+        try {
+            const cached = localStorage.getItem(`dw_client_payment_${client.id}`);
+            if (cached) {
+                const c = JSON.parse(cached);
+                storedPaid = c.paid_amount;
+                storedPending = c.pending_amount;
+            }
+        } catch {}
+    }
+
+    const totalBudget = clientTotal;
+    let paid = 0;
+    let pending = 0;
+
+    if (storedPaid !== null && storedPaid !== undefined) {
+        paid = Math.max(0, Number(storedPaid));
+        pending = storedPending !== null && storedPending !== undefined
+            ? Math.max(0, Number(storedPending))
+            : Math.max(0, totalBudget - paid);
+    } else {
+        if (client.payment_status === 'Paid') {
+            paid = totalBudget;
+            pending = 0;
+        } else if (client.payment_status === 'Partial') {
+            paid = Math.round(totalBudget * 0.5);
+            pending = Math.max(0, totalBudget - paid);
+        } else {
+            paid = 0;
+            pending = totalBudget;
+        }
+    }
+
+    const pct = totalBudget > 0 ? Math.min(100, Math.round((paid / totalBudget) * 100)) : (paid > 0 ? 100 : 0);
+
+    let paymentStatus = client.payment_status || 'Unpaid';
+    if (totalBudget > 0) {
+        if (paid >= totalBudget) paymentStatus = 'Paid';
+        else if (paid <= 0) paymentStatus = 'Unpaid';
+        else paymentStatus = 'Partial';
+    }
+
+    return {
+        totalBudget,
+        paid,
+        pending,
+        pct,
+        paymentStatus,
+        noteText
+    };
+};
 
 const Clients = () => {
     const dispatch = useDispatch();
@@ -39,6 +137,15 @@ const Clients = () => {
     const theme = useSelector((state) => state.ui.theme);
     const currency = useSelector((state) => state.ui.currency) || 'PKR';
 
+    // Manual Payment Adjustment Modal State
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [paymentClient, setPaymentClient] = useState(null);
+    const [paymentBudget, setPaymentBudget] = useState(0);
+    const [paymentPaidAmount, setPaymentPaidAmount] = useState(0);
+    const [paymentPendingAmount, setPaymentPendingAmount] = useState(0);
+    const [paymentNotes, setPaymentNotes] = useState('');
+    const [isSavingPayment, setIsSavingPayment] = useState(false);
+
     const [clients, setClients] = useState([]);
     const [dataLoading, setDataLoading] = useState(true);
     const loadClients = useCallback(async () => {
@@ -46,7 +153,13 @@ const Clients = () => {
             const data = await clientsService.getClients();
             const clientsWithProjects = await Promise.all(data.map(async (client) => {
                 const projects = await projectService.getByClient(client.id);
-                return { ...client, projects, payment: client.payment_status };
+                const financials = getClientFinancials({ ...client, projects });
+                return {
+                    ...client,
+                    projects,
+                    financials,
+                    payment: financials.paymentStatus
+                };
             }));
             setClients(clientsWithProjects);
         } catch (err) { console.error('Error loading clients:', err); }
@@ -134,10 +247,15 @@ const Clients = () => {
         }
         try {
             if (editMode && selectedClient) {
+                const { paidAmount, pendingAmount } = parseClientNotes(selectedClient.notes);
+                const updatedNotes = (paidAmount !== null || pendingAmount !== null)
+                    ? serializeClientNotes(formData.notes, paidAmount, pendingAmount)
+                    : formData.notes;
+
                 await clientsService.updateClient(selectedClient.id, {
                     name: formData.name, company: formData.company, email: formData.email,
                     phone: formData.phone, address: formData.address, status: formData.status,
-                    payment_status: formData.payment, notes: formData.notes
+                    payment_status: formData.payment, notes: updatedNotes
                 });
                 dispatch(addToast({ title: 'Client Updated', message: 'Client details have been updated.', type: 'success' }));
             } else {
@@ -169,6 +287,111 @@ const Clients = () => {
         }
     };
 
+    // Open Payment Adjustment Modal for a client
+    const handleOpenPaymentModal = (client) => {
+        const fin = client.financials || getClientFinancials(client);
+        setPaymentClient(client);
+        setPaymentBudget(fin.totalBudget);
+        setPaymentPaidAmount(fin.paid);
+        setPaymentPendingAmount(fin.pending);
+        setPaymentNotes('');
+        setIsPaymentModalOpen(true);
+    };
+
+    const handlePaidChange = (e) => {
+        const val = e.target.value;
+        setPaymentPaidAmount(val);
+        if (val === '') {
+            setPaymentPendingAmount(paymentBudget);
+        } else {
+            const p = parseFloat(val) || 0;
+            const rem = Math.max(0, paymentBudget - p);
+            setPaymentPendingAmount(rem);
+        }
+    };
+
+    const handlePendingChange = (e) => {
+        const val = e.target.value;
+        setPaymentPendingAmount(val);
+        if (val === '') {
+            setPaymentPaidAmount(paymentBudget);
+        } else {
+            const rem = parseFloat(val) || 0;
+            const p = Math.max(0, paymentBudget - rem);
+            setPaymentPaidAmount(p);
+        }
+    };
+
+    const applyPaymentPreset = (percentage) => {
+        const targetBudget = Number(paymentBudget) || 0;
+        const paid = Math.round((targetBudget * percentage) / 100);
+        const pending = Math.max(0, targetBudget - paid);
+        setPaymentPaidAmount(paid);
+        setPaymentPendingAmount(pending);
+    };
+
+    const handleSavePayment = async () => {
+        if (!paymentClient) return;
+        setIsSavingPayment(true);
+        try {
+            const paidNum = Math.max(0, parseFloat(paymentPaidAmount) || 0);
+            const pendingNum = Math.max(0, parseFloat(paymentPendingAmount) || 0);
+            const total = paymentBudget > 0 ? paymentBudget : (paidNum + pendingNum);
+
+            let status = 'Unpaid';
+            if (total > 0) {
+                if (paidNum >= total) status = 'Paid';
+                else if (paidNum > 0) status = 'Partial';
+                else status = 'Unpaid';
+            } else {
+                status = paidNum > 0 ? 'Paid' : 'Unpaid';
+            }
+
+            const { noteText } = parseClientNotes(paymentClient.notes);
+            let combinedNotes = noteText;
+            if (paymentNotes && paymentNotes.trim()) {
+                const timestamp = new Date().toLocaleDateString();
+                const noteEntry = `[${timestamp}] Payment Update: Paid ${formatCurrency(paidNum, currency)}, Pending ${formatCurrency(pendingNum, currency)} - ${paymentNotes.trim()}`;
+                combinedNotes = combinedNotes ? `${combinedNotes}\n${noteEntry}` : noteEntry;
+            }
+
+            const updatedNotes = serializeClientNotes(combinedNotes, paidNum, pendingNum);
+
+            await clientsService.updateClient(paymentClient.id, {
+                payment_status: status,
+                notes: updatedNotes
+            });
+
+            // Cache locally for instantaneous feedback
+            try {
+                localStorage.setItem(`dw_client_payment_${paymentClient.id}`, JSON.stringify({
+                    paid_amount: paidNum,
+                    pending_amount: pendingNum,
+                    budget: total,
+                    updated_at: new Date().toISOString()
+                }));
+            } catch {}
+
+            dispatch(addToast({
+                title: 'Payment Updated',
+                message: `Payment updated for ${paymentClient.name}: ${formatCurrency(paidNum, currency)} Paid, ${formatCurrency(pendingNum, currency)} Remaining.`,
+                type: 'success'
+            }));
+
+            setIsPaymentModalOpen(false);
+            await loadClients();
+        } catch (err) {
+            console.error('Failed to update payment:', err);
+            dispatch(addToast({
+                title: 'Update Failed',
+                message: err.message || 'Failed to update payment record.',
+                type: 'error'
+            }));
+        } finally {
+            setIsSavingPayment(false);
+        }
+    };
+
     const stats = [
         { label: 'Total Clients', value: clients.length, image: cl1 },
         { label: 'Active Projects', value: clients.reduce((sum, c) => sum + c.projects.length, 0), image: cl2 },
@@ -183,9 +406,9 @@ const Clients = () => {
     ];
 
     const renderBilling = () => {
-        const totalRevenue = clients.reduce((sum, c) => sum + c.projects.reduce((s, p) => s + (p.amount || 0), 0), 0);
-        const totalPaid = clients.filter(c => c.payment === 'Paid').reduce((sum, c) => sum + c.projects.reduce((s, p) => s + (p.amount || 0), 0), 0);
-        const totalOutstanding = clients.filter(c => c.payment !== 'Paid').reduce((sum, c) => sum + c.projects.reduce((s, p) => s + (p.amount || 0), 0), 0);
+        const totalRevenue = clients.reduce((sum, c) => sum + (c.financials?.totalBudget ?? c.projects.reduce((s, p) => s + (p.amount || 0), 0)), 0);
+        const totalPaid = clients.reduce((sum, c) => sum + (c.financials?.paid ?? 0), 0);
+        const totalOutstanding = clients.reduce((sum, c) => sum + (c.financials?.pending ?? 0), 0);
 
         return (
             <div className="cl__billing-overview">
@@ -218,12 +441,9 @@ const Clients = () => {
                         <tbody>
                             {filteredClients.length === 0 && <tr><td colSpan={5} style={{textAlign:'center', padding:'40px'}}>No billing records found.</td></tr>}
                             {filteredClients.map(client => {
-                                const clientTotal = client.projects.reduce((s, p) => s + (p.amount || 0), 0);
-                                if (clientTotal === 0 && client.payment === 'Unpaid') return null;
-                                
-                                let paidPct = 0;
-                                if (client.payment === 'Paid') paidPct = 100;
-                                else if (client.payment === 'Partial') paidPct = 50;
+                                const fin = client.financials || getClientFinancials(client);
+                                const clientTotal = fin.totalBudget;
+                                if (clientTotal === 0 && fin.paymentStatus === 'Unpaid') return null;
 
                                 return (
                                     <tr key={client.id}>
@@ -237,34 +457,28 @@ const Clients = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className={`cl__billing-amount ${client.payment === 'Paid' ? 'success' : 'pending'}`}>
+                                            <div className={`cl__billing-amount ${fin.paymentStatus === 'Paid' ? 'success' : 'pending'}`}>
                                                 {formatCurrency(clientTotal, currency)}
                                             </div>
                                         </td>
-                                        <td>{renderTag(client.payment)}</td>
+                                        <td>{renderTag(fin.paymentStatus)}</td>
                                         <td>
                                             <div className="cl__billing-progress">
                                                 <div className="cl__billing-progress-bar">
-                                                    <div className="cl__billing-progress-fill paid" style={{width: `${paidPct}%`}}></div>
-                                                    <div className="cl__billing-progress-fill unpaid" style={{width: `${100 - paidPct}%`}}></div>
+                                                    <div className="cl__billing-progress-fill paid" style={{width: `${fin.pct}%`}}></div>
+                                                    <div className="cl__billing-progress-fill unpaid" style={{width: `${100 - fin.pct}%`}}></div>
                                                 </div>
                                                 <div className="cl__billing-progress-labels">
-                                                    <span>{paidPct}% Paid</span>
+                                                    <span className="cl__billing-paid-text">{formatCurrency(fin.paid, currency)} Paid ({fin.pct}%)</span>
+                                                    <span className="cl__billing-pending-text">{formatCurrency(fin.pending, currency)} Remaining</span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td>
                                             <div className="cl__billing-actions">
-                                                <Button variant="ghost" size="sm" onClick={() => {
-                                                    setEditMode(true);
-                                                    setSelectedClient(client);
-                                                    setFormData({
-                                                        name: client.name, company: client.company, email: client.email,
-                                                        phone: client.phone, address: client.address, status: client.status,
-                                                        payment: client.payment_status, notes: client.notes || ''
-                                                    });
-                                                    setIsAddModalOpen(true);
-                                                }}>Update Payment</Button>
+                                                <Button variant="ghost" size="sm" onClick={() => handleOpenPaymentModal(client)}>
+                                                    Update Payment
+                                                </Button>
                                             </div>
                                         </td>
                                     </tr>
@@ -387,10 +601,11 @@ const Clients = () => {
                                                 e.stopPropagation(); 
                                                 setEditMode(true);
                                                 setSelectedClient(client);
+                                                const { noteText } = parseClientNotes(client.notes);
                                                 setFormData({
                                                     name: client.name, company: client.company, email: client.email,
                                                     phone: client.phone, address: client.address, status: client.status,
-                                                    payment: client.payment_status, notes: client.notes || ''
+                                                    payment: client.payment_status, notes: noteText || ''
                                                 });
                                                 setIsAddModalOpen(true);
                                             }} title="Edit"><Pencil size={12} /></button>
@@ -479,10 +694,11 @@ const Clients = () => {
                                                             e.stopPropagation();
                                                             setEditMode(true);
                                                             setSelectedClient(client);
+                                                            const { noteText } = parseClientNotes(client.notes);
                                                             setFormData({
                                                                 name: client.name, company: client.company, email: client.email,
                                                                 phone: client.phone, address: client.address, status: client.status,
-                                                                payment: client.payment_status, notes: client.notes || ''
+                                                                payment: client.payment_status, notes: noteText || ''
                                                             });
                                                             setIsAddModalOpen(true);
                                                         }}><Pencil size={14} /></button>
@@ -680,7 +896,7 @@ const Clients = () => {
 
                         <div className="cl__detail-section">
                             <h4>Internal Notes</h4>
-                            <div className="cl__detail-notes">{selectedClient.notes || 'No notes added.'}</div>
+                            <div className="cl__detail-notes">{parseClientNotes(selectedClient.notes).noteText || 'No notes added.'}</div>
                         </div>
                     </div>
                 )}
@@ -742,6 +958,178 @@ const Clients = () => {
                         <textarea className="dw-form-input" style={{ minHeight: '80px' }} placeholder="Any specific requirements..." value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} />
                     </div>
                 </div>
+            </Modal>
+
+            {/* Update Client Payment Modal */}
+            <Modal
+                isOpen={isPaymentModalOpen}
+                onClose={() => setIsPaymentModalOpen(false)}
+                title="Update Client Payment"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setIsPaymentModalOpen(false)} disabled={isSavingPayment}>
+                            Cancel
+                        </Button>
+                        <Button variant="primary" onClick={handleSavePayment} loading={isSavingPayment}>
+                            Save Payment
+                        </Button>
+                    </>
+                }
+            >
+                {paymentClient && (
+                    <div className="cl__pay-modal">
+                        <div className="cl__pay-client-card">
+                            <div className="cl__pay-client-info">
+                                <Avatar name={paymentClient.name} size="md" />
+                                <div>
+                                    <h4 className="cl__pay-client-name">{paymentClient.name}</h4>
+                                    <p className="cl__pay-client-company">{paymentClient.company || 'Client Profile'}</p>
+                                </div>
+                            </div>
+                            <div className="cl__pay-budget-pill">
+                                <div className="cl__pay-budget-label">Total Contract Budget</div>
+                                <div className="cl__pay-budget-val">{formatCurrency(paymentBudget, currency)}</div>
+                            </div>
+                        </div>
+
+                        {paymentBudget === 0 && (
+                            <div className="dw-form-group">
+                                <label className="dw-form-label">Total Contract Budget ({currency})</label>
+                                <div className="cl__pay-input-field-wrap">
+                                    <span className="cl__pay-currency-tag">{currency}</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="cl__pay-number-input"
+                                        placeholder="Set total client contract amount..."
+                                        value={paymentBudget || ''}
+                                        onChange={(e) => {
+                                            const b = Math.max(0, parseFloat(e.target.value) || 0);
+                                            setPaymentBudget(b);
+                                            setPaymentPendingAmount(b);
+                                            setPaymentPaidAmount(0);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="cl__pay-inputs-grid">
+                            <div className="cl__pay-input-card paid">
+                                <div className="cl__pay-input-header">
+                                    <span className="cl__pay-input-label">Paid Amount</span>
+                                    <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
+                                </div>
+                                <div className="cl__pay-input-field-wrap">
+                                    <span className="cl__pay-currency-tag">{currency}</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max={paymentBudget > 0 ? paymentBudget : undefined}
+                                        className="cl__pay-number-input"
+                                        value={paymentPaidAmount}
+                                        onChange={handlePaidChange}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <p className="cl__pay-input-hint">Collected from client</p>
+                            </div>
+
+                            <div className="cl__pay-input-card pending">
+                                <div className="cl__pay-input-header">
+                                    <span className="cl__pay-input-label">Remaining / Pending</span>
+                                    <Clock size={16} style={{ color: 'var(--danger)' }} />
+                                </div>
+                                <div className="cl__pay-input-field-wrap">
+                                    <span className="cl__pay-currency-tag">{currency}</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max={paymentBudget > 0 ? paymentBudget : undefined}
+                                        className="cl__pay-number-input"
+                                        value={paymentPendingAmount}
+                                        onChange={handlePendingChange}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <p className="cl__pay-input-hint">Pending amount to be paid</p>
+                            </div>
+                        </div>
+
+                        {paymentBudget > 0 && (
+                            <div className="cl__pay-presets">
+                                <span className="cl__pay-preset-title">Quick Adjust:</span>
+                                <button type="button" className="cl__pay-preset-btn" onClick={() => applyPaymentPreset(0)}>
+                                    0% (Unpaid)
+                                </button>
+                                <button type="button" className="cl__pay-preset-btn" onClick={() => applyPaymentPreset(25)}>
+                                    25% Advance
+                                </button>
+                                <button type="button" className="cl__pay-preset-btn" onClick={() => applyPaymentPreset(50)}>
+                                    50% Half
+                                </button>
+                                <button type="button" className="cl__pay-preset-btn" onClick={() => applyPaymentPreset(75)}>
+                                    75% Partial
+                                </button>
+                                <button type="button" className="cl__pay-preset-btn" onClick={() => applyPaymentPreset(100)}>
+                                    100% (Paid)
+                                </button>
+                            </div>
+                        )}
+
+                        {(() => {
+                            const p = Math.max(0, parseFloat(paymentPaidAmount) || 0);
+                            const rem = Math.max(0, parseFloat(paymentPendingAmount) || 0);
+                            const total = paymentBudget > 0 ? paymentBudget : (p + rem);
+                            const pct = total > 0 ? Math.min(100, Math.round((p / total) * 100)) : (p > 0 ? 100 : 0);
+                            let statusLabel = 'Unpaid';
+                            let statusColor = 'var(--danger)';
+                            if (pct >= 100) {
+                                statusLabel = 'Fully Paid';
+                                statusColor = 'var(--success)';
+                            } else if (pct > 0) {
+                                statusLabel = 'Partial Payment';
+                                statusColor = 'var(--warning)';
+                            }
+
+                            return (
+                                <div className="cl__pay-preview-box">
+                                    <div className="cl__pay-preview-header">
+                                        <span className="cl__pay-preview-title">Payment Breakdown Preview</span>
+                                        <span style={{
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            padding: '3px 8px',
+                                            borderRadius: '12px',
+                                            background: `${statusColor}22`,
+                                            color: statusColor
+                                        }}>
+                                            ● {statusLabel} ({pct}%)
+                                        </span>
+                                    </div>
+                                    <div className="cl__pay-preview-bar">
+                                        <div style={{ width: `${pct}%`, background: 'var(--success)', transition: 'width 0.25s ease' }} />
+                                        <div style={{ width: `${100 - pct}%`, background: 'var(--danger)', transition: 'width 0.25s ease' }} />
+                                    </div>
+                                    <div className="cl__pay-preview-stats">
+                                        <span className="paid-stat">Paid: {formatCurrency(p, currency)} ({pct}%)</span>
+                                        <span className="pending-stat">Remaining: {formatCurrency(rem, currency)} ({100 - pct}%)</span>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
+                        <div className="dw-form-group">
+                            <label className="dw-form-label">Payment Note / Remarks (Optional)</label>
+                            <input
+                                className="dw-form-input"
+                                placeholder="e.g. Received partial advance via online transfer"
+                                value={paymentNotes}
+                                onChange={(e) => setPaymentNotes(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     );

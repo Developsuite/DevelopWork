@@ -642,6 +642,34 @@
     font-weight: 500;
 }
 
+.inv-total-row.advance {
+    color: #059669 !important;
+    font-weight: 600 !important;
+}
+
+.inv-preset-chip {
+    padding: 3px 9px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.inv-preset-chip:hover {
+    background: var(--primary-50);
+    border-color: var(--primary-500);
+    color: var(--primary-600);
+}
+
+[data-theme="dark"] .inv-preset-chip:hover {
+    background: rgba(14, 165, 233, 0.15);
+    color: var(--primary-400);
+}
+
 .inv-template-modern .inv-total-row.grand {
     border-top: 2px solid #6366f1;
     margin-top: 16px;
