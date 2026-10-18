@@ -179,7 +179,7 @@ const Finance = () => {
     };
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
-    const [dateFilter, setDateFilter] = useState('all');
+    const [dateFilter, setDateFilter] = useState('this_month');
     const [customStartDate, setCustomStartDate] = useState('');
     const [customEndDate, setCustomEndDate] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -200,7 +200,8 @@ const Finance = () => {
         description: '',
         amount: '',
         category: 'Software',
-        type: 'expense'
+        type: 'expense',
+        date: ''
     });
 
     const [expenseFormData, setExpenseFormData] = useState({
@@ -208,7 +209,8 @@ const Finance = () => {
         amount: '',
         category: 'Power',
         type: 'company', // 'company' or 'individual'
-        requester: ''
+        requester: '',
+        date: ''
     });
 
     const [editExpenseId, setEditExpenseId] = useState(null);
@@ -740,12 +742,13 @@ const Finance = () => {
             return;
         }
         
+        const txDate = formData.date || (editId ? undefined : new Date().toISOString().split('T')[0]);
         const txData = {
             type: formData.type || 'expense',
             category: formData.category || 'General',
             description: formData.description,
             amount: parseInt(formData.amount) || 0,
-            date: new Date().toISOString().split('T')[0],
+            date: txDate || new Date().toISOString().split('T')[0],
             status: 'completed',
             reference: editId ? undefined : `TXN-${Date.now().toString().slice(-6)}`
         };
@@ -766,7 +769,7 @@ const Finance = () => {
 
         setIsModalOpen(false);
         setEditId(null);
-        setFormData({ description: '', amount: '', category: 'General', type: 'expense' });
+        setFormData({ description: '', amount: '', category: 'General', type: 'expense', date: '' });
     };
 
     const handleEditTransaction = (e, t) => {
@@ -776,7 +779,8 @@ const Finance = () => {
             description: t.description,
             amount: t.amount,
             category: t.category,
-            type: t.type
+            type: t.type,
+            date: t.date ? t.date.split('T')[0] : ''
         });
         setIsModalOpen(true);
     };
@@ -866,13 +870,14 @@ const Finance = () => {
             return;
         }
         
+        const expDate = expenseFormData.date || new Date().toISOString().split('T')[0];
         const expData = {
             reason: expenseFormData.description,
             amount: parseInt(expenseFormData.amount),
             category: expenseFormData.category,
             type: expenseFormData.type,
             requester_name: expenseFormData.type === 'company' ? 'Company' : (expenseFormData.requester || user?.name || 'User'),
-            date: new Date().toISOString().split('T')[0],
+            date: expDate,
             status: editExpenseId ? undefined : (expenseFormData.type === 'company' ? 'Approved' : 'Pending')
         };
 
@@ -892,7 +897,7 @@ const Finance = () => {
         
         setIsAddExpenseModalOpen(false);
         setEditExpenseId(null);
-        setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '' });
+        setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '', date: '' });
 
         // If expense type is company and auto-approved, also create a transaction
         if (!editExpenseId && expenseFormData.type === 'company') {
@@ -902,7 +907,7 @@ const Finance = () => {
                     category: expenseFormData.category || 'Operations',
                     description: `Expense: ${expenseFormData.description}`,
                     amount: parseInt(expenseFormData.amount) || 0,
-                    date: new Date().toISOString().split('T')[0],
+                    date: expDate,
                     status: 'completed',
                     reference: `EXP-AUTO-${Date.now().toString().slice(-6)}`
                 });
@@ -958,7 +963,8 @@ const Finance = () => {
             amount: exp.amount.toString(),
             category: exp.category,
             type: exp.type,
-            requester: exp.requester
+            requester: exp.requester,
+            date: exp.date ? exp.date.split('T')[0] : ''
         });
         setIsAddExpenseModalOpen(true);
     };
@@ -972,13 +978,14 @@ const Finance = () => {
         e.stopPropagation();
         try {
             await financeService.updateExpense(exp.id, { status: 'Approved' });
-            // Create expense transaction for this approved expense
+            // Create expense transaction for this approved expense using its recorded date
+            const expDate = exp.date ? exp.date.split('T')[0] : new Date().toISOString().split('T')[0];
             await financeService.createTransaction({
                 type: 'expense',
                 category: exp.category || 'Operations',
                 description: `Expense: ${exp.reason || exp.description} (${exp.requester})`,
                 amount: exp.amount,
-                date: new Date().toISOString().split('T')[0],
+                date: expDate,
                 status: 'completed',
                 reference: `EXP-${exp.id}`
             });
@@ -1240,7 +1247,7 @@ const Finance = () => {
                     {activeTab === 'expenses' && canManageExpenses && (
                         <>
                             <Button variant="ghost" size="sm" icon={Download} onClick={handleExportCSV}>Export</Button>
-                            <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditExpenseId(null); setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '' }); setIsAddExpenseModalOpen(true); }}>New Expense</Button>
+                            <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditExpenseId(null); setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '', date: '' }); setIsAddExpenseModalOpen(true); }}>New Expense</Button>
                         </>
                     )}
                 </div>
@@ -1497,7 +1504,7 @@ const Finance = () => {
                             </div>
                             <div style={{display:'flex', gap:'8px'}}>
                                 <Button variant="ghost" size="sm" icon={Download} onClick={handleExportPDF} style={{fontSize:'11px'}}>Export PDF</Button>
-                                <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditExpenseId(null); setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '' }); setIsAddExpenseModalOpen(true); }} style={{borderRadius:'100px', padding:'8px 16px', fontSize:'11px'}}>Record Expense</Button>
+                                <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditExpenseId(null); setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '', date: '' }); setIsAddExpenseModalOpen(true); }} style={{borderRadius:'100px', padding:'8px 16px', fontSize:'11px'}}>Record Expense</Button>
                             </div>
                         </div>
                     </div>
@@ -1625,6 +1632,15 @@ const Finance = () => {
                             <option>Payroll</option>
                             <option>Sales</option>
                         </select>
+                    </div>
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Transaction Date (Optional, defaults to today)</label>
+                        <input
+                            type="date"
+                            className="dw-form-input"
+                            value={formData.date || ''}
+                            onChange={e => setFormData({ ...formData, date: e.target.value })}
+                        />
                     </div>
                 </div>
             </Modal>
@@ -1941,6 +1957,19 @@ const Finance = () => {
                                 onChange={e => setExpenseFormData({...expenseFormData, amount: e.target.value})} 
                             />
                         </div>
+                    </div>
+
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Expense Date (Optional, defaults to today)</label>
+                        <input 
+                            className="dw-form-input" 
+                            type="date" 
+                            value={expenseFormData.date || ''} 
+                            onChange={e => setExpenseFormData({...expenseFormData, date: e.target.value})} 
+                        />
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                            Choose a previous date to record this expense for that month's financial records.
+                        </span>
                     </div>
 
                     <div className="dw-form-group">
