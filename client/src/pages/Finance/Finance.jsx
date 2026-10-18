@@ -1200,15 +1200,24 @@ const Finance = () => {
                             </div>
                         )}
                     </div>
-                    {canManageTransactions && (
+                    {(activeTab === 'dashboard' || activeTab === 'transactions') && canManageTransactions && (
                         <>
-                            <Button variant="ghost" icon={Upload} onClick={() => setIsImportModalOpen(true)}>Import</Button>
-                            <Button variant="ghost" icon={Download} onClick={handleExportCSV}>Export</Button>
-                            <Button variant="primary" icon={Receipt} onClick={handleAddTransaction}>New Transaction</Button>
+                            <Button variant="ghost" size="sm" icon={Upload} onClick={() => setIsImportModalOpen(true)}>Import</Button>
+                            <Button variant="ghost" size="sm" icon={Download} onClick={handleExportCSV}>Export</Button>
+                            <Button variant="primary" size="sm" icon={Receipt} onClick={handleAddTransaction}>New Transaction</Button>
                         </>
                     )}
-                    {activeTab === 'expenses' && (
-                        <Button variant="primary" icon={Plus} onClick={() => { setEditExpenseId(null); setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '' }); setIsAddExpenseModalOpen(true); }}>New Expense</Button>
+                    {activeTab === 'invoices' && canManageInvoices && (
+                        <>
+                            <Button variant="ghost" size="sm" icon={Download} onClick={handleExportCSV}>Export</Button>
+                            <Button variant="primary" size="sm" icon={Plus} onClick={() => setIsInvoiceBuilderOpen(true)}>Create Invoice</Button>
+                        </>
+                    )}
+                    {activeTab === 'expenses' && canManageExpenses && (
+                        <>
+                            <Button variant="ghost" size="sm" icon={Download} onClick={handleExportCSV}>Export</Button>
+                            <Button variant="primary" size="sm" icon={Plus} onClick={() => { setEditExpenseId(null); setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '' }); setIsAddExpenseModalOpen(true); }}>New Expense</Button>
+                        </>
                     )}
                 </div>
             </div>
