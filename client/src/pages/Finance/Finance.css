@@ -323,22 +323,8 @@
 
 /* Invoices */
 .fin-invoice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.fin-invoice-card {
-    padding: 24px;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    border-radius: 16px;
-    background: var(--bg-primary);
-    transition: all 0.2s ease;
-    text-align: left;
-    box-shadow: none;
-    position: relative;
-    overflow: hidden;
-}
-.fin-invoice-card:hover {
-    border-color: rgba(0, 0, 0, 0.24);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-}
+.fin-invoice-card { padding: 24px; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; background: var(--bg-primary); transition: all 0.2s ease; text-align: left; box-shadow: none; position: relative; overflow: hidden; }
+.fin-invoice-card:hover { background: var(--bg-secondary); border-color: rgba(0,0,0,0.15); transform: translateY(-2px); }
 .fin-invoice-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .fin-invoice-card__id { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.3px; }
 .fin-invoice-card__client { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -394,7 +380,7 @@
     background: rgba(245, 158, 11, 0.2);
     color: #fbbf24;
 }
-.fin-invoice-card__actions { display: flex; gap: 8px; padding-top: 12px; margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.08); }
+.fin-invoice-card__actions { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); }
 
 /* Budgets */
 .fin-budget-list { display: flex; flex-direction: column; gap: 0; }
@@ -453,7 +439,6 @@
 [data-theme="dark"] .fin-chart-card,
 [data-theme="dark"] .fin-section,
 [data-theme="dark"] .fin-invoice-card,
-[data-theme="dark"] .fin-invoice-card.clickable,
 [data-theme="dark"] .fin-ledger-summary,
 [data-theme="dark"] .fin-ledger-list {
     background: rgba(255, 255, 255, 0.02) !important;
@@ -462,8 +447,7 @@
 }
 
 [data-theme="dark"] .finance-dashboard__stat-card:hover,
-[data-theme="dark"] .fin-invoice-card:hover,
-[data-theme="dark"] .fin-invoice-card.clickable:hover {
+[data-theme="dark"] .fin-invoice-card:hover {
     background: rgba(255, 255, 255, 0.04) !important;
     border-color: rgba(0, 85, 254, 0.35) !important;
 }
@@ -536,17 +520,22 @@
 .fin-invoice-card.clickable {
     width: 100%;
     text-align: left;
+    background: var(--bg-primary);
     font-family: inherit;
     cursor: pointer;
     display: block;
-    background: var(--bg-primary);
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--border-color, rgba(0,0,0,0.08));
+    border-radius: 16px;
+    padding: 22px 24px;
     transition: all 0.2s ease;
+    box-shadow: none;
 }
+
 .fin-invoice-card.clickable:hover {
     transform: translateY(-2px);
-    border-color: rgba(0, 0, 0, 0.24);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+    background: var(--bg-secondary);
+    border-color: var(--border-hover, rgba(0,0,0,0.18));
+    box-shadow: 0 6px 20px rgba(0,0,0,0.04);
 }
 
 /* Invoice Detail */
