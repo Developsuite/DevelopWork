@@ -1015,10 +1015,10 @@ const Clients = () => {
                         )}
 
                         <div className="cl__pay-inputs-grid">
-                            <div className="cl__pay-input-card paid">
+                            <div className="cl__pay-input-card">
                                 <div className="cl__pay-input-header">
                                     <span className="cl__pay-input-label">Paid Amount</span>
-                                    <CheckCircle2 size={16} style={{ color: 'var(--success)' }} />
+                                    <CheckCircle2 size={16} className="cl__pay-header-icon paid" />
                                 </div>
                                 <div className="cl__pay-input-field-wrap">
                                     <span className="cl__pay-currency-tag">{currency}</span>
@@ -1035,10 +1035,10 @@ const Clients = () => {
                                 <p className="cl__pay-input-hint">Collected from client</p>
                             </div>
 
-                            <div className="cl__pay-input-card pending">
+                            <div className="cl__pay-input-card">
                                 <div className="cl__pay-input-header">
                                     <span className="cl__pay-input-label">Remaining / Pending</span>
-                                    <Clock size={16} style={{ color: 'var(--danger)' }} />
+                                    <Clock size={16} className="cl__pay-header-icon pending" />
                                 </div>
                                 <div className="cl__pay-input-field-wrap">
                                     <span className="cl__pay-currency-tag">{currency}</span>
