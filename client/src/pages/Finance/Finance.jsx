@@ -180,6 +180,8 @@ const Finance = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [dateFilter, setDateFilter] = useState('all');
+    const [customStartDate, setCustomStartDate] = useState('');
+    const [customEndDate, setCustomEndDate] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
@@ -220,21 +222,65 @@ const Finance = () => {
     const isWithinDateFilter = useCallback((dateString) => {
         if (!dateString) return true;
         if (dateFilter === 'all') return true;
-        const date = new Date(dateString);
-        const today = new Date();
         
+        let itemDateStr = dateString;
+        if (dateString.includes('T')) {
+            itemDateStr = dateString.split('T')[0];
+        }
+        const itemDate = new Date(itemDateStr + 'T00:00:00');
+        if (isNaN(itemDate.getTime())) return true;
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+
+        if (dateFilter === 'today') {
+            return itemDateStr === todayStr;
+        }
+
+        if (dateFilter === 'this_week') {
+            const day = now.getDay();
+            const diffToMonday = day === 0 ? 6 : day - 1;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - diffToMonday);
+            monday.setHours(0, 0, 0, 0);
+
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            sunday.setHours(23, 59, 59, 999);
+
+            return itemDate >= monday && itemDate <= sunday;
+        }
+
         if (dateFilter === 'this_month') {
-            return date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+            return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
         }
+
         if (dateFilter === 'last_month') {
-            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-            return date.getMonth() === lastMonth.getMonth() && date.getFullYear() === lastMonth.getFullYear();
+            const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            return itemDate.getMonth() === lastMonthDate.getMonth() && itemDate.getFullYear() === lastMonthDate.getFullYear();
         }
+
         if (dateFilter === 'this_year') {
-            return date.getFullYear() === today.getFullYear();
+            return itemDate.getFullYear() === now.getFullYear();
         }
+
+        if (dateFilter === 'custom') {
+            if (customStartDate && customEndDate) {
+                const start = customStartDate <= customEndDate ? customStartDate : customEndDate;
+                const end = customStartDate <= customEndDate ? customEndDate : customStartDate;
+                return itemDateStr >= start && itemDateStr <= end;
+            }
+            if (customStartDate) {
+                return itemDateStr >= customStartDate;
+            }
+            if (customEndDate) {
+                return itemDateStr <= customEndDate;
+            }
+            return true;
+        }
+
         return true;
-    }, [dateFilter]);
+    }, [dateFilter, customStartDate, customEndDate]);
 
     const loadTransactions = useCallback(async () => {
         try {
@@ -286,6 +332,274 @@ const Finance = () => {
     }, [loadTransactions, loadInvoices, loadExpenses]);
 
     const chartData = useMemo(() => {
+        const now = new Date();
+        const parseTxDate = (t) => {
+            if (!t.date) return null;
+            const str = t.date.includes('T') ? t.date.split('T')[0] : t.date;
+            const d = new Date(str + 'T00:00:00');
+            return isNaN(d.getTime()) ? null : { dateObj: d, dateStr: str };
+        };
+
+        if (dateFilter === 'today') {
+            const todayStr = now.toISOString().split('T')[0];
+            const buckets = [
+                { key: '00', label: '12 AM', revenue: 0, expenses: 0 },
+                { key: '04', label: '4 AM', revenue: 0, expenses: 0 },
+                { key: '08', label: '8 AM', revenue: 0, expenses: 0 },
+                { key: '12', label: '12 PM', revenue: 0, expenses: 0 },
+                { key: '16', label: '4 PM', revenue: 0, expenses: 0 },
+                { key: '20', label: '8 PM', revenue: 0, expenses: 0 },
+            ];
+
+            transactions.forEach(t => {
+                const parsed = parseTxDate(t);
+                if (!parsed || parsed.dateStr !== todayStr) return;
+                
+                let bucketIndex = 3;
+                if (t.created_at || (t.date && t.date.includes('T'))) {
+                    const fullDate = new Date(t.created_at || t.date);
+                    if (!isNaN(fullDate.getTime())) {
+                        const h = fullDate.getHours();
+                        bucketIndex = Math.min(5, Math.floor(h / 4));
+                    }
+                }
+                if (t.type === 'income') buckets[bucketIndex].revenue += t.amount;
+                else buckets[bucketIndex].expenses += t.amount;
+            });
+
+            return buckets.map(b => ({
+                month: b.label,
+                revenue: b.revenue,
+                expenses: b.expenses,
+                netProfit: b.revenue - b.expenses
+            }));
+        }
+
+        if (dateFilter === 'this_week') {
+            const dayOfWeek = now.getDay();
+            const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - diffToMonday);
+            monday.setHours(0, 0, 0, 0);
+
+            const days = [];
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                const dStr = d.toISOString().split('T')[0];
+                days.push({
+                    dateStr: dStr,
+                    label: dayNames[i],
+                    revenue: 0,
+                    expenses: 0
+                });
+            }
+
+            transactions.forEach(t => {
+                const parsed = parseTxDate(t);
+                if (!parsed) return;
+                const match = days.find(d => d.dateStr === parsed.dateStr);
+                if (match) {
+                    if (t.type === 'income') match.revenue += t.amount;
+                    else match.expenses += t.amount;
+                }
+            });
+
+            return days.map(d => ({
+                month: d.label,
+                revenue: d.revenue,
+                expenses: d.expenses,
+                netProfit: d.revenue - d.expenses
+            }));
+        }
+
+        if (dateFilter === 'this_month' || dateFilter === 'last_month') {
+            const targetYear = dateFilter === 'this_month' ? now.getFullYear() : (now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear());
+            const targetMonth = dateFilter === 'this_month' ? now.getMonth() : (now.getMonth() === 0 ? 11 : now.getMonth() - 1);
+            
+            const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+            const monthName = new Date(targetYear, targetMonth, 1).toLocaleString('default', { month: 'short' });
+            
+            const intervals = [
+                { start: 1, end: 5, label: `${monthName} 1-5`, revenue: 0, expenses: 0 },
+                { start: 6, end: 10, label: `${monthName} 6-10`, revenue: 0, expenses: 0 },
+                { start: 11, end: 15, label: `${monthName} 11-15`, revenue: 0, expenses: 0 },
+                { start: 16, end: 20, label: `${monthName} 16-20`, revenue: 0, expenses: 0 },
+                { start: 21, end: 25, label: `${monthName} 21-25`, revenue: 0, expenses: 0 },
+                { start: 26, end: daysInMonth, label: `${monthName} 26-${daysInMonth}`, revenue: 0, expenses: 0 },
+            ];
+
+            transactions.forEach(t => {
+                const parsed = parseTxDate(t);
+                if (!parsed) return;
+                if (parsed.dateObj.getFullYear() === targetYear && parsed.dateObj.getMonth() === targetMonth) {
+                    const dayNum = parsed.dateObj.getDate();
+                    const interval = intervals.find(inv => dayNum >= inv.start && dayNum <= inv.end);
+                    if (interval) {
+                        if (t.type === 'income') interval.revenue += t.amount;
+                        else interval.expenses += t.amount;
+                    }
+                }
+            });
+
+            return intervals.map(inv => ({
+                month: inv.label,
+                revenue: inv.revenue,
+                expenses: inv.expenses,
+                netProfit: inv.revenue - inv.expenses
+            }));
+        }
+
+        if (dateFilter === 'this_year') {
+            const targetYear = now.getFullYear();
+            const months = [];
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            for (let i = 0; i < 12; i++) {
+                months.push({
+                    monthIndex: i,
+                    label: monthNames[i],
+                    revenue: 0,
+                    expenses: 0
+                });
+            }
+
+            transactions.forEach(t => {
+                const parsed = parseTxDate(t);
+                if (!parsed) return;
+                if (parsed.dateObj.getFullYear() === targetYear) {
+                    const mIdx = parsed.dateObj.getMonth();
+                    if (months[mIdx]) {
+                        if (t.type === 'income') months[mIdx].revenue += t.amount;
+                        else months[mIdx].expenses += t.amount;
+                    }
+                }
+            });
+
+            return months.map(m => ({
+                month: m.label,
+                revenue: m.revenue,
+                expenses: m.expenses,
+                netProfit: m.revenue - m.expenses
+            }));
+        }
+
+        if (dateFilter === 'custom' && (customStartDate || customEndDate)) {
+            let start = customStartDate || customEndDate;
+            let end = customEndDate || customStartDate;
+            if (start > end) {
+                const temp = start;
+                start = end;
+                end = temp;
+            }
+
+            const startDateObj = new Date(start + 'T00:00:00');
+            const endDateObj = new Date(end + 'T00:00:00');
+            const diffDays = Math.max(1, Math.round((endDateObj - startDateObj) / (1000 * 60 * 60 * 24)) + 1);
+
+            if (diffDays <= 14) {
+                const days = [];
+                for (let i = 0; i < diffDays; i++) {
+                    const d = new Date(startDateObj);
+                    d.setDate(startDateObj.getDate() + i);
+                    const dStr = d.toISOString().split('T')[0];
+                    const label = d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+                    days.push({ dateStr: dStr, label, revenue: 0, expenses: 0 });
+                }
+
+                transactions.forEach(t => {
+                    const parsed = parseTxDate(t);
+                    if (!parsed) return;
+                    const match = days.find(d => d.dateStr === parsed.dateStr);
+                    if (match) {
+                        if (t.type === 'income') match.revenue += t.amount;
+                        else match.expenses += t.amount;
+                    }
+                });
+
+                return days.map(d => ({
+                    month: d.label,
+                    revenue: d.revenue,
+                    expenses: d.expenses,
+                    netProfit: d.revenue - d.expenses
+                }));
+            } else if (diffDays <= 60) {
+                const numBuckets = Math.min(8, Math.max(4, Math.ceil(diffDays / 7)));
+                const bucketSize = Math.ceil(diffDays / numBuckets);
+                const buckets = [];
+
+                for (let i = 0; i < numBuckets; i++) {
+                    const bStart = new Date(startDateObj);
+                    bStart.setDate(startDateObj.getDate() + i * bucketSize);
+                    const bEnd = new Date(startDateObj);
+                    bEnd.setDate(startDateObj.getDate() + Math.min(diffDays - 1, (i + 1) * bucketSize - 1));
+                    
+                    const label = `${bStart.toLocaleDateString('default', { month: 'short', day: 'numeric' })} - ${bEnd.toLocaleDateString('default', { month: 'short', day: 'numeric' })}`;
+                    buckets.push({
+                        startDate: bStart,
+                        endDate: bEnd,
+                        label,
+                        revenue: 0,
+                        expenses: 0
+                    });
+                }
+
+                transactions.forEach(t => {
+                    const parsed = parseTxDate(t);
+                    if (!parsed) return;
+                    if (parsed.dateStr >= start && parsed.dateStr <= end) {
+                        const b = buckets.find(b => parsed.dateObj >= b.startDate && parsed.dateObj <= b.endDate);
+                        if (b) {
+                            if (t.type === 'income') b.revenue += t.amount;
+                            else b.expenses += t.amount;
+                        }
+                    }
+                });
+
+                return buckets.map(b => ({
+                    month: b.label,
+                    revenue: b.revenue,
+                    expenses: b.expenses,
+                    netProfit: b.revenue - b.expenses
+                }));
+            } else {
+                const months = [];
+                const cur = new Date(startDateObj.getFullYear(), startDateObj.getMonth(), 1);
+                const last = new Date(endDateObj.getFullYear(), endDateObj.getMonth(), 1);
+                
+                while (cur <= last) {
+                    months.push({
+                        year: cur.getFullYear(),
+                        monthIndex: cur.getMonth(),
+                        label: cur.toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+                        revenue: 0,
+                        expenses: 0
+                    });
+                    cur.setMonth(cur.getMonth() + 1);
+                }
+
+                transactions.forEach(t => {
+                    const parsed = parseTxDate(t);
+                    if (!parsed) return;
+                    if (parsed.dateStr >= start && parsed.dateStr <= end) {
+                        const m = months.find(m => m.year === parsed.dateObj.getFullYear() && m.monthIndex === parsed.dateObj.getMonth());
+                        if (m) {
+                            if (t.type === 'income') m.revenue += t.amount;
+                            else m.expenses += t.amount;
+                        }
+                    }
+                });
+
+                return months.map(m => ({
+                    month: m.label,
+                    revenue: m.revenue,
+                    expenses: m.expenses,
+                    netProfit: m.revenue - m.expenses
+                }));
+            }
+        }
+
+        // Default 'all' or fallback: Last 6 months
         const last6Months = [];
         for (let i = 5; i >= 0; i--) {
             const d = new Date();
@@ -299,9 +613,10 @@ const Finance = () => {
         }
 
         transactions.forEach(t => {
-            const tDate = new Date(t.date);
-            const month = tDate.toLocaleString('default', { month: 'short' });
-            const year = tDate.getFullYear();
+            const parsed = parseTxDate(t);
+            if (!parsed) return;
+            const month = parsed.dateObj.toLocaleString('default', { month: 'short' });
+            const year = parsed.dateObj.getFullYear();
             const monthData = last6Months.find(m => m.month === month && m.year === year);
             if (monthData) {
                 if (t.type === 'income') monthData.revenue += t.amount;
@@ -313,15 +628,18 @@ const Finance = () => {
             ...m,
             netProfit: m.revenue - m.expenses
         }));
-    }, [transactions]);
+    }, [transactions, dateFilter, customStartDate, customEndDate]);
 
     const categoryData = useMemo(() => {
         const cats = {};
-        transactions.filter(t => t.type === 'expense').forEach(t => {
-            cats[t.category] = (cats[t.category] || 0) + t.amount;
-        });
+        transactions
+            .filter(t => t.type === 'expense' && isWithinDateFilter(t.date))
+            .forEach(t => {
+                const cat = t.category || 'General';
+                cats[cat] = (cats[cat] || 0) + t.amount;
+            });
         return Object.entries(cats).map(([name, value]) => ({ name, value }));
-    }, [transactions]);
+    }, [transactions, isWithinDateFilter]);
 
     const dashboardStats = useMemo(() => {
         const filteredTxForStats = transactions.filter(t => isWithinDateFilter(t.date));
@@ -329,31 +647,58 @@ const Finance = () => {
         const totalExp = filteredTxForStats.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
         const netProfit = totalRev - totalExp;
         
-        const last3Months = chartData.slice(-3);
-        const avgBurn = last3Months.reduce((acc, m) => acc + m.expenses, 0) / 3;
+        // Calculate dynamic comparison metrics based on the chartData points
+        let prevRev = 0;
+        let prevExp = 0;
+        let prevProfit = 0;
 
-        // Calculate dynamic changes based on the last 2 months
-        const currMonth = chartData[5];
-        const prevMonth = chartData[4];
+        if (chartData.length >= 2) {
+            const currentPoint = chartData[chartData.length - 1];
+            const prevPoint = chartData[chartData.length - 2];
+            prevRev = prevPoint.revenue;
+            prevExp = prevPoint.expenses;
+            prevProfit = prevPoint.netProfit;
+        }
 
         const getChange = (curr, prev) => {
+            if (prev === 0 && curr === 0) return '0.0%';
             if (prev === 0) return curr > 0 ? '+100.0%' : '0.0%';
             const pct = ((curr - prev) / Math.abs(prev)) * 100;
             return `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
         };
 
-        const revChange = getChange(currMonth.revenue, prevMonth.revenue);
-        const expChange = getChange(currMonth.expenses, prevMonth.expenses);
-        const profitChange = getChange(currMonth.netProfit, prevMonth.netProfit);
-        const burnChange = getChange(currMonth.expenses, prevMonth.expenses); // Using current vs prev expenses for burn rate change
+        const revChange = getChange(totalRev, prevRev);
+        const expChange = getChange(totalExp, prevExp);
+        const profitChange = getChange(netProfit, prevProfit);
+
+        // Calculate monthly burn rate accurately
+        let monthlyBurn = totalExp;
+        if (dateFilter === 'this_year') {
+            const currentMonthIdx = new Date().getMonth() + 1;
+            monthlyBurn = totalExp / currentMonthIdx;
+        } else if (dateFilter === 'all') {
+            monthlyBurn = totalExp / Math.max(1, chartData.length);
+        } else if (dateFilter === 'this_week') {
+            monthlyBurn = (totalExp / 7) * 30;
+        } else if (dateFilter === 'today') {
+            monthlyBurn = totalExp * 30;
+        } else if (dateFilter === 'custom' && customStartDate && customEndDate) {
+            const s = new Date(customStartDate);
+            const e = new Date(customEndDate);
+            const days = Math.max(1, Math.round(Math.abs(e - s) / (1000 * 60 * 60 * 24)) + 1);
+            monthlyBurn = (totalExp / days) * 30;
+        }
+
+        const roundedBurn = Math.round(monthlyBurn);
+        const burnChange = expChange;
 
         return [
             { label: 'Total Revenue', value: formatCurrency(totalRev), change: revChange, positive: revChange.startsWith('+'), image: img1 },
             { label: 'Total Expenses', value: formatCurrency(totalExp), change: expChange, positive: expChange.startsWith('-'), image: img2 }, // Expense increase is negative
             { label: 'Net Profit', value: formatCurrency(netProfit), change: profitChange, positive: profitChange.startsWith('+'), image: img3 },
-            { label: 'Burn Rate', value: formatCurrency(avgBurn) + '/mo', change: burnChange, positive: burnChange.startsWith('-'), image: img4 }, // Burn rate decrease is positive
+            { label: 'Burn Rate', value: `${formatCurrency(roundedBurn)}/mo`, change: burnChange, positive: burnChange.startsWith('-'), image: img4 }, // Burn rate decrease is positive
         ];
-    }, [transactions, chartData, isWithinDateFilter]);
+    }, [transactions, chartData, isWithinDateFilter, dateFilter, customStartDate, customEndDate, formatCurrency]);
 
     const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
@@ -807,17 +1152,54 @@ const Finance = () => {
                     ))}
                 </div>
                 <div className="fin-actions">
-                    <select 
-                        value={dateFilter} 
-                        onChange={e => setDateFilter(e.target.value)} 
-                        className="dw-form-input" 
-                        style={{ width: '140px', padding: '8px 12px', fontSize: '14px', height: 'auto', borderRadius: '8px', cursor: 'pointer' }}
-                    >
-                        <option value="all">All Time</option>
-                        <option value="this_month">This Month</option>
-                        <option value="last_month">Last Month</option>
-                        <option value="this_year">This Year</option>
-                    </select>
+                    <div className="fin-date-filter-group">
+                        <div className="fin-date-select-wrap">
+                            <Calendar size={14} className="fin-date-select-icon" />
+                            <select 
+                                value={dateFilter} 
+                                onChange={e => setDateFilter(e.target.value)} 
+                                className="fin-date-select"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="this_week">This Week</option>
+                                <option value="this_month">This Month</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="this_year">This Year</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        {dateFilter === 'custom' && (
+                            <div className="fin-date-range-pill">
+                                <span className="fin-range-tag">From</span>
+                                <input 
+                                    type="date" 
+                                    value={customStartDate} 
+                                    onChange={e => setCustomStartDate(e.target.value)}
+                                    className="fin-date-input"
+                                    title="Start Date"
+                                />
+                                <span className="fin-range-tag">To</span>
+                                <input 
+                                    type="date" 
+                                    value={customEndDate} 
+                                    onChange={e => setCustomEndDate(e.target.value)}
+                                    className="fin-date-input"
+                                    title="End Date"
+                                />
+                                {(customStartDate || customEndDate) && (
+                                    <button 
+                                        type="button" 
+                                        className="fin-date-clear-btn" 
+                                        title="Reset custom dates"
+                                        onClick={() => { setCustomStartDate(''); setCustomEndDate(''); }}
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
                     {canManageTransactions && (
                         <>
                             <Button variant="ghost" icon={Upload} onClick={() => setIsImportModalOpen(true)}>Import</Button>
@@ -864,25 +1246,40 @@ const Finance = () => {
                     <div className="fin-chart-card">
                         <h3>Expense Breakdown</h3>
                         <div style={{ width: '100%', height: 350 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={categoryData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={100}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {categoryData.map((entry, index) => (
-                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip content={<ExpensePieTooltip />} />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
+                            {categoryData.length === 0 ? (
+                                <div style={{ 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center', 
+                                    height: '100%', 
+                                    color: 'var(--text-muted)',
+                                    fontSize: '13px'
+                                }}>
+                                    <Receipt size={36} style={{ opacity: 0.35, marginBottom: '10px' }} />
+                                    <span>No expense data for this period</span>
+                                </div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={categoryData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={100}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {categoryData.map((entry, index) => (
+                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip content={<ExpensePieTooltip />} />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
                     </div>
 

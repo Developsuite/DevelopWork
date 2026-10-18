@@ -811,6 +811,9 @@ const HR = () => {
     const [isApplicantModalOpen, setIsApplicantModalOpen] = useState(false);
     const [isCandidateModalOpen, setIsCandidateModalOpen] = useState(false);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
+    const [draggedCandidateId, setDraggedCandidateId] = useState(null);
+    const [dragOverStage, setDragOverStage] = useState(null);
+    const isDraggingCandidateRef = useRef(false);
 
     const [jobFormData, setJobFormData] = useState({
         id: null,
@@ -1008,13 +1011,66 @@ const HR = () => {
     };
 
     const handleMoveStage = (applicantId, newStage) => {
+        const targetApplicant = applicants.find(a => a.id === applicantId);
+        if (targetApplicant && targetApplicant.stage === newStage) return;
+
         const updated = applicants.map(a => a.id === applicantId ? { ...a, stage: newStage } : a);
         setApplicants(updated);
         hrService.saveApplicants(updated);
         if (selectedCandidate && selectedCandidate.id === applicantId) {
             setSelectedCandidate({ ...selectedCandidate, stage: newStage });
         }
-        dispatch(addToast({ title: 'Stage Updated', message: `Candidate moved to ${newStage}.`, type: 'info' }));
+        const stageObj = pipelineStages.find(s => s.key === newStage);
+        dispatch(addToast({ 
+            title: 'Candidate Moved', 
+            message: `${targetApplicant ? targetApplicant.name : 'Candidate'} moved to ${stageObj ? stageObj.label : newStage}.`, 
+            type: 'info' 
+        }));
+    };
+
+    const handleCandidateDragStart = (e, applicant) => {
+        e.stopPropagation();
+        setDraggedCandidateId(applicant.id);
+        isDraggingCandidateRef.current = true;
+        e.dataTransfer.setData('text/plain', applicant.id);
+        e.dataTransfer.setData('applicantId', applicant.id);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleCandidateDragEnd = () => {
+        setDraggedCandidateId(null);
+        setDragOverStage(null);
+        setTimeout(() => {
+            isDraggingCandidateRef.current = false;
+        }, 100);
+    };
+
+    const handleColumnDragOver = (e, stageKey) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragOverStage !== stageKey) {
+            setDragOverStage(stageKey);
+        }
+    };
+
+    const handleColumnDragLeave = (e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+            setDragOverStage(null);
+        }
+    };
+
+    const handleColumnDrop = (e, targetStageKey) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const applicantId = e.dataTransfer.getData('applicantId') || e.dataTransfer.getData('text/plain') || draggedCandidateId;
+        if (applicantId) {
+            handleMoveStage(applicantId, targetStageKey);
+        }
+        setDraggedCandidateId(null);
+        setDragOverStage(null);
+        setTimeout(() => {
+            isDraggingCandidateRef.current = false;
+        }, 100);
     };
 
     const handleDeleteApplicant = (appId) => {
@@ -1104,19 +1160,60 @@ const HR = () => {
 
             {/* Stats */}
             <div className="hr-dashboard__stats">
-                {stats.map(stat => (
-                    <div key={stat.label} className="hr-stat-card hr-stat-card--small">
-                        <div className="hr-stat-card__content">
-                            <div className="hr-stat-card__info">
-                                <div className="hr-stat-card__value">{stat.value}</div>
-                                <div className="hr-stat-card__label">{stat.label}</div>
+                {activeTab === 'recruitment' ? (
+                    <>
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <div className="recruitment-metric-card__val">{recruitmentMetrics.activeJobs}</div>
+                                <div className="recruitment-metric-card__lbl">Active Openings</div>
                             </div>
-                            <div className={`hr-stat-card__image-container hr-stat-card__image-container--${stat.align}`}>
-                                <img src={stat.image} alt="" className="hr-stat-card__image" />
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ color: '#3B82F6' }}>
+                                <Briefcase size={24} />
                             </div>
                         </div>
-                    </div>
-                ))}
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <div className="recruitment-metric-card__val">{recruitmentMetrics.totalCandidates}</div>
+                                <div className="recruitment-metric-card__lbl">Total Candidates</div>
+                            </div>
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ color: '#8B5CF6' }}>
+                                <Users size={24} />
+                            </div>
+                        </div>
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <div className="recruitment-metric-card__val">{recruitmentMetrics.inInterview}</div>
+                                <div className="recruitment-metric-card__lbl">In Interview</div>
+                            </div>
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ color: '#06B6D4' }}>
+                                <Clock size={24} />
+                            </div>
+                        </div>
+                        <div className="recruitment-metric-card">
+                            <div className="recruitment-metric-card__info">
+                                <div className="recruitment-metric-card__val">{recruitmentMetrics.hiredCount}</div>
+                                <div className="recruitment-metric-card__lbl">Hired / Placed</div>
+                            </div>
+                            <div className="recruitment-metric-card__icon-wrapper" style={{ color: '#10B981' }}>
+                                <UserCheck size={24} />
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    stats.map(stat => (
+                        <div key={stat.label} className="hr-stat-card hr-stat-card--small">
+                            <div className="hr-stat-card__content">
+                                <div className="hr-stat-card__info">
+                                    <div className="hr-stat-card__value">{stat.value}</div>
+                                    <div className="hr-stat-card__label">{stat.label}</div>
+                                </div>
+                                <div className={`hr-stat-card__image-container hr-stat-card__image-container--${stat.align}`}>
+                                    <img src={stat.image} alt="" className="hr-stat-card__image" />
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
 
             {/* Sub-tab Navigation and Actions */}
@@ -1538,46 +1635,6 @@ const HR = () => {
             {/* === RECRUITMENT === */}
             {activeTab === 'recruitment' && (
                 <div className="recruitment-container">
-                    {/* Recruitment Metrics Bar */}
-                    <div className="recruitment-metrics">
-                        <div className="recruitment-metric-card recruitment-metric-card--jobs">
-                            <div className="recruitment-metric-card__info">
-                                <span className="recruitment-metric-card__val">{recruitmentMetrics.activeJobs}</span>
-                                <span className="recruitment-metric-card__lbl">Active Openings</span>
-                            </div>
-                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(59, 130, 246, 0.12)', color: '#3B82F6' }}>
-                                <Briefcase size={20} />
-                            </div>
-                        </div>
-                        <div className="recruitment-metric-card recruitment-metric-card--candidates">
-                            <div className="recruitment-metric-card__info">
-                                <span className="recruitment-metric-card__val">{recruitmentMetrics.totalCandidates}</span>
-                                <span className="recruitment-metric-card__lbl">Total Candidates</span>
-                            </div>
-                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8B5CF6' }}>
-                                <Users size={20} />
-                            </div>
-                        </div>
-                        <div className="recruitment-metric-card recruitment-metric-card--interview">
-                            <div className="recruitment-metric-card__info">
-                                <span className="recruitment-metric-card__val">{recruitmentMetrics.inInterview}</span>
-                                <span className="recruitment-metric-card__lbl">In Interview</span>
-                            </div>
-                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(6, 182, 212, 0.12)', color: '#06B6D4' }}>
-                                <Clock size={20} />
-                            </div>
-                        </div>
-                        <div className="recruitment-metric-card recruitment-metric-card--hired">
-                            <div className="recruitment-metric-card__info">
-                                <span className="recruitment-metric-card__val">{recruitmentMetrics.hiredCount}</span>
-                                <span className="recruitment-metric-card__lbl">Hired / Placed</span>
-                            </div>
-                            <div className="recruitment-metric-card__icon-wrapper" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10B981' }}>
-                                <UserCheck size={20} />
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Section Card */}
                     <div className="hr-section glass-card">
                         <div className="recruitment-subbar">
@@ -1640,8 +1697,16 @@ const HR = () => {
                                 <div className="recruitment-pipeline-board">
                                     {pipelineStages.map(stage => {
                                         const stageApplicants = filteredApplicants.filter(a => a.stage === stage.key);
+                                        const isOver = dragOverStage === stage.key;
+
                                         return (
-                                            <div key={stage.key} className="recruitment-pipeline-col">
+                                            <div 
+                                                key={stage.key} 
+                                                className={`recruitment-pipeline-col ${isOver ? 'recruitment-pipeline-col--drag-over' : ''}`}
+                                                onDragOver={(e) => handleColumnDragOver(e, stage.key)}
+                                                onDragLeave={handleColumnDragLeave}
+                                                onDrop={(e) => handleColumnDrop(e, stage.key)}
+                                            >
                                                 <div className="recruitment-col-header">
                                                     <div className="recruitment-col-header__title">
                                                         <span className="recruitment-col-dot" style={{ backgroundColor: stage.color }} />
@@ -1657,15 +1722,19 @@ const HR = () => {
 
                                                 <div className="recruitment-col-body">
                                                     {stageApplicants.length === 0 ? (
-                                                        <div className="recruitment-empty-col">
-                                                            No candidates in {stage.label}
+                                                        <div className={`recruitment-empty-col ${isOver ? 'recruitment-empty-col--active' : ''}`}>
+                                                            {isOver ? `Drop here for ${stage.label}` : `No candidates in ${stage.label}`}
                                                         </div>
                                                     ) : (
                                                         stageApplicants.map(applicant => (
                                                             <div 
                                                                 key={applicant.id} 
-                                                                className="recruitment-card"
+                                                                className={`recruitment-card ${draggedCandidateId === applicant.id ? 'recruitment-card--dragging' : ''}`}
+                                                                draggable="true"
+                                                                onDragStart={(e) => handleCandidateDragStart(e, applicant)}
+                                                                onDragEnd={handleCandidateDragEnd}
                                                                 onClick={() => {
+                                                                    if (isDraggingCandidateRef.current) return;
                                                                     setSelectedCandidate(applicant);
                                                                     setIsCandidateModalOpen(true);
                                                                 }}
@@ -1698,7 +1767,7 @@ const HR = () => {
                                                                 </div>
 
                                                                 {/* Quick Contact & Links */}
-                                                                <div className="recruitment-card__contact" onClick={e => e.stopPropagation()}>
+                                                                <div className="recruitment-card__contact" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
                                                                     {applicant.email && (
                                                                         <button 
                                                                             type="button" 
@@ -1739,7 +1808,7 @@ const HR = () => {
                                                                 </div>
 
                                                                 {/* Card Footer Actions */}
-                                                                <div className="recruitment-card__footer" onClick={e => e.stopPropagation()}>
+                                                                <div className="recruitment-card__footer" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
                                                                     <select
                                                                         className="recruitment-stage-select"
                                                                         value={applicant.stage}
@@ -1775,6 +1844,7 @@ const HR = () => {
                                                                     <button
                                                                         type="button"
                                                                         className="recruitment-hire-banner-btn"
+                                                                        onMouseDown={e => e.stopPropagation()}
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             handleConvertToEmployee(applicant);
