@@ -324,21 +324,20 @@
 /* Invoices */
 .fin-invoice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
 .fin-invoice-card {
-    padding: 22px 24px;
-    border: 1px solid rgba(0, 0, 0, 0.09);
+    padding: 24px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
     border-radius: 16px;
-    background: #f3f4f6;
+    background: var(--bg-primary);
     transition: all 0.2s ease;
     text-align: left;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    box-shadow: none;
     position: relative;
     overflow: hidden;
 }
 .fin-invoice-card:hover {
-    background: #eaecf0;
-    border-color: rgba(0, 0, 0, 0.16);
+    border-color: rgba(0, 0, 0, 0.24);
     transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 .fin-invoice-card__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .fin-invoice-card__id { font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.3px; }
@@ -540,15 +539,14 @@
     font-family: inherit;
     cursor: pointer;
     display: block;
-    background: #f3f4f6;
-    border: 1px solid rgba(0, 0, 0, 0.09);
+    background: var(--bg-primary);
+    border: 1px solid rgba(0, 0, 0, 0.12);
     transition: all 0.2s ease;
 }
 .fin-invoice-card.clickable:hover {
     transform: translateY(-2px);
-    background: #eaecf0;
-    border-color: rgba(0, 0, 0, 0.16);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.24);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Invoice Detail */
@@ -641,12 +639,11 @@
 .fin-ledger-header { display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px; }
 
 .fin-ledger-summary { 
-    background: #f3f4f6; 
-    border: 1px solid rgba(0, 0, 0, 0.09); 
-    border-radius: 16px; 
+    background: transparent; 
+    border: 1px solid rgba(0, 0, 0, 0.15); 
+    border-radius: 8px; 
     padding: 24px; 
     width: 100%; 
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 .fin-summary-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
 .fin-summary-amount-group { display: flex; align-items: baseline; }
@@ -656,7 +653,7 @@
 .fin-summary-trend.positive { color: var(--success); }
 .fin-summary-trend.negative { color: var(--danger); }
 
-.fin-summary-details { display: flex; gap: 24px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0, 0, 0, 0.08); width: fit-content; }
+.fin-summary-details { display: flex; gap: 24px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); width: fit-content; }
 .fin-summary-details .detail-item { display: flex; flex-direction: column; gap: 1px; }
 .fin-summary-details .label { font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
 .fin-summary-details strong { font-size: 14px; color: var(--text-primary); font-weight: 700; }
@@ -667,7 +664,7 @@
 .fin-minimal-tabs button.active { background: var(--bg-primary); color: var(--primary-600); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
 /* Ledger List with Grid */
-.fin-ledger-list { background: #f3f4f6; border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.09); overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02); }
+.fin-ledger-list { background: var(--bg-primary); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; }
 
 .fin-ledger-list-header, .fin-ledger-row { 
     display: grid; 
@@ -678,9 +675,9 @@
 }
 
 .fin-ledger-list-header { 
-    height: 42px; 
-    background: #eaecf0; 
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08); 
+    height: 40px; 
+    background: var(--bg-secondary); 
+    border-bottom: 1px solid var(--border-color); 
     font-size: 10px; 
     font-weight: 700; 
     color: var(--text-muted); 
@@ -691,14 +688,13 @@
 
 .fin-ledger-row { 
     min-height: 68px; 
-    background: #f3f4f6;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05); 
-    transition: 0.15s ease; 
+    border-bottom: 1px solid rgba(0,0,0,0.03); 
+    transition: 0.2s; 
     cursor: pointer; 
     position: relative; 
     padding: 12px 24px;
 }
-.fin-ledger-row:hover { background: #eaecf0; }
+.fin-ledger-row:hover { background: rgba(0,0,0,0.01); }
 .fin-ledger-row:last-child { border-bottom: none; }
 
 .fin-ledger-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--text-muted); opacity: 0.1; }
