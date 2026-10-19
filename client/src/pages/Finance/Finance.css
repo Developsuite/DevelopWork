@@ -900,3 +900,143 @@
 [data-theme="dark"] .fin-chart-tooltip__value.negative {
     color: #F43F5E !important;
 }
+
+/* ============================================================
+   Cash Flow Reserve Panel
+   ============================================================ */
+.cfr-panel {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+}
+
+.cfr-panel__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+.cfr-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #EFF6FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563EB;
+    flex-shrink: 0;
+}
+
+.cfr-info { display: flex; flex-direction: column; gap: 2px; }
+.cfr-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.cfr-sub { font-size: 11px; color: var(--text-muted); }
+
+.cfr-panel__center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.cfr-bar-wrap {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-hover);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.cfr-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: #2563EB;
+    transition: width 0.4s ease;
+}
+
+.cfr-bar-fill--over { background: #EF4444; }
+
+.cfr-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cfr-used { font-size: 11px; color: var(--text-muted); }
+.cfr-remaining { font-size: 11px; color: var(--text-muted); }
+
+.cfr-over-limit {
+    font-size: 11px;
+    color: #EF4444;
+    font-weight: 600;
+}
+
+.cfr-panel__right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.cfr-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.cfr-stat__label { font-size: 11px; color: var(--text-muted); }
+.cfr-stat__value { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+.cfr-stat__value--green { color: #10B981; }
+.cfr-stat__value--red { color: #EF4444; }
+
+.cfr-settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.cfr-settings-btn:hover {
+    border-color: #2563EB;
+    color: #2563EB;
+    background: #EFF6FF;
+}
+
+.cfr-enable-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.cfr-enable-btn:hover {
+    border-color: #2563EB;
+    color: #2563EB;
+}
+
+/* Dark mode */
+[data-theme='dark'] .cfr-icon { background: rgba(37,99,235,0.18); }
+[data-theme='dark'] .cfr-settings-btn:hover { background: rgba(37,99,235,0.15); }
+[data-theme='dark'] .cfr-enable-btn:hover { background: rgba(37,99,235,0.1); }

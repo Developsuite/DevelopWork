@@ -11,7 +11,7 @@ import {
     DollarSign, TrendingUp, TrendingDown, CreditCard, Wallet, Receipt, FileText,
     Download, Upload, Calendar, Search, MoreVertical, ArrowUpRight, ArrowDownRight,
     BarChart3, AlertCircle, Plus, Check, X, Clock, Trash2, Pencil,
-    Zap, Home, Briefcase, Filter, ShieldAlert
+    Zap, Home, Briefcase, Filter, ShieldAlert, PiggyBank, Settings2, ChevronRight
 } from 'lucide-react';
 import { permissionsService } from '../../services/permissionsService';
 import './Finance.css';
@@ -215,6 +215,24 @@ const Finance = () => {
 
     const [editExpenseId, setEditExpenseId] = useState(null);
     const [expenseFilter, setExpenseFilter] = useState('all');
+
+    // ── Cash Flow Reserve ──────────────────────────────────────────────
+    const [cashFlowReserve, setCashFlowReserve] = useState(() => {
+        try {
+            const saved = localStorage.getItem('dw-cashflow-reserve');
+            return saved ? JSON.parse(saved) : { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true };
+        } catch { return { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true }; }
+    });
+    const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
+    const [cfDraft, setCfDraft] = useState(cashFlowReserve);
+
+    const saveCashFlowReserve = (settings) => {
+        setCashFlowReserve(settings);
+        try { localStorage.setItem('dw-cashflow-reserve', JSON.stringify(settings)); } catch {}
+        setIsCashFlowModalOpen(false);
+        dispatch(addToast({ title: 'Cash Flow Reserve Saved', message: 'Reserve settings updated for this month.', type: 'success' }));
+    };
+    // ──────────────────────────────────────────────────────────────────
 
     const [transactions, setTransactions] = useState([]);
     const [invoices, setInvoices] = useState([]);
@@ -774,6 +792,30 @@ const Finance = () => {
         ];
     }, [transactions, chartData, isWithinDateFilter, dateFilter, customStartDate, customEndDate, formatCurrency]);
 
+    // Cash Flow Reserve calculations for current month
+    const cashFlowStats = useMemo(() => {
+        const now = new Date();
+        const thisMonthTx = transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+        const monthRevenue = thisMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const monthExpenses = thisMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+
+        const reserveAmount = cashFlowReserve.enabled
+            ? (cashFlowReserve.mode === 'percent'
+                ? Math.round(monthRevenue * (cashFlowReserve.percent / 100))
+                : cashFlowReserve.fixedAmount)
+            : 0;
+
+        const usedFromReserve = Math.min(monthExpenses, reserveAmount);
+        const remaining = Math.max(0, reserveAmount - usedFromReserve);
+        const overReserve = Math.max(0, monthExpenses - reserveAmount);
+        const pctUsed = reserveAmount > 0 ? Math.min(100, Math.round((usedFromReserve / reserveAmount) * 100)) : 0;
+
+        return { monthRevenue, monthExpenses, reserveAmount, usedFromReserve, remaining, overReserve, pctUsed };
+    }, [transactions, cashFlowReserve]);
+
     const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
     const handleAddTransaction = () => {
@@ -1256,6 +1298,68 @@ const Finance = () => {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* ── Cash Flow Reserve Panel ── */}
+            {canViewDashboard && cashFlowReserve.enabled && (
+                <div className="cfr-panel">
+                    <div className="cfr-panel__left">
+                        <div className="cfr-icon"><PiggyBank size={20} /></div>
+                        <div className="cfr-info">
+                            <div className="cfr-label">Monthly Cash Flow Reserve</div>
+                            <div className="cfr-sub">
+                                {cashFlowReserve.mode === 'percent'
+                                    ? `${cashFlowReserve.percent}% of this month's revenue`
+                                    : `Fixed ${formatCurrency(cashFlowReserve.fixedAmount)}/month`}
+                                {' · '}Reserve: <strong>{formatCurrency(cashFlowStats.reserveAmount)}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="cfr-panel__center">
+                        <div className="cfr-bar-wrap">
+                            <div
+                                className={`cfr-bar-fill ${cashFlowStats.pctUsed >= 100 ? 'cfr-bar-fill--over' : ''}`}
+                                style={{ width: `${cashFlowStats.pctUsed}%` }}
+                            />
+                        </div>
+                        <div className="cfr-bar-labels">
+                            <span className="cfr-used">{formatCurrency(cashFlowStats.usedFromReserve)} used</span>
+                            <span className="cfr-remaining">{formatCurrency(cashFlowStats.remaining)} left</span>
+                        </div>
+                        {cashFlowStats.overReserve > 0 && (
+                            <div className="cfr-over-limit">
+                                <AlertCircle size={13} />
+                                {formatCurrency(cashFlowStats.overReserve)} exceeded reserve cap — drawing from main funds
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="cfr-panel__right">
+                        <div className="cfr-stat">
+                            <span className="cfr-stat__label">Reserve</span>
+                            <span className="cfr-stat__value">{formatCurrency(cashFlowStats.reserveAmount)}</span>
+                        </div>
+                        <div className="cfr-stat">
+                            <span className="cfr-stat__label">Remaining</span>
+                            <span className="cfr-stat__value cfr-stat__value--green">{formatCurrency(cashFlowStats.remaining)}</span>
+                        </div>
+                        <div className="cfr-stat">
+                            <span className="cfr-stat__label">Over Cap</span>
+                            <span className={`cfr-stat__value ${cashFlowStats.overReserve > 0 ? 'cfr-stat__value--red' : ''}`}>
+                                {formatCurrency(cashFlowStats.overReserve)}
+                            </span>
+                        </div>
+                        <button className="cfr-settings-btn" onClick={() => { setCfDraft(cashFlowReserve); setIsCashFlowModalOpen(true); }}>
+                            <Settings2 size={15} /> Configure
+                        </button>
+                    </div>
+                </div>
+            )}
+            {canViewDashboard && !cashFlowReserve.enabled && (
+                <button className="cfr-enable-btn" onClick={() => { setCfDraft(cashFlowReserve); setIsCashFlowModalOpen(true); }}>
+                    <PiggyBank size={15} /> Set up Monthly Cash Flow Reserve <ChevronRight size={14} />
+                </button>
             )}
 
             {/* Controls Row */}
@@ -2121,6 +2225,89 @@ const Finance = () => {
                     }
                 }}
             />
+
+            {/* ── Cash Flow Reserve Configure Modal ── */}
+            <Modal
+                isOpen={isCashFlowModalOpen}
+                onClose={() => setIsCashFlowModalOpen(false)}
+                title="Configure Monthly Cash Flow Reserve"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setIsCashFlowModalOpen(false)}>Cancel</Button>
+                        <Button variant="primary" onClick={() => saveCashFlowReserve(cfDraft)}>Save Reserve Settings</Button>
+                    </>
+                }
+            >
+                <div className="dw-form">
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Enable Cash Flow Reserve</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <input
+                                type="checkbox"
+                                checked={cfDraft.enabled}
+                                onChange={e => setCfDraft(p => ({ ...p, enabled: e.target.checked }))}
+                                style={{ width: 16, height: 16, cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                                Hold a portion of monthly revenue as a reserve buffer
+                            </span>
+                        </div>
+                    </div>
+
+                    {cfDraft.enabled && (
+                        <>
+                            <div className="dw-form-group">
+                                <label className="dw-form-label">Reserve Type</label>
+                                <select
+                                    className="dw-form-input"
+                                    value={cfDraft.mode}
+                                    onChange={e => setCfDraft(p => ({ ...p, mode: e.target.value }))}
+                                >
+                                    <option value="percent">Percentage of monthly revenue</option>
+                                    <option value="fixed">Fixed amount per month</option>
+                                </select>
+                            </div>
+
+                            {cfDraft.mode === 'percent' ? (
+                                <div className="dw-form-group">
+                                    <label className="dw-form-label">Reserve Percentage (%)</label>
+                                    <input
+                                        type="number"
+                                        className="dw-form-input"
+                                        min="1" max="100"
+                                        value={cfDraft.percent}
+                                        onChange={e => setCfDraft(p => ({ ...p, percent: Math.min(100, Math.max(1, Number(e.target.value))) }))}
+                                        placeholder="e.g. 20"
+                                    />
+                                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                                        {cfDraft.percent}% of this month's revenue will be reserved. Expenses draw from this pool first.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="dw-form-group">
+                                    <label className="dw-form-label">Fixed Reserve Amount ({currency})</label>
+                                    <input
+                                        type="number"
+                                        className="dw-form-input"
+                                        min="0"
+                                        value={cfDraft.fixedAmount}
+                                        onChange={e => setCfDraft(p => ({ ...p, fixedAmount: Math.max(0, Number(e.target.value)) }))}
+                                        placeholder="e.g. 50000"
+                                    />
+                                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                                        A fixed {formatCurrency(cfDraft.fixedAmount)} is held each month. Expenses above this draw from main funds.
+                                    </p>
+                                </div>
+                            )}
+
+                            <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--border-default)', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                <strong style={{ color: 'var(--text-primary)' }}>How it works:</strong><br />
+                                Each month, the system reserves this amount from revenue. Monthly expenses are drawn from the reserve first. Once the reserve is exhausted, remaining expenses come from your main operating funds. This gives you a buffer and makes cash planning manageable.
+                            </div>
+                        </>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 };
