@@ -221,8 +221,8 @@ const Finance = () => {
     const [cashFlowReserve, setCashFlowReserve] = useState(() => {
         try {
             const saved = localStorage.getItem('dw-cashflow-reserve');
-            return saved ? JSON.parse(saved) : { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true };
-        } catch { return { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true }; }
+            return saved ? JSON.parse(saved) : { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true, sourceMonth: 'previous' };
+        } catch { return { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true, sourceMonth: 'previous' }; }
     });
     const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
     const [cfDraft, setCfDraft] = useState(cashFlowReserve);
@@ -796,16 +796,31 @@ const Finance = () => {
     // Cash Flow Reserve calculations for current month
     const cashFlowStats = useMemo(() => {
         const now = new Date();
+
+        // Current month expenses
         const thisMonthTx = transactions.filter(t => {
             const d = new Date(t.date);
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
         });
-        const monthRevenue = thisMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
         const monthExpenses = thisMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const monthRevenue  = thisMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+
+        // Source month for the reserve budget (current or previous)
+        const usePrev = cashFlowReserve.sourceMonth === 'previous';
+        const srcDate = usePrev ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : now;
+        const srcTx = usePrev
+            ? transactions.filter(t => {
+                const d = new Date(t.date);
+                return d.getMonth() === srcDate.getMonth() && d.getFullYear() === srcDate.getFullYear();
+            })
+            : thisMonthTx;
+        const srcRevenue  = srcTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const srcExpenses = srcTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const srcNetProfit = Math.max(0, srcRevenue - srcExpenses);
 
         const reserveAmount = cashFlowReserve.enabled
             ? (cashFlowReserve.mode === 'percent'
-                ? Math.round(monthRevenue * (cashFlowReserve.percent / 100))
+                ? Math.round(srcNetProfit * (cashFlowReserve.percent / 100))
                 : cashFlowReserve.fixedAmount)
             : 0;
 
@@ -814,30 +829,46 @@ const Finance = () => {
         const overReserve = Math.max(0, monthExpenses - reserveAmount);
         const pctUsed = reserveAmount > 0 ? Math.min(100, Math.round((usedFromReserve / reserveAmount) * 100)) : 0;
 
-        return { monthRevenue, monthExpenses, reserveAmount, usedFromReserve, remaining, overReserve, pctUsed };
+        return { monthRevenue, monthExpenses, srcNetProfit, srcRevenue, srcExpenses, reserveAmount, usedFromReserve, remaining, overReserve, pctUsed };
     }, [transactions, cashFlowReserve]);
 
     const cashFlowHistory = useMemo(() => {
         const now = new Date();
         const months = [];
+        const usePrev = cashFlowReserve.sourceMonth === 'previous';
         for (let i = 5; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const monthTx = transactions.filter(t => {
                 const td = new Date(t.date);
                 return td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear();
             });
-            const revenue = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const revenue  = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
             const expenses = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            const netProfit = Math.max(0, revenue - expenses);
+
+            // Source for reserve: prev month's net profit or this month's net profit
+            let srcNetProfit = netProfit;
+            if (usePrev) {
+                const prevD = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+                const prevTx = transactions.filter(t => {
+                    const td = new Date(t.date);
+                    return td.getMonth() === prevD.getMonth() && td.getFullYear() === prevD.getFullYear();
+                });
+                const prevRev = prevTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                const prevExp = prevTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                srcNetProfit = Math.max(0, prevRev - prevExp);
+            }
+
             const reserve = cashFlowReserve.mode === 'percent'
-                ? Math.round(revenue * (cashFlowReserve.percent / 100))
+                ? Math.round(srcNetProfit * (cashFlowReserve.percent / 100))
                 : cashFlowReserve.fixedAmount;
             const used = Math.min(expenses, reserve);
             const over = Math.max(0, expenses - reserve);
-            const pct = reserve > 0 ? Math.round((used / reserve) * 100) : 0;
+            const pct  = reserve > 0 ? Math.round((used / reserve) * 100) : 0;
             months.push({
                 key: `${d.getFullYear()}-${d.getMonth()}`,
                 label: d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-                revenue, expenses, reserve, used, over, pct,
+                revenue, expenses, netProfit, reserve, used, over, pct,
             });
         }
         return months;
@@ -2239,7 +2270,9 @@ const Finance = () => {
                                         <div className="cfr-kpi-card__label">Reserve Budget</div>
                                         <div className="cfr-kpi-card__value">{formatCurrency(cashFlowStats.reserveAmount)}</div>
                                         <div className="cfr-kpi-card__sub">
-                                            {cashFlowReserve.mode === 'percent' ? `${cashFlowReserve.percent}% of this month's revenue` : 'Fixed amount'}
+                                            {cashFlowReserve.mode === 'percent'
+                                                ? `${cashFlowReserve.percent}% of ${cashFlowReserve.sourceMonth === 'previous' ? 'last' : 'this'} month's net profit`
+                                                : 'Fixed amount'}
                                         </div>
                                     </div>
                                 </div>
@@ -2302,6 +2335,11 @@ const Finance = () => {
                                         </div>
                                     </div>
                                     <div className="cfr-donut-legend">
+                                        <div className="cfr-legend-row cfr-legend-row--src">
+                                            <span style={{fontSize:11,color:'var(--text-muted)'}}>
+                                                Source: {cashFlowReserve.sourceMonth === 'previous' ? 'Last' : 'This'} month net profit · {formatCurrency(cashFlowStats.srcNetProfit)}
+                                            </span>
+                                        </div>
                                         <div className="cfr-legend-row"><span className="cfr-legend-dot cfr-legend-dot--blue" />Used<span className="cfr-legend-val">{formatCurrency(cashFlowStats.usedFromReserve)}</span></div>
                                         <div className="cfr-legend-row"><span className="cfr-legend-dot cfr-legend-dot--muted" />Remaining<span className="cfr-legend-val">{formatCurrency(cashFlowStats.remaining)}</span></div>
                                         {cashFlowStats.overReserve > 0 && (
@@ -2329,7 +2367,8 @@ const Finance = () => {
                                             <tr>
                                                 <th>Month</th>
                                                 <th>Revenue</th>
-                                                <th>Reserve</th>
+                                                <th>Net Profit</th>
+                                                <th>Reserve ({cashFlowReserve.sourceMonth === 'previous' ? 'prev month' : 'this month'})</th>
                                                 <th>Expenses</th>
                                                 <th>Used</th>
                                                 <th>Status</th>
@@ -2340,6 +2379,7 @@ const Finance = () => {
                                                 <tr key={row.key}>
                                                     <td className="cfr-hist-month">{row.label}</td>
                                                     <td>{formatCurrency(row.revenue)}</td>
+                                                    <td className={row.netProfit > 0 ? 'cfr-hist-profit' : ''}>{formatCurrency(row.netProfit)}</td>
                                                     <td className="cfr-hist-reserve">{formatCurrency(row.reserve)}</td>
                                                     <td>{formatCurrency(row.expenses)}</td>
                                                     <td>{formatCurrency(row.used)}</td>
@@ -2368,7 +2408,7 @@ const Finance = () => {
                                         <div className="cfr-config-card__title">Current Reserve Configuration</div>
                                         <div className="cfr-config-card__desc">
                                             {cashFlowReserve.mode === 'percent'
-                                                ? `${cashFlowReserve.percent}% of monthly revenue · approximately ${formatCurrency(cashFlowStats.reserveAmount)} this month`
+                                                ? `${cashFlowReserve.percent}% of ${cashFlowReserve.sourceMonth === 'previous' ? 'last' : 'this'} month's net profit · ~${formatCurrency(cashFlowStats.reserveAmount)} this month`
                                                 : `Fixed ${formatCurrency(cashFlowReserve.fixedAmount)} held every month`}
                                         </div>
                                     </div>
@@ -2413,13 +2453,30 @@ const Finance = () => {
                     {cfDraft.enabled && (
                         <>
                             <div className="dw-form-group">
+                                <label className="dw-form-label">Reserve Source</label>
+                                <select
+                                    className="dw-form-input"
+                                    value={cfDraft.sourceMonth || 'previous'}
+                                    onChange={e => setCfDraft(p => ({ ...p, sourceMonth: e.target.value }))}
+                                >
+                                    <option value="previous">Previous month's net profit</option>
+                                    <option value="current">Current month's net profit</option>
+                                </select>
+                                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                                    {(cfDraft.sourceMonth || 'previous') === 'previous'
+                                        ? 'Reserve budget is set from last month\'s net profit (revenue − expenses). Recommended for planning ahead.'
+                                        : 'Reserve budget is calculated live from this month\'s net profit as it accrues.'}
+                                </p>
+                            </div>
+
+                            <div className="dw-form-group">
                                 <label className="dw-form-label">Reserve Type</label>
                                 <select
                                     className="dw-form-input"
                                     value={cfDraft.mode}
                                     onChange={e => setCfDraft(p => ({ ...p, mode: e.target.value }))}
                                 >
-                                    <option value="percent">Percentage of monthly revenue</option>
+                                    <option value="percent">Percentage of net profit</option>
                                     <option value="fixed">Fixed amount per month</option>
                                 </select>
                             </div>
@@ -2436,7 +2493,7 @@ const Finance = () => {
                                         placeholder="e.g. 20"
                                     />
                                     <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                                        {cfDraft.percent}% of this month's revenue will be reserved. Expenses draw from this pool first.
+                                        {cfDraft.percent}% of {(cfDraft.sourceMonth || 'previous') === 'previous' ? 'last' : 'this'} month's net profit will be reserved.
                                     </p>
                                 </div>
                             ) : (
@@ -2458,7 +2515,7 @@ const Finance = () => {
 
                             <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--border-default)', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                                 <strong style={{ color: 'var(--text-primary)' }}>How it works:</strong><br />
-                                Each month, the system reserves this amount from revenue. Monthly expenses are drawn from the reserve first. Once the reserve is exhausted, remaining expenses come from your main operating funds. This gives you a buffer and makes cash planning manageable.
+                                The reserve is calculated from net profit (revenue − expenses), not gross revenue. This month's expenses draw from the reserve first. Once exhausted, remaining expenses come from your main operating funds — giving you a predictable monthly buffer.
                             </div>
                         </>
                     )}

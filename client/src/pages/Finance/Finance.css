@@ -1085,8 +1085,10 @@
 }
 .cfr-hist-table tbody tr:last-child td { border-bottom: none; }
 .cfr-hist-table tbody tr:hover td { background: var(--bg-hover); }
-.cfr-hist-month { font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.cfr-hist-month  { font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.cfr-hist-profit { color: #059669; font-weight: 500; }
 .cfr-hist-reserve { color: #2563EB; font-weight: 500; }
+.cfr-legend-row--src { margin-bottom: 4px; }
 
 /* Status badges */
 .cfr-badge {
