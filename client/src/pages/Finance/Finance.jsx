@@ -121,6 +121,7 @@ const Finance = () => {
         { id: 'transactions', label: 'Transactions', icon: Receipt, permission: 'finance.transactions' },
         { id: 'invoices', label: 'Invoices', icon: FileText, permission: 'finance.invoices' },
         { id: 'expenses', label: 'Expenses', icon: CreditCard, permission: 'finance.expenses' },
+        { id: 'cashflow', label: 'Cash Flow', icon: PiggyBank, permission: 'finance.dashboard' },
     ], []);
 
     const tabs = useMemo(() => {
@@ -816,6 +817,32 @@ const Finance = () => {
         return { monthRevenue, monthExpenses, reserveAmount, usedFromReserve, remaining, overReserve, pctUsed };
     }, [transactions, cashFlowReserve]);
 
+    const cashFlowHistory = useMemo(() => {
+        const now = new Date();
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthTx = transactions.filter(t => {
+                const td = new Date(t.date);
+                return td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear();
+            });
+            const revenue = monthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+            const expenses = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+            const reserve = cashFlowReserve.mode === 'percent'
+                ? Math.round(revenue * (cashFlowReserve.percent / 100))
+                : cashFlowReserve.fixedAmount;
+            const used = Math.min(expenses, reserve);
+            const over = Math.max(0, expenses - reserve);
+            const pct = reserve > 0 ? Math.round((used / reserve) * 100) : 0;
+            months.push({
+                key: `${d.getFullYear()}-${d.getMonth()}`,
+                label: d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+                revenue, expenses, reserve, used, over, pct,
+            });
+        }
+        return months;
+    }, [transactions, cashFlowReserve]);
+
     const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
     const handleAddTransaction = () => {
@@ -1298,68 +1325,6 @@ const Finance = () => {
                         </div>
                     ))}
                 </div>
-            )}
-
-            {/* ── Cash Flow Reserve Panel ── */}
-            {canViewDashboard && cashFlowReserve.enabled && (
-                <div className="cfr-panel">
-                    <div className="cfr-panel__left">
-                        <div className="cfr-icon"><PiggyBank size={20} /></div>
-                        <div className="cfr-info">
-                            <div className="cfr-label">Monthly Cash Flow Reserve</div>
-                            <div className="cfr-sub">
-                                {cashFlowReserve.mode === 'percent'
-                                    ? `${cashFlowReserve.percent}% of this month's revenue`
-                                    : `Fixed ${formatCurrency(cashFlowReserve.fixedAmount)}/month`}
-                                {' · '}Reserve: <strong>{formatCurrency(cashFlowStats.reserveAmount)}</strong>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="cfr-panel__center">
-                        <div className="cfr-bar-wrap">
-                            <div
-                                className={`cfr-bar-fill ${cashFlowStats.pctUsed >= 100 ? 'cfr-bar-fill--over' : ''}`}
-                                style={{ width: `${cashFlowStats.pctUsed}%` }}
-                            />
-                        </div>
-                        <div className="cfr-bar-labels">
-                            <span className="cfr-used">{formatCurrency(cashFlowStats.usedFromReserve)} used</span>
-                            <span className="cfr-remaining">{formatCurrency(cashFlowStats.remaining)} left</span>
-                        </div>
-                        {cashFlowStats.overReserve > 0 && (
-                            <div className="cfr-over-limit">
-                                <AlertCircle size={13} />
-                                {formatCurrency(cashFlowStats.overReserve)} exceeded reserve cap — drawing from main funds
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="cfr-panel__right">
-                        <div className="cfr-stat">
-                            <span className="cfr-stat__label">Reserve</span>
-                            <span className="cfr-stat__value">{formatCurrency(cashFlowStats.reserveAmount)}</span>
-                        </div>
-                        <div className="cfr-stat">
-                            <span className="cfr-stat__label">Remaining</span>
-                            <span className="cfr-stat__value cfr-stat__value--green">{formatCurrency(cashFlowStats.remaining)}</span>
-                        </div>
-                        <div className="cfr-stat">
-                            <span className="cfr-stat__label">Over Cap</span>
-                            <span className={`cfr-stat__value ${cashFlowStats.overReserve > 0 ? 'cfr-stat__value--red' : ''}`}>
-                                {formatCurrency(cashFlowStats.overReserve)}
-                            </span>
-                        </div>
-                        <button className="cfr-settings-btn" onClick={() => { setCfDraft(cashFlowReserve); setIsCashFlowModalOpen(true); }}>
-                            <Settings2 size={15} /> Configure
-                        </button>
-                    </div>
-                </div>
-            )}
-            {canViewDashboard && !cashFlowReserve.enabled && (
-                <button className="cfr-enable-btn" onClick={() => { setCfDraft(cashFlowReserve); setIsCashFlowModalOpen(true); }}>
-                    <PiggyBank size={15} /> Set up Monthly Cash Flow Reserve <ChevronRight size={14} />
-                </button>
             )}
 
             {/* Controls Row */}
@@ -2225,6 +2190,197 @@ const Finance = () => {
                     }
                 }}
             />
+
+            {/* ── Cash Flow Reserve Tab ── */}
+            {activeTab === 'cashflow' && (
+                <div className="cfr-page">
+                    {/* Header */}
+                    <div className="cfr-page__header">
+                        <div className="cfr-page__header-left">
+                            <div className="cfr-page__hdr-icon"><PiggyBank size={22} /></div>
+                            <div>
+                                <h2 className="cfr-page__title">Monthly Cash Flow Reserve</h2>
+                                <p className="cfr-page__desc">Hold a buffer of revenue each month to cover expenses before drawing from main funds</p>
+                            </div>
+                        </div>
+                        <div className="cfr-page__header-right">
+                            <label className="cfr-toggle-wrap">
+                                <input
+                                    type="checkbox"
+                                    checked={cashFlowReserve.enabled}
+                                    onChange={e => saveCashFlowReserve({ ...cashFlowReserve, enabled: e.target.checked })}
+                                    className="cfr-toggle-input"
+                                />
+                                <span className="cfr-toggle-track" />
+                                <span className="cfr-toggle-label">{cashFlowReserve.enabled ? 'Enabled' : 'Disabled'}</span>
+                            </label>
+                            <Button variant="primary" size="sm" icon={Settings2} onClick={() => { setCfDraft(cashFlowReserve); setIsCashFlowModalOpen(true); }}>
+                                Configure Reserve
+                            </Button>
+                        </div>
+                    </div>
+
+                    {!cashFlowReserve.enabled ? (
+                        <div className="cfr-page__empty">
+                            <div className="cfr-page__empty-icon"><PiggyBank size={44} /></div>
+                            <h3 className="cfr-page__empty-title">Cash Flow Reserve is Disabled</h3>
+                            <p className="cfr-page__empty-desc">Enable a monthly reserve to automatically hold a portion of revenue as a buffer. Expenses draw from this reserve first until the cap is reached, then pull from your main operating funds.</p>
+                            <Button variant="primary" onClick={() => { setCfDraft({ ...cashFlowReserve, enabled: true }); setIsCashFlowModalOpen(true); }}>
+                                Enable Reserve
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
+                            {/* Stat cards */}
+                            <div className="cfr-page__stats">
+                                <div className="cfr-kpi-card">
+                                    <div className="cfr-kpi-card__icon cfr-kpi-card__icon--blue"><DollarSign size={18} /></div>
+                                    <div className="cfr-kpi-card__body">
+                                        <div className="cfr-kpi-card__label">Reserve Budget</div>
+                                        <div className="cfr-kpi-card__value">{formatCurrency(cashFlowStats.reserveAmount)}</div>
+                                        <div className="cfr-kpi-card__sub">
+                                            {cashFlowReserve.mode === 'percent' ? `${cashFlowReserve.percent}% of this month's revenue` : 'Fixed amount'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="cfr-kpi-card">
+                                    <div className="cfr-kpi-card__icon cfr-kpi-card__icon--amber"><TrendingDown size={18} /></div>
+                                    <div className="cfr-kpi-card__body">
+                                        <div className="cfr-kpi-card__label">Used This Month</div>
+                                        <div className="cfr-kpi-card__value">{formatCurrency(cashFlowStats.usedFromReserve)}</div>
+                                        <div className="cfr-kpi-card__sub">{cashFlowStats.pctUsed}% of reserve consumed</div>
+                                    </div>
+                                </div>
+                                <div className="cfr-kpi-card">
+                                    <div className="cfr-kpi-card__icon cfr-kpi-card__icon--green"><Wallet size={18} /></div>
+                                    <div className="cfr-kpi-card__body">
+                                        <div className="cfr-kpi-card__label">Remaining Reserve</div>
+                                        <div className="cfr-kpi-card__value cfr-kpi-val--green">{formatCurrency(cashFlowStats.remaining)}</div>
+                                        <div className="cfr-kpi-card__sub">Available to cover expenses</div>
+                                    </div>
+                                </div>
+                                <div className="cfr-kpi-card">
+                                    <div className={`cfr-kpi-card__icon ${cashFlowStats.overReserve > 0 ? 'cfr-kpi-card__icon--red' : 'cfr-kpi-card__icon--muted'}`}><ShieldAlert size={18} /></div>
+                                    <div className="cfr-kpi-card__body">
+                                        <div className="cfr-kpi-card__label">Over Cap (Main Funds)</div>
+                                        <div className={`cfr-kpi-card__value ${cashFlowStats.overReserve > 0 ? 'cfr-kpi-val--red' : ''}`}>{formatCurrency(cashFlowStats.overReserve)}</div>
+                                        <div className="cfr-kpi-card__sub">{cashFlowStats.overReserve > 0 ? 'Drawn from main operating funds' : 'Reserve is sufficient'}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Body: donut + history */}
+                            <div className="cfr-page__body">
+                                {/* Left: donut */}
+                                <div className="cfr-donut-card">
+                                    <div className="cfr-donut-card__header">
+                                        <h3 className="cfr-section-title">This Month's Usage</h3>
+                                        <span className="cfr-section-month">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                                    </div>
+                                    <div className="cfr-donut-wrap">
+                                        <ResponsiveContainer width="100%" height={200}>
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Used', value: cashFlowStats.usedFromReserve || 0 },
+                                                        { name: 'Remaining', value: Math.max(0, cashFlowStats.remaining) || (cashFlowStats.reserveAmount === 0 ? 1 : 0) },
+                                                    ]}
+                                                    cx="50%" cy="50%"
+                                                    innerRadius={62} outerRadius={88}
+                                                    paddingAngle={cashFlowStats.reserveAmount > 0 ? 3 : 0}
+                                                    dataKey="value"
+                                                >
+                                                    <Cell fill="#2563EB" />
+                                                    <Cell fill="var(--bg-hover)" />
+                                                </Pie>
+                                                <Tooltip content={<ExpensePieTooltip />} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="cfr-donut-center">
+                                            <div className="cfr-donut-pct">{cashFlowStats.pctUsed}%</div>
+                                            <div className="cfr-donut-sub">Used</div>
+                                        </div>
+                                    </div>
+                                    <div className="cfr-donut-legend">
+                                        <div className="cfr-legend-row"><span className="cfr-legend-dot cfr-legend-dot--blue" />Used<span className="cfr-legend-val">{formatCurrency(cashFlowStats.usedFromReserve)}</span></div>
+                                        <div className="cfr-legend-row"><span className="cfr-legend-dot cfr-legend-dot--muted" />Remaining<span className="cfr-legend-val">{formatCurrency(cashFlowStats.remaining)}</span></div>
+                                        {cashFlowStats.overReserve > 0 && (
+                                            <div className="cfr-legend-row cfr-legend-row--alert">
+                                                <AlertCircle size={12} />
+                                                Over cap: {formatCurrency(cashFlowStats.overReserve)}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {cashFlowStats.overReserve > 0 && (
+                                        <div className="cfr-alert-banner">
+                                            <AlertCircle size={14} />
+                                            Reserve cap exceeded. {formatCurrency(cashFlowStats.overReserve)} drawn from main operating funds.
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Right: history table */}
+                                <div className="cfr-history-card">
+                                    <div className="cfr-history-card__header">
+                                        <h3 className="cfr-section-title">6-Month Reserve History</h3>
+                                    </div>
+                                    <table className="cfr-hist-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Month</th>
+                                                <th>Revenue</th>
+                                                <th>Reserve</th>
+                                                <th>Expenses</th>
+                                                <th>Used</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {cashFlowHistory.map(row => (
+                                                <tr key={row.key}>
+                                                    <td className="cfr-hist-month">{row.label}</td>
+                                                    <td>{formatCurrency(row.revenue)}</td>
+                                                    <td className="cfr-hist-reserve">{formatCurrency(row.reserve)}</td>
+                                                    <td>{formatCurrency(row.expenses)}</td>
+                                                    <td>{formatCurrency(row.used)}</td>
+                                                    <td>
+                                                        {row.over > 0
+                                                            ? <span className="cfr-badge cfr-badge--red">Over cap</span>
+                                                            : row.pct >= 80
+                                                                ? <span className="cfr-badge cfr-badge--amber">High usage</span>
+                                                                : row.reserve === 0
+                                                                    ? <span className="cfr-badge cfr-badge--muted">No revenue</span>
+                                                                    : <span className="cfr-badge cfr-badge--green">On track</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Settings info card */}
+                            <div className="cfr-config-card">
+                                <div className="cfr-config-card__left">
+                                    <div className="cfr-config-card__icon"><Settings2 size={18} /></div>
+                                    <div>
+                                        <div className="cfr-config-card__title">Current Reserve Configuration</div>
+                                        <div className="cfr-config-card__desc">
+                                            {cashFlowReserve.mode === 'percent'
+                                                ? `${cashFlowReserve.percent}% of monthly revenue · approximately ${formatCurrency(cashFlowStats.reserveAmount)} this month`
+                                                : `Fixed ${formatCurrency(cashFlowReserve.fixedAmount)} held every month`}
+                                        </div>
+                                    </div>
+                                </div>
+                                <Button variant="ghost" size="sm" icon={Settings2} onClick={() => { setCfDraft(cashFlowReserve); setIsCashFlowModalOpen(true); }}>
+                                    Edit Settings
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
             {/* ── Cash Flow Reserve Configure Modal ── */}
             <Modal
