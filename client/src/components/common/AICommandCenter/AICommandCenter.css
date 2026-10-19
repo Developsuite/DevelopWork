@@ -416,13 +416,23 @@
     border-collapse: collapse;
     font-size: 11px;
     margin: 8px 0;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .aicc-msg__markdown th,
 .aicc-msg__markdown td {
-    padding: 5px 8px;
+    padding: 6px 10px;
     border: 1px solid var(--border-light);
     text-align: left;
+    white-space: nowrap;
+}
+
+.aicc-msg__markdown td:first-child,
+.aicc-msg__markdown td:nth-child(2) {
+    white-space: normal;
+    min-width: 80px;
 }
 
 .aicc-msg__markdown th {
@@ -431,6 +441,8 @@
     font-size: 10px;
     text-transform: uppercase;
     color: var(--text-muted);
+    position: sticky;
+    top: 0;
 }
 
 .aicc-msg__markdown code {

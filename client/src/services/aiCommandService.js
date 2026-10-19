@@ -757,9 +757,11 @@ RULES:
 
 FORMATTING:
 - Use **bold** for names and important values
-- Use tables for listing multiple records
-- Use bullet points for summaries
-- Keep responses focused and actionable`;
+- Use bullet points for summaries and single records (NOT tables for 1-2 items)
+- Use markdown tables ONLY when listing 3+ records — keep columns to 3-4 max (Name, Status, Key Value). Omit UUIDs and long fields from tables.
+- When showing a single employee match, use bullet points: **Name:** X, **Email:** Y, **Role:** Z
+- Keep responses concise and actionable — no unnecessary explanations
+- Never show raw UUIDs to the admin unless specifically asked`;
 
 // ── Main service ──
 

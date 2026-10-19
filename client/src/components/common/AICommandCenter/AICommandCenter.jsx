@@ -19,6 +19,7 @@ import {
     MicOff,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { aiCommandService } from '../../../services/aiCommandService';
 import './AICommandCenter.css';
 
@@ -66,8 +67,7 @@ const AICommandCenter = () => {
     const inputRef = useRef(null);
     const recognitionRef = useRef(null);
 
-    // Only render for admins
-    if (user?.role !== 'admin') return null;
+    const isAdmin = user?.role === 'admin';
 
     useEffect(() => {
         if (messagesEndRef.current) {
@@ -238,6 +238,8 @@ const AICommandCenter = () => {
 
     const formatToolName = (name) => name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
+    if (!isAdmin) return null;
+
     return (
         <div className={`aicc-container ${isExpanded ? 'aicc-container--expanded' : ''}`}>
             {/* Trigger Button */}
@@ -327,7 +329,7 @@ const AICommandCenter = () => {
                                 <div key={i} className={`aicc-msg aicc-msg--${msg.role}`}>
                                     <div className="aicc-msg__bubble">
                                         {msg.role === 'assistant' ? (
-                                            <div className="aicc-msg__markdown"><ReactMarkdown>{msg.content}</ReactMarkdown></div>
+                                            <div className="aicc-msg__markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown></div>
                                         ) : (
                                             <span>{msg.content}</span>
                                         )}
