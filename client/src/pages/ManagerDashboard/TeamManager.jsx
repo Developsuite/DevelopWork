@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import {
@@ -17,8 +17,9 @@ import {
     UserPlus,
     X,
     Search,
-    Shield,
-    Clock
+    Users,
+    UserRoundCheck,
+    Layers3
 } from 'lucide-react';
 import './TeamManager.css';
 
@@ -38,6 +39,15 @@ const TeamManager = () => {
     // Team Member adding state
     const [activeTeamId, setActiveTeamId] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+
+    const teams = managerData?.teams || [];
+    const totalMembers = teams.reduce((total, team) => total + team.members.length, 0);
+    const assignedEmployeeEmails = new Set(
+        teams.flatMap((team) => team.members.map((member) => member.email))
+    );
+    const availableEmployeeCount = employees.filter(
+        (employee) => !assignedEmployeeEmails.has(employee.email)
+    ).length;
 
     const handleAddTeam = () => {
         if (!newTeamName.trim() || !managerData) return;
@@ -84,11 +94,11 @@ const TeamManager = () => {
     };
 
     // Find available employees to add
-    const availableEmployees = useMemo(() => {
+    const availableEmployees = (() => {
         if (!activeTeamId) return [];
         
         // Filter out employees already in this team
-        const team = managerData?.teams?.find(t => t.id === activeTeamId);
+        const team = teams.find(t => t.id === activeTeamId);
         const existingEmails = team?.members.map(m => m.email) || [];
 
         return employees.filter(emp => {
@@ -98,35 +108,58 @@ const TeamManager = () => {
             // Optionally, we could filter by department here, but for now we let managers pick anyone
             return matchesSearch && notInTeam;
         });
-    }, [employees, searchQuery, activeTeamId, managerData]);
+    })();
 
     if (!managerData) return <div className="team-manager__empty">No manager data found.</div>;
 
     return (
         <div className="team-manager">
             <div className="team-manager__header">
-                <div>
+                <div className="team-manager__heading">
+                    <span className="team-manager__eyebrow">People & teams</span>
                     <h1 className="team-manager__title">Team Management</h1>
-                    <p className="team-manager__subtitle">Build and manage your teams, add members, and assign roles.</p>
+                    <p className="team-manager__subtitle">Organize employees into focused teams for this workspace.</p>
                 </div>
                 <Button variant="primary" icon={Plus} onClick={() => setShowAddTeam(true)}>
-                    Create New Team
+                    Create team
                 </Button>
+            </div>
+
+            <div className="team-manager__overview" aria-label="Team overview">
+                <div className="team-manager__stat">
+                    <span className="team-manager__stat-icon team-manager__stat-icon--blue"><Layers3 size={18} /></span>
+                    <div><strong>{teams.length}</strong><span>Total teams</span></div>
+                </div>
+                <div className="team-manager__stat">
+                    <span className="team-manager__stat-icon team-manager__stat-icon--violet"><Users size={18} /></span>
+                    <div><strong>{totalMembers}</strong><span>Team members</span></div>
+                </div>
+                <div className="team-manager__stat">
+                    <span className="team-manager__stat-icon team-manager__stat-icon--green"><UserRoundCheck size={18} /></span>
+                    <div><strong>{availableEmployeeCount}</strong><span>Available employees</span></div>
+                </div>
             </div>
 
             {showAddTeam && (
                 <div className="team-manager__add-form glass-card">
-                    <input
-                        type="text"
-                        className="glass-input"
-                        placeholder="Enter team name (e.g. Frontend Team)"
-                        value={newTeamName}
-                        onChange={(e) => setNewTeamName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddTeam()}
-                        autoFocus
-                    />
-                    <Button variant="primary" onClick={handleAddTeam}>Create Team</Button>
-                    <Button variant="ghost" onClick={() => { setShowAddTeam(false); setNewTeamName(''); }}>Cancel</Button>
+                    <div className="team-manager__add-copy">
+                        <span className="team-manager__add-icon"><Plus size={18} /></span>
+                        <div><strong>Create a new team</strong><span>Give it a clear, recognizable name.</span></div>
+                    </div>
+                    <div className="team-manager__add-controls">
+                        <input
+                            type="text"
+                            className="glass-input"
+                            placeholder="e.g. Product Design"
+                            aria-label="Team name"
+                            value={newTeamName}
+                            onChange={(e) => setNewTeamName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddTeam()}
+                            autoFocus
+                        />
+                        <Button variant="primary" onClick={handleAddTeam} disabled={!newTeamName.trim()}>Create team</Button>
+                        <Button variant="ghost" onClick={() => { setShowAddTeam(false); setNewTeamName(''); }}>Cancel</Button>
+                    </div>
                 </div>
             )}
 
@@ -135,9 +168,9 @@ const TeamManager = () => {
                     <div className="team-manager__empty-state glass-card">
                         <UsersRound size={48} className="text-muted" />
                         <h2>No Teams Yet</h2>
-                        <p>Create your first team to start adding members and assigning tasks.</p>
+                        <p>Create your first team, then add employees to start collaborating.</p>
                         <Button variant="primary" icon={Plus} onClick={() => setShowAddTeam(true)}>
-                            Create Team
+                            Create your first team
                         </Button>
                     </div>
                 ) : (
@@ -145,13 +178,18 @@ const TeamManager = () => {
                         <div key={team.id} className="team-card glass-card">
                             <div className="team-card__header">
                                 <div className="team-card__info">
-                                    <h3 className="team-card__name">{team.name}</h3>
-                                    <Badge variant="default">{team.members.length} members</Badge>
+                                    <span className="team-card__avatar"><UsersRound size={19} /></span>
+                                    <div>
+                                        <h3 className="team-card__name">{team.name}</h3>
+                                        <span className="team-card__count">{team.members.length} {team.members.length === 1 ? 'member' : 'members'}</span>
+                                    </div>
                                 </div>
                                 <div className="team-card__actions">
                                     <button 
                                         className="team-card__btn-icon delete"
                                         onClick={() => handleRemoveTeam(team.id)}
+                                        aria-label={`Delete ${team.name}`}
+                                        title="Delete team"
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -177,8 +215,10 @@ const TeamManager = () => {
                                         </div>
                                         
                                         {/* Search Results Dropdown */}
-                                        {searchQuery && (
-                                            <div className="team-card__search-results">
+                                        <div className="team-card__search-results">
+                                            <div className="team-card__search-caption">
+                                                {searchQuery ? 'Search results' : 'Available employees'}
+                                            </div>
                                                 {availableEmployees.length > 0 ? (
                                                     availableEmployees.map(emp => (
                                                         <div key={emp.id} className="team-card__search-result-item">
@@ -195,10 +235,9 @@ const TeamManager = () => {
                                                         </div>
                                                     ))
                                                 ) : (
-                                                    <div className="team-card__search-empty">No employees found.</div>
+                                                    <div className="team-card__search-empty">{searchQuery ? 'No employees match your search.' : 'Everyone is already on this team.'}</div>
                                                 )}
-                                            </div>
-                                        )}
+                                        </div>
                                     </div>
                                 ) : (
                                     <Button 
@@ -207,7 +246,7 @@ const TeamManager = () => {
                                         className="team-card__add-btn"
                                         onClick={() => setActiveTeamId(team.id)}
                                     >
-                                        Add Member
+                                        Add member
                                     </Button>
                                 )}
                             </div>
@@ -224,11 +263,12 @@ const TeamManager = () => {
                                             </div>
                                         </div>
                                         <div className="team-card__member-meta">
-                                            <Badge variant="default">{member.role}</Badge>
+                                                <Badge variant="default">{member.role || 'Member'}</Badge>
                                             <button
                                                 className="team-card__btn-remove"
                                                 onClick={() => handleRemoveMember(team.id, member.id)}
                                                 title="Remove"
+                                                aria-label={`Remove ${member.name} from ${team.name}`}
                                             >
                                                 <X size={14} />
                                             </button>
@@ -237,7 +277,9 @@ const TeamManager = () => {
                                 ))}
                                 {team.members.length === 0 && !activeTeamId && (
                                     <div className="team-card__no-members">
-                                        No members in this team.
+                                        <UsersRound size={22} />
+                                        <span>No members yet</span>
+                                        <small>Add an employee to get this team started.</small>
                                     </div>
                                 )}
                             </div>

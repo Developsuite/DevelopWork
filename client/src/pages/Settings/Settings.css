@@ -418,7 +418,43 @@
 .team-directory__person-copy strong { display: block; overflow: hidden; color: var(--text-primary); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .team-directory__person-copy span { display: block; overflow: hidden; margin-top: 3px; color: var(--text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
 .team-directory__person-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
-.team-directory__badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; min-width: 0; }
+.team-directory__badges { display: flex; justify-content: flex-end; min-width: 0; }
+.team-directory__access-list { display: flex; align-items: center; justify-content: flex-end; gap: 5px; min-width: 0; }
+.team-directory__access-pill {
+    --pill-color: var(--primary-500);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 138px;
+    min-height: 23px;
+    padding: 2px 7px;
+    overflow: hidden;
+    color: var(--pill-color);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .01em;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.team-directory__access-pill i { width: 5px; height: 5px; flex: 0 0 auto; background: var(--pill-color); border-radius: 50%; }
+.team-directory__access-pill small { display: inline; min-width: auto; height: auto; padding: 0; color: var(--pill-color); background: transparent; border-radius: 0; font-size: 8px; opacity: .75; }
+.team-directory__access-pill--muted { --pill-color: var(--text-muted); }
+.team-directory__access-pill--more { --pill-color: var(--text-secondary); max-width: none; color: var(--text-muted); background: var(--bg-secondary); border-radius: 5px; }
+
+.team-directory__person-actions .brd__icon-btn {
+    background: transparent;
+    transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+.team-directory__icon-btn--access { color: #2563eb; border-color: rgba(37, 99, 235, .26); }
+.team-directory__icon-btn--access:hover { color: #1d4ed8; border-color: #2563eb; background: rgba(37, 99, 235, .05); }
+.team-directory__icon-btn--edit { color: #d97706; border-color: rgba(217, 119, 6, .28); }
+.team-directory__icon-btn--edit:hover { color: #b45309; border-color: #d97706; background: rgba(217, 119, 6, .05); }
+.team-directory__person-actions .brd__icon-btn.danger { color: #dc2626; border-color: rgba(220, 38, 38, .24); }
+.team-directory__person-actions .brd__icon-btn.danger:hover { color: #b91c1c; border-color: #dc2626; background: rgba(220, 38, 38, .05); }
 
 @media (max-width: 760px) {
     .team-directory__header { flex-direction: column; }
@@ -427,7 +463,8 @@
     .team-directory__stats { grid-template-columns: 1fr; }
     .team-directory__person { align-items: flex-start; flex-direction: column; gap: 12px; }
     .team-directory__person-actions { width: 100%; }
-    .team-directory__badges { justify-content: flex-start; margin-right: auto; }
+    .team-directory__badges, .team-directory__access-list { justify-content: flex-start; }
+    .team-directory__badges { margin-right: auto; }
 }
 
 @media (max-width: 520px) {

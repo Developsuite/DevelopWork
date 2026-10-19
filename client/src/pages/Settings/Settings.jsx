@@ -313,7 +313,7 @@ const Settings = () => {
             const singleMod = DEPARTMENT_MODULES.find(dm => dm.key === targetUser.assigned_module);
             if (singleMod) {
                 return (
-                    <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', background: `${singleMod.color}18`, color: singleMod.color, border: `1px solid ${singleMod.color}35` }}>
+                    <span className="team-directory__access-pill" style={{ '--pill-color': singleMod.color }} title={`Access to ${singleMod.label}`}>
                         {singleMod.label}
                     </span>
                 );
@@ -322,46 +322,39 @@ const Settings = () => {
 
         if (accessibleMods.length === 0) {
             return (
-                <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: 'rgba(0,0,0,0.05)', color: 'var(--text-muted)' }}>
-                    Standard Access
+                <span className="team-directory__access-pill team-directory__access-pill--muted">
+                    Standard
                 </span>
             );
         }
 
         return (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                {accessibleMods.map(mod => {
+            <div className="team-directory__access-list">
+                {accessibleMods.slice(0, 2).map(mod => {
                     const hasFull = userPerms.includes(mod.key) || userPerms.includes(`${mod.key}.*`);
                     const userFeaturesInMod = mod.features.filter(f => userPerms.includes(f.key));
-                    
-                    let badgeLabel = mod.label;
-                    if (!hasFull && userFeaturesInMod.length > 0) {
-                        badgeLabel = userFeaturesInMod.length === 1 
-                            ? `${userFeaturesInMod[0].label} (${mod.label})` 
-                            : `${mod.label} (${userFeaturesInMod.length} feats)`;
-                    }
+                    const accessDescription = hasFull
+                        ? `Full access to ${mod.label}`
+                        : `${mod.label}: ${userFeaturesInMod.map(f => f.label).join(', ')}`;
 
                     return (
                         <span 
                             key={mod.key} 
-                            style={{
-                                padding: '3px 8px',
-                                borderRadius: '6px',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                textTransform: 'uppercase',
-                                background: `${mod.color}15`,
-                                color: mod.color,
-                                border: `1px solid ${mod.color}35`,
-                                letterSpacing: '0.02em',
-                                whiteSpace: 'nowrap'
-                            }}
-                            title={hasFull ? `Full access to ${mod.label}` : `Granular: ${userFeaturesInMod.map(f => f.label).join(', ')}`}
+                            className="team-directory__access-pill"
+                            style={{ '--pill-color': mod.color }}
+                            title={accessDescription}
                         >
-                            {badgeLabel}
+                            <i aria-hidden="true" />
+                            {mod.label}
+                            {!hasFull && userFeaturesInMod.length > 0 && <small>{userFeaturesInMod.length}</small>}
                         </span>
                     );
                 })}
+                {accessibleMods.length > 2 && (
+                    <span className="team-directory__access-pill team-directory__access-pill--more" title={accessibleMods.slice(2).map(mod => mod.label).join(', ')}>
+                        +{accessibleMods.length - 2}
+                    </span>
+                )}
             </div>
         );
     };
@@ -822,22 +815,6 @@ const Settings = () => {
                                 </div>
                             </div>
 
-                            <div className="settings-divider" />
-
-                            <h3 className="settings-subsection-title">Currency Live Preview</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '16px' }}>
-                                <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-default)' }}>
-                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '6px' }}>Sample Invoice</div>
-                                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)' }}>
-                                        {workspaceCurrency === 'USD' ? '$5,050.00' : 'Rs. 5,050'}
-                                    </div>
-                                </div>
-                                <div style={{ padding: '16px 20px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-default)' }}>
-                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '6px' }}>Monthly Revenue</div>
-                                    <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--success)' }}>
-                                        {workspaceCurrency === 'USD' ? '+$12,400.00' : '+Rs. 12,400'}
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -887,8 +864,8 @@ const Settings = () => {
                                             </div>
                                             <div className="team-directory__person-actions">
                                                 <div className="team-directory__badges">{renderUserModuleBadges(m)}</div>
-                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(m)} title="Manage access" aria-label={`Manage ${m.name}'s access`}><Shield size={14}/></button>
-                                                <button className="brd__icon-btn" onClick={() => { setEditingManager(m); setIsEditModuleModalOpen(true); }} title="Change module"><Pencil size={14}/></button>
+                                                <button className="brd__icon-btn team-directory__icon-btn--access" onClick={() => handleOpenPermissionsModal(m)} title="Manage access" aria-label={`Manage ${m.name}'s access`}><Shield size={14}/></button>
+                                                <button className="brd__icon-btn team-directory__icon-btn--edit" onClick={() => { setEditingManager(m); setIsEditModuleModalOpen(true); }} title="Change module"><Pencil size={14}/></button>
                                                 <button
                                                     className="brd__icon-btn"
                                                     onClick={() => handleAdminResetPassword(m)}
@@ -942,7 +919,7 @@ const Settings = () => {
                                             </div>
                                             <div className="team-directory__person-actions">
                                                 <div className="team-directory__badges">{renderUserModuleBadges(e)}</div>
-                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(e)} title="Manage access" aria-label={`Manage ${e.name}'s access`}><Shield size={14}/></button>
+                                                <button className="brd__icon-btn team-directory__icon-btn--access" onClick={() => handleOpenPermissionsModal(e)} title="Manage access" aria-label={`Manage ${e.name}'s access`}><Shield size={14}/></button>
                                                 <button
                                                     className="brd__icon-btn"
                                                     onClick={() => handleAdminResetPassword(e)}
