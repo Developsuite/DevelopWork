@@ -789,7 +789,13 @@ const Finance = () => {
         const filteredTxForStats = transactions.filter(t => isWithinDateFilter(t.date));
         const totalRev = filteredTxForStats.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
         const totalExp = filteredTxForStats.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-        const netProfit = totalRev - totalExp;
+
+        // Expenses covered by the cash flow reserve don't reduce operational net profit.
+        // Only the over-cap portion (drawn from main funds) counts against profit.
+        const expFromMainFunds = cashFlowReserve.enabled
+            ? Math.max(0, totalExp - (cashFlowStats.usedFromReserve || 0))
+            : totalExp;
+        const netProfit = totalRev - expFromMainFunds;
         
         // Calculate dynamic comparison metrics based on the chartData points
         let prevRev = 0;
@@ -839,7 +845,15 @@ const Finance = () => {
         return [
             { label: 'Total Revenue', value: formatCurrency(totalRev), change: revChange, positive: revChange.startsWith('+'), image: img1 },
             { label: 'Total Expenses', value: formatCurrency(totalExp), change: expChange, positive: expChange.startsWith('-'), image: img2 }, // Expense increase is negative
-            { label: 'Net Profit', value: formatCurrency(netProfit), change: profitChange, positive: profitChange.startsWith('+'), image: img3 },
+            {
+                label: 'Net Profit',
+                value: formatCurrency(netProfit),
+                change: cashFlowReserve.enabled && cashFlowStats.usedFromReserve > 0
+                    ? `${profitChange} · ${formatCurrency(cashFlowStats.usedFromReserve)} from reserve`
+                    : profitChange,
+                positive: profitChange.startsWith('+') || netProfit >= 0,
+                image: img3,
+            },
             {
                 label: 'Reserve Remaining',
                 value: cashFlowReserve.enabled ? formatCurrency(cashFlowStats.remaining) : '—',
