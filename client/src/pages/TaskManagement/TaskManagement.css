@@ -241,71 +241,25 @@
     transition: all 0.15s ease;
 }
 
-/* Active State: Tagline Pill Style with Color-Coding */
+/* Active State: Tagline Pill Style — Unified Blue (matches other modules) */
 .task-tab-btn.active {
-    font-weight: 700;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
+    font-weight: 600;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     transform: none;
 }
 
-/* Tab 1: All Tasks Directory — Vibrant Blue Tagline Pill */
-.task-tab-btn.tab-pill--all.active {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    color: #1d4ed8;
-}
-
-.task-tab-btn.tab-pill--all.active .task-tab-dot {
+.task-tab-btn.active .task-tab-dot {
     background: #2563eb;
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
-.task-tab-btn.tab-pill--all.active .task-tab-badge {
+.task-tab-btn.active .task-tab-badge {
     background: #dbeafe;
     color: #1d4ed8;
     border-color: #bfdbfe;
-}
-
-/* Tab 2: Delegation Center — Vibrant Indigo / Purple Tagline Pill */
-.task-tab-btn.tab-pill--delegated.active {
-    background: #f5f3ff;
-    border-color: #ddd6fe;
-    color: #6d28d9;
-}
-
-.task-tab-btn.tab-pill--delegated.active .task-tab-dot {
-    background: #7c3aed;
-    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
-}
-
-.task-tab-btn.tab-pill--delegated.active .task-tab-badge {
-    background: #ede9fe;
-    color: #6d28d9;
-    border-color: #ddd6fe;
-}
-
-/* Tab 3: Kanban Board — Vibrant Amber Tagline Pill */
-.task-tab-btn.tab-pill--kanban.active {
-    background: #fffbeb;
-    border-color: #fde68a;
-    color: #b45309;
-}
-
-.task-tab-btn.tab-pill--kanban.active .task-tab-dot {
-    background: #d97706;
-    box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
-}
-
-/* Tab 4: Workload & Velocity — Vibrant Emerald Green Tagline Pill (Matches Image 2) */
-.task-tab-btn.tab-pill--analytics.active {
-    background: #ecfdf5;
-    border-color: #a7f3d0;
-    color: #047857;
-}
-
-.task-tab-btn.tab-pill--analytics.active .task-tab-dot {
-    background: #059669;
-    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
 }
 
 /* Dark Mode Tagline Pills */
@@ -332,61 +286,22 @@
     color: #9CA3B5;
 }
 
-/* Dark Mode Active Pills */
-[data-theme='dark'] .task-tab-btn.tab-pill--all.active {
-    background: rgba(0, 85, 254, 0.14);
+/* Dark Mode Active Pills — Unified Blue */
+[data-theme='dark'] .task-tab-btn.active {
+    background: rgba(0, 85, 254, 0.15);
     border-color: rgba(0, 85, 254, 0.35);
     color: #579BFC;
 }
 
-[data-theme='dark'] .task-tab-btn.tab-pill--all.active .task-tab-dot {
+[data-theme='dark'] .task-tab-btn.active .task-tab-dot {
     background: #579BFC;
     box-shadow: 0 0 0 2px rgba(0, 85, 254, 0.25);
 }
 
-[data-theme='dark'] .task-tab-btn.tab-pill--all.active .task-tab-badge {
+[data-theme='dark'] .task-tab-btn.active .task-tab-badge {
     background: rgba(0, 85, 254, 0.25);
     border-color: rgba(0, 85, 254, 0.4);
     color: #93C5FD;
-}
-
-[data-theme='dark'] .task-tab-btn.tab-pill--delegated.active {
-    background: rgba(124, 58, 237, 0.14);
-    border-color: rgba(124, 58, 237, 0.35);
-    color: #A78BFA;
-}
-
-[data-theme='dark'] .task-tab-btn.tab-pill--delegated.active .task-tab-dot {
-    background: #A78BFA;
-    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25);
-}
-
-[data-theme='dark'] .task-tab-btn.tab-pill--delegated.active .task-tab-badge {
-    background: rgba(124, 58, 237, 0.25);
-    border-color: rgba(124, 58, 237, 0.4);
-    color: #C4B5FD;
-}
-
-[data-theme='dark'] .task-tab-btn.tab-pill--kanban.active {
-    background: rgba(217, 119, 6, 0.14);
-    border-color: rgba(217, 119, 6, 0.35);
-    color: #FBBF24;
-}
-
-[data-theme='dark'] .task-tab-btn.tab-pill--kanban.active .task-tab-dot {
-    background: #FBBF24;
-    box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.25);
-}
-
-[data-theme='dark'] .task-tab-btn.tab-pill--analytics.active {
-    background: rgba(16, 185, 129, 0.14);
-    border-color: rgba(16, 185, 129, 0.35);
-    color: #34D399;
-}
-
-[data-theme='dark'] .task-tab-btn.tab-pill--analytics.active .task-tab-dot {
-    background: #34D399;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
 
