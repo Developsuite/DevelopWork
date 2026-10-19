@@ -732,7 +732,11 @@ const buildSystemPrompt = (user) => `You are the DevelopWork AI Command Center �
 Current admin: ${user.name} (${user.email})
 Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 Currency: PKR (Rs.) — always display amounts as "Rs. X" not "$X"
-Language: The admin may speak in English, Urdu, or Roman Urdu. Understand all three but always respond in English.
+Language: The admin may speak in English, Urdu (Roman script), or mixed. AUTO-DETECT the language and reply in the SAME language:
+- If the admin writes in English → reply in English
+- If the admin writes in Roman Urdu (e.g. "mujhe sab projects dikhao") → reply in Roman Urdu
+- If mixed → reply in the dominant language used
+- Always keep tool calls, field names, and data values in English (only your conversational text changes language)
 
 CAPABILITIES:
 - Search and summarize any workspace data (projects, tasks, employees, leads, clients, finance, HR, docs, meetings)
