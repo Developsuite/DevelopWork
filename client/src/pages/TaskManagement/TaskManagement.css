@@ -1045,3 +1045,121 @@
     color: #94A3B8;
 }
 
+/* --------------------------------------------------------------------------
+   Multi-Assign Employees Box
+   -------------------------------------------------------------------------- */
+.multi-assign-box {
+    border: 1px solid var(--border-light, #e2e8f0);
+    border-radius: 8px;
+    background: var(--bg-surface, #ffffff);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.multi-assign-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-light, #e2e8f0);
+}
+
+.multi-assign-select-all-btn {
+    background: transparent;
+    border: none;
+    color: var(--primary-600, #2563eb);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+.multi-assign-select-all-btn:hover {
+    text-decoration: underline;
+}
+
+.multi-assign-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 160px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.multi-assign-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.multi-assign-item:hover {
+    background: var(--bg-hover, #f8fafc);
+}
+
+.multi-assign-item.selected {
+    background: rgba(0, 85, 254, 0.06);
+}
+
+.multi-assign-member-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.multi-assign-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.multi-assign-role {
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dark mode for multi-assign */
+[data-theme='dark'] .multi-assign-box {
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='dark'] .multi-assign-header {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='dark'] .multi-assign-select-all-btn {
+    color: #579BFC;
+}
+
+[data-theme='dark'] .multi-assign-item:hover {
+    background: #14151C;
+}
+
+[data-theme='dark'] .multi-assign-item.selected {
+    background: rgba(0, 85, 254, 0.14);
+}
+
+[data-theme='dark'] .multi-assign-name {
+    color: #F4F6FB;
+}
+
+[data-theme='dark'] .multi-assign-role {
+    color: #9CA3B5;
+}
+

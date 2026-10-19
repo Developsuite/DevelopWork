@@ -66,6 +66,8 @@ const TaskManagement = () => {
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
+    const [isMultiAssign, setIsMultiAssign] = useState(false);
+    const [selectedAssigneeIds, setSelectedAssigneeIds] = useState([]);
     const [taskForm, setTaskForm] = useState({
         title: '',
         description: '',
@@ -178,6 +180,8 @@ const TaskManagement = () => {
 
     const handleOpenCreateModal = (prefillAssignee = null) => {
         setEditingTask(null);
+        setIsMultiAssign(false);
+        setSelectedAssigneeIds(prefillAssignee ? [prefillAssignee.id] : []);
         setTaskForm({
             title: '',
             description: '',
@@ -193,6 +197,8 @@ const TaskManagement = () => {
 
     const handleOpenEditModal = (task) => {
         setEditingTask(task);
+        setIsMultiAssign(false);
+        setSelectedAssigneeIds(task.assignee_id ? [task.assignee_id] : []);
         setTaskForm({
             title: task.title || '',
             description: task.description || '',
@@ -213,11 +219,49 @@ const TaskManagement = () => {
             return;
         }
 
+        // Clean project_id: standalone operational tasks have project_id null
+        const resolvedProjectId = taskForm.project_id && taskForm.project_id.trim() ? taskForm.project_id.trim() : null;
+
+        // If Multi-assign mode is checked (when creating a new task)
+        if (!editingTask && isMultiAssign) {
+            if (selectedAssigneeIds.length === 0) {
+                dispatch(addToast({ title: 'Validation', message: 'Please select at least one employee from the list.', type: 'warning' }));
+                return;
+            }
+
+            try {
+                for (const aId of selectedAssigneeIds) {
+                    const member = teamMembers.find(m => m.id === aId);
+                    const payload = {
+                        title: taskForm.title.trim(),
+                        description: taskForm.description || null,
+                        project_id: resolvedProjectId,
+                        assignee_id: aId,
+                        assignee_name: member ? member.name : null,
+                        priority: taskForm.priority,
+                        status: taskForm.status,
+                        deadline: taskForm.deadline || null
+                    };
+                    await projectService.createTask(payload);
+                }
+
+                dispatch(addToast({
+                    title: 'Tasks Assigned',
+                    message: `Task successfully assigned to ${selectedAssigneeIds.length} team members.`,
+                    type: 'success'
+                }));
+
+                setIsModalOpen(false);
+                loadData();
+            } catch (err) {
+                console.error('Error delegating tasks:', err);
+                dispatch(addToast({ title: 'Error', message: err.message || 'Failed to save tasks.', type: 'error' }));
+            }
+            return;
+        }
+
         try {
             const selectedMember = teamMembers.find(m => m.id === taskForm.assignee_id);
-
-            // Clean project_id: standalone operational tasks have project_id null
-            const resolvedProjectId = taskForm.project_id && taskForm.project_id.trim() ? taskForm.project_id.trim() : null;
 
             const payload = {
                 title: taskForm.title.trim(),
@@ -812,29 +856,107 @@ const TaskManagement = () => {
                         />
                     </div>
 
-                    <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
                         <div className="dw-form-group">
-                            <label className="dw-form-label">Assign To *</label>
-                            <select
-                                className="dw-form-input"
-                                value={taskForm.assignee_id}
-                                onChange={(e) => {
-                                    const mId = e.target.value;
-                                    const selected = teamMembers.find(m => m.id === mId);
-                                    setTaskForm({
-                                        ...taskForm,
-                                        assignee_id: mId,
-                                        assignee_name: selected ? selected.name : ''
-                                    });
-                                }}
-                            >
-                                <option value="">Select Employee or Manager</option>
-                                {teamMembers.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                        {m.name} &bull; {m.role === 'employee' ? 'Employee' : m.role === 'manager' ? 'Manager' : 'Admin'} ({m.email})
-                                    </option>
-                                ))}
-                            </select>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                <label className="dw-form-label" style={{ margin: 0 }}>Assign To *</label>
+                                {!editingTask && (
+                                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: 'var(--text-secondary)', cursor: 'pointer', userSelect: 'none' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={isMultiAssign}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setIsMultiAssign(checked);
+                                                if (checked) {
+                                                    if (taskForm.assignee_id) {
+                                                        setSelectedAssigneeIds([taskForm.assignee_id]);
+                                                    } else {
+                                                        setSelectedAssigneeIds([]);
+                                                    }
+                                                }
+                                            }}
+                                            style={{ cursor: 'pointer', accentColor: 'var(--primary-600, #2563eb)' }}
+                                        />
+                                        <span>Assign to multiple employees</span>
+                                    </label>
+                                )}
+                            </div>
+
+                            {!isMultiAssign ? (
+                                <select
+                                    className="dw-form-input"
+                                    value={taskForm.assignee_id}
+                                    onChange={(e) => {
+                                        const mId = e.target.value;
+                                        const selected = teamMembers.find(m => m.id === mId);
+                                        setTaskForm({
+                                            ...taskForm,
+                                            assignee_id: mId,
+                                            assignee_name: selected ? selected.name : ''
+                                        });
+                                    }}
+                                >
+                                    <option value="">Select Employee or Manager</option>
+                                    {teamMembers.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                            {m.name} &bull; {m.role === 'employee' ? 'Employee' : m.role === 'manager' ? 'Manager' : 'Admin'} ({m.email})
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <div className="multi-assign-box">
+                                    <div className="multi-assign-header">
+                                        <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                            {selectedAssigneeIds.length} of {teamMembers.length} selected
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="multi-assign-select-all-btn"
+                                            onClick={() => {
+                                                if (selectedAssigneeIds.length === teamMembers.length) {
+                                                    setSelectedAssigneeIds([]);
+                                                } else {
+                                                    setSelectedAssigneeIds(teamMembers.map(m => m.id));
+                                                }
+                                            }}
+                                        >
+                                            {selectedAssigneeIds.length === teamMembers.length ? 'Deselect All' : 'Select All'}
+                                        </button>
+                                    </div>
+                                    <div className="multi-assign-list">
+                                        {teamMembers.length === 0 ? (
+                                            <span style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '6px' }}>No team members available</span>
+                                        ) : (
+                                            teamMembers.map((m) => {
+                                                const isChecked = selectedAssigneeIds.includes(m.id);
+                                                return (
+                                                    <label key={m.id} className={`multi-assign-item ${isChecked ? 'selected' : ''}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isChecked}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedAssigneeIds(prev => [...prev, m.id]);
+                                                                } else {
+                                                                    setSelectedAssigneeIds(prev => prev.filter(id => id !== m.id));
+                                                                }
+                                                            }}
+                                                            style={{ accentColor: 'var(--primary-600, #2563eb)', cursor: 'pointer' }}
+                                                        />
+                                                        <div className="multi-assign-member-info">
+                                                            <span className="multi-assign-name">{m.name}</span>
+                                                            <span className="multi-assign-role">
+                                                                {m.role === 'employee' ? 'Employee' : m.role === 'manager' ? 'Manager' : 'Admin'} &bull; {m.email}
+                                                            </span>
+                                                        </div>
+                                                    </label>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="dw-form-group">
