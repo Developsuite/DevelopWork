@@ -53,10 +53,13 @@ const moduleIconMap = {
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [securityLoading, setSecurityLoading] = useState(false);
+    const [resetingUserId, setResetingUserId] = useState(null);
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
     const activeModules = useSelector((state) => state.access.activeModules);
@@ -105,6 +108,23 @@ const Settings = () => {
             dispatch(addToast({ title: 'Error', message: err.message || 'Failed to update password.', type: 'error' }));
         } finally {
             setSecurityLoading(false);
+        }
+    };
+
+    // Admin: send password reset email to a team member
+    const handleAdminResetPassword = async (member) => {
+        setResetingUserId(member.id);
+        try {
+            await authService.resetPassword(member.email);
+            dispatch(addToast({
+                title: 'Reset Email Sent',
+                message: `A password reset link has been sent to ${member.email}.`,
+                type: 'success',
+            }));
+        } catch (err) {
+            dispatch(addToast({ title: 'Error', message: err.message || 'Failed to send reset email.', type: 'error' }));
+        } finally {
+            setResetingUserId(null);
         }
     };
 
@@ -697,21 +717,31 @@ const Settings = () => {
                             <div className="settings-grid">
                                 <div className="settings-field">
                                     <label>New Password</label>
-                                    <input 
-                                        type="password" 
-                                        placeholder="••••••••" 
-                                        value={newPassword} 
-                                        onChange={(e) => setNewPassword(e.target.value)} 
-                                    />
+                                    <div className="input-with-action">
+                                        <input
+                                            type={showNewPassword ? 'text' : 'password'}
+                                            placeholder="••••••••"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                        />
+                                        <button onClick={() => setShowNewPassword(!showNewPassword)}>
+                                            {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="settings-field">
                                     <label>Confirm New Password</label>
-                                    <input 
-                                        type="password" 
-                                        placeholder="••••••••" 
-                                        value={confirmPassword} 
-                                        onChange={(e) => setConfirmPassword(e.target.value)} 
-                                    />
+                                    <div className="input-with-action">
+                                        <input
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            placeholder="••••••••"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                        />
+                                        <button onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -813,51 +843,72 @@ const Settings = () => {
                     )}
 
                     {activeTab === 'team' && (
-                        <div className="settings-section">
-                            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px'}}>
+                        <div className="settings-section team-directory">
+                            <div className="team-directory__header">
                                 <div>
-                                    <h2 className="settings-section-title" style={{marginBottom:'4px'}}>Team Directory</h2>
-                                    <p className="settings-section-hint">Invite managers and employees. Assign modules and tasks to your team.</p>
+                                    <span className="team-directory__eyebrow">Workspace access</span>
+                                    <h2 className="settings-section-title">Team Directory</h2>
+                                    <p className="settings-section-hint">Manage your people, roles, and module permissions.</p>
                                 </div>
-                                <div style={{display:'flex', gap:'10px'}}>
-                                    <Button variant="ghost" icon={UserPlus} onClick={() => { setInviteEmployeeForm({ name: '', email: '', password: 'Employee@123' }); setInviteSuccess(null); setIsInviteEmployeeModalOpen(true); }}>Invite Employee</Button>
-                                    <Button variant="primary" icon={UserPlus} onClick={() => { setInviteForm({ name: '', email: '', password: 'Manager@123', assignedModule: 'projects' }); setInviteSuccess(null); setIsInviteModalOpen(true); }}>Invite Manager</Button>
+                                <div className="team-directory__actions">
+                                    <Button variant="outline" icon={UserPlus} onClick={() => { setInviteEmployeeForm({ name: '', email: '', password: 'Employee@123' }); setInviteSuccess(null); setIsInviteEmployeeModalOpen(true); }}>Invite employee</Button>
+                                    <Button variant="primary" icon={UserPlus} onClick={() => { setInviteForm({ name: '', email: '', password: 'Manager@123', assignedModule: 'projects' }); setInviteSuccess(null); setIsInviteModalOpen(true); }}>Invite manager</Button>
                                 </div>
                             </div>
 
-                            <h3 className="settings-subsection-title" style={{marginBottom: '16px'}}>Managers</h3>
+                            <div className="team-directory__stats">
+                                <div><span className="team-directory__stat-icon managers"><ShieldCheck size={18}/></span><strong>{managers.length}</strong><small>Managers</small></div>
+                                <div><span className="team-directory__stat-icon employees"><Users size={18}/></span><strong>{employees.length}</strong><small>Employees</small></div>
+                                <div><span className="team-directory__stat-icon total"><UserPlus size={18}/></span><strong>{managers.length + employees.length}</strong><small>Total people</small></div>
+                            </div>
+
+                            <div className="team-directory__section-heading">
+                                <div><h3>Managers</h3><p>People who can manage assigned modules and team access.</p></div>
+                                <span>{managers.length}</span>
+                            </div>
                             {managers.length === 0 && (
-                                <div className="empty-settings" style={{padding:'40px', marginBottom: '24px'}}>
-                                    <ShieldCheck size={36} style={{opacity:0.2, marginBottom:'12px'}}/>
-                                    <p style={{fontWeight:600, marginBottom:'4px'}}>No managers yet</p>
+                                <div className="team-directory__empty">
+                                    <span className="team-directory__empty-icon"><ShieldCheck size={24}/></span>
+                                    <div><strong>No managers yet</strong><p>Invite a manager and assign their first workspace module.</p></div>
+                                    <Button size="sm" variant="outline" icon={UserPlus} onClick={() => { setInviteForm({ name: '', email: '', password: 'Manager@123', assignedModule: 'projects' }); setInviteSuccess(null); setIsInviteModalOpen(true); }}>Invite manager</Button>
                                 </div>
                             )}
 
                             {managers.length > 0 && (
                                 <div className="module-settings-list">
                                     {managers.map(m => (
-                                        <div key={m.id} className="module-setting-item" style={{padding:'16px 20px'}}>
-                                            <div style={{display:'flex', alignItems:'center', gap:'14px', flex:1}}>
+                                        <div key={m.id} className="module-setting-item team-directory__person">
+                                            <div className="team-directory__identity">
                                                 <Avatar name={m.name || 'M'} size="sm" />
-                                                <div>
-                                                    <div style={{fontWeight:700, fontSize:'14px', color:'var(--text-primary)'}}>{m.name}</div>
-                                                    <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'2px'}}>{m.email}</div>
+                                                <div className="team-directory__person-copy">
+                                                    <strong>{m.name}</strong>
+                                                    <span>{m.email}</span>
                                                 </div>
                                             </div>
-                                            <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                                                {renderUserModuleBadges(m)}
-                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(m)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
+                                            <div className="team-directory__person-actions">
+                                                <div className="team-directory__badges">{renderUserModuleBadges(m)}</div>
+                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(m)} title="Manage access" aria-label={`Manage ${m.name}'s access`}><Shield size={14}/></button>
                                                 <button className="brd__icon-btn" onClick={() => { setEditingManager(m); setIsEditModuleModalOpen(true); }} title="Change module"><Pencil size={14}/></button>
-                                                <button 
-                                                    className="brd__icon-btn danger" 
+                                                <button
+                                                    className="brd__icon-btn"
+                                                    onClick={() => handleAdminResetPassword(m)}
+                                                    title="Send password reset email"
+                                                    aria-label={`Reset ${m.name}'s password`}
+                                                    disabled={resetingUserId === m.id}
+                                                >
+                                                    {resetingUserId === m.id ? <span style={{fontSize:'10px'}}>...</span> : <KeyRound size={14}/>}
+                                                </button>
+                                                <button
+                                                    className="brd__icon-btn danger"
                                                     onClick={() => setConfirmModal({
                                                         isOpen: true,
                                                         title: 'Manage Manager Account',
                                                         targetUser: m,
                                                         type: 'manage_manager',
                                                         loading: false
-                                                    })} 
+                                                    })}
                                                     title="Demote or Remove Manager"
+                                                    aria-label={`Manage or remove ${m.name}`}
                                                 >
                                                     <Trash2 size={14}/>
                                                 </button>
@@ -867,39 +918,51 @@ const Settings = () => {
                                 </div>
                             )}
 
-                            <h3 className="settings-subsection-title" style={{marginTop: '32px', marginBottom: '16px'}}>Employees</h3>
+                            <div className="team-directory__section-heading team-directory__section-heading--employees">
+                                <div><h3>Employees</h3><p>Team members who work in their assigned modules.</p></div>
+                                <span>{employees.length}</span>
+                            </div>
                             {employees.length === 0 && (
-                                <div className="empty-settings" style={{padding:'40px'}}>
-                                    <Users size={36} style={{opacity:0.2, marginBottom:'12px'}}/>
-                                    <p style={{fontWeight:600, marginBottom:'4px'}}>No employees yet</p>
-                                    <p>Invite employees to assign them tasks.</p>
+                                <div className="team-directory__empty">
+                                    <span className="team-directory__empty-icon"><Users size={24}/></span>
+                                    <div><strong>No employees yet</strong><p>Invite employees to assign modules and tasks.</p></div>
                                 </div>
                             )}
                             
                             {employees.length > 0 && (
                                 <div className="module-settings-list">
                                     {employees.map(e => (
-                                        <div key={e.id} className="module-setting-item" style={{padding:'16px 20px'}}>
-                                            <div style={{display:'flex', alignItems:'center', gap:'14px', flex:1}}>
+                                        <div key={e.id} className="module-setting-item team-directory__person">
+                                            <div className="team-directory__identity">
                                                 <Avatar name={e.name || 'E'} size="sm" />
-                                                <div>
-                                                    <div style={{fontWeight:700, fontSize:'14px', color:'var(--text-primary)'}}>{e.name}</div>
-                                                    <div style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'2px'}}>{e.email}</div>
+                                                <div className="team-directory__person-copy">
+                                                    <strong>{e.name}</strong>
+                                                    <span>{e.email}</span>
                                                 </div>
                                             </div>
-                                            <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-                                                {renderUserModuleBadges(e)}
-                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(e)} title="Manage Granular Access & Permissions"><Shield size={14}/></button>
-                                                <button 
-                                                    className="brd__icon-btn danger" 
+                                            <div className="team-directory__person-actions">
+                                                <div className="team-directory__badges">{renderUserModuleBadges(e)}</div>
+                                                <button className="brd__icon-btn" onClick={() => handleOpenPermissionsModal(e)} title="Manage access" aria-label={`Manage ${e.name}'s access`}><Shield size={14}/></button>
+                                                <button
+                                                    className="brd__icon-btn"
+                                                    onClick={() => handleAdminResetPassword(e)}
+                                                    title="Send password reset email"
+                                                    aria-label={`Reset ${e.name}'s password`}
+                                                    disabled={resetingUserId === e.id}
+                                                >
+                                                    {resetingUserId === e.id ? <span style={{fontSize:'10px'}}>...</span> : <KeyRound size={14}/>}
+                                                </button>
+                                                <button
+                                                    className="brd__icon-btn danger"
                                                     onClick={() => setConfirmModal({
                                                         isOpen: true,
                                                         title: 'Delete Employee Account',
                                                         targetUser: e,
                                                         type: 'delete_employee',
                                                         loading: false
-                                                    })} 
+                                                    })}
                                                     title="Remove Employee"
+                                                    aria-label={`Remove ${e.name}`}
                                                 >
                                                     <Trash2 size={14}/>
                                                 </button>
