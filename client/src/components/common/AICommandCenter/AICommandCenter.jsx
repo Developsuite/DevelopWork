@@ -62,6 +62,7 @@ const AICommandCenter = () => {
     const [actionHistory, setActionHistory] = useState([]);
     const [showHistory, setShowHistory] = useState(false);
     const [isListening, setIsListening] = useState(false);
+    const [voiceLang, setVoiceLang] = useState('ur-PK');
 
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
@@ -86,19 +87,32 @@ const AICommandCenter = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             const recognition = new SpeechRecognition();
-            recognition.continuous = false;
+            recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.lang = 'en-US';
+            recognition.lang = 'ur-PK';
 
             recognition.onresult = (event) => {
-                const transcript = Array.from(event.results)
-                    .map(r => r[0].transcript)
-                    .join('');
-                setInput(transcript);
+                let final = '';
+                let interim = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    const t = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        final += t + ' ';
+                    } else {
+                        interim = t;
+                    }
+                }
+                setInput((final + interim).trim());
             };
 
-            recognition.onend = () => setIsListening(false);
-            recognition.onerror = () => setIsListening(false);
+            recognition.onend = () => {
+                setIsListening(false);
+            };
+
+            recognition.onerror = (e) => {
+                console.warn('[Voice] Error:', e.error);
+                setIsListening(false);
+            };
 
             recognitionRef.current = recognition;
         }
@@ -118,8 +132,19 @@ const AICommandCenter = () => {
             recognitionRef.current.stop();
             setIsListening(false);
         } else {
+            recognitionRef.current.lang = voiceLang;
             recognitionRef.current.start();
             setIsListening(true);
+        }
+    };
+
+    const cycleVoiceLang = () => {
+        const langs = ['ur-PK', 'en-US'];
+        const next = langs[(langs.indexOf(voiceLang) + 1) % langs.length];
+        setVoiceLang(next);
+        if (isListening && recognitionRef.current) {
+            recognitionRef.current.stop();
+            setIsListening(false);
         }
     };
 
@@ -425,6 +450,9 @@ const AICommandCenter = () => {
 
                     {/* Input */}
                     <form className="aicc-input" onSubmit={(e) => { e.preventDefault(); handleSend(); }}>
+                        <button type="button" className="aicc-input__lang" onClick={cycleVoiceLang} title={`Voice: ${voiceLang === 'ur-PK' ? 'Urdu' : 'English'}`}>
+                            {voiceLang === 'ur-PK' ? 'UR' : 'EN'}
+                        </button>
                         <button type="button" className={`aicc-input__voice ${isListening ? 'aicc-input__voice--active' : ''}`} onClick={toggleVoice} title="Voice input">
                             {isListening ? <MicOff size={18} /> : <Mic size={18} />}
                         </button>

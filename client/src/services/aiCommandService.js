@@ -674,7 +674,7 @@ const executeWriteTool = async (name, args) => {
                 due_date: args.due_date || null,
                 status: args.status || 'Draft',
             });
-            return { success: true, message: `Invoice draft created for ${args.client_name}: Rs. ${args.amount}`, data: result };
+            return { success: true, message: `Invoice draft created for ${args.client_name}: Rs. ${args.amount.toLocaleString()}`, data: result };
         }
         case 'create_expense_request': {
             const result = await financeService.createExpense({
@@ -683,7 +683,7 @@ const executeWriteTool = async (name, args) => {
                 category: args.category || 'Other',
                 date: args.date || new Date().toISOString().split('T')[0],
             });
-            return { success: true, message: `Expense "${args.description}" recorded: Rs. ${args.amount}`, data: result };
+            return { success: true, message: `Expense "${args.description}" recorded: Rs. ${args.amount.toLocaleString()}`, data: result };
         }
         case 'send_notification': {
             let recipientId = args.user_id;
@@ -731,6 +731,8 @@ const buildSystemPrompt = (user) => `You are the DevelopWork AI Command Center â
 
 Current admin: ${user.name} (${user.email})
 Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+Currency: PKR (Rs.) â€” always display amounts as "Rs. X" not "$X"
+Language: The admin may speak in English, Urdu, or Roman Urdu. Understand all three but always respond in English.
 
 CAPABILITIES:
 - Search and summarize any workspace data (projects, tasks, employees, leads, clients, finance, HR, docs, meetings)

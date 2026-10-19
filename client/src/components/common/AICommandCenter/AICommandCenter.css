@@ -647,6 +647,30 @@
     color: var(--text-muted);
 }
 
+.aicc-input__lang {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+}
+
+.aicc-input__lang:hover {
+    border-color: var(--primary-300);
+    color: var(--primary-500);
+    background: var(--primary-50, rgba(59, 130, 246, 0.08));
+}
+
 .aicc-input__voice {
     width: 36px;
     height: 36px;
