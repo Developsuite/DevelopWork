@@ -220,16 +220,16 @@ const Finance = () => {
     // ── Cash Flow Reserve ──────────────────────────────────────────────
     const [cashFlowReserve, setCashFlowReserve] = useState(() => {
         try {
-            const saved = localStorage.getItem('dw-cashflow-reserve');
-            return saved ? JSON.parse(saved) : { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true, sourceMonth: 'previous' };
-        } catch { return { mode: 'percent', percent: 20, fixedAmount: 0, enabled: true, sourceMonth: 'previous' }; }
+            const saved = localStorage.getItem('dw-cashflow-reserve-v2');
+            return saved ? JSON.parse(saved) : { mode: 'fixed', percent: 20, fixedAmount: 20000, enabled: true, sourceMonth: 'previous' };
+        } catch { return { mode: 'fixed', percent: 20, fixedAmount: 20000, enabled: true, sourceMonth: 'previous' }; }
     });
     const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
     const [cfDraft, setCfDraft] = useState(cashFlowReserve);
 
     const saveCashFlowReserve = (settings) => {
         setCashFlowReserve(settings);
-        try { localStorage.setItem('dw-cashflow-reserve', JSON.stringify(settings)); } catch {}
+        try { localStorage.setItem('dw-cashflow-reserve-v2', JSON.stringify(settings)); } catch {}
         setIsCashFlowModalOpen(false);
         dispatch(addToast({ title: 'Cash Flow Reserve Saved', message: 'Reserve settings updated for this month.', type: 'success' }));
     };
