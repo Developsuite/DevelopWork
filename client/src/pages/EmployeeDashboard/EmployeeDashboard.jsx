@@ -265,7 +265,7 @@ const EmployeeDashboard = () => {
     return (
         <div className="employee-cockpit">
             {/* Top Welcome & KPI Header */}
-            <div className="cockpit-welcome glass-card">
+            <div className="cockpit-welcome">
                 <div className="cockpit-welcome__main">
                     <div className="cockpit-welcome__user">
                         <Avatar name={user?.name || 'Employee'} src={user?.avatar} size="lg" />
@@ -330,7 +330,7 @@ const EmployeeDashboard = () => {
             {/* Main Content Layout: Tasks + RBAC Workspaces */}
             <div className="cockpit-layout-grid">
                 {/* Left/Main Column: Interactive Task Board */}
-                <div className="cockpit-tasks-section glass-card">
+                <div className="cockpit-tasks-section">
                     <div className="cockpit-section-header">
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -571,7 +571,7 @@ const EmployeeDashboard = () => {
 
                 {/* Right Column: RBAC Permitted Workspaces & Modules */}
                 <div className="cockpit-sidebar-section">
-                    <div className="cockpit-rbac-card glass-card">
+                    <div className="cockpit-rbac-card">
                         <div className="cockpit-section-header">
                             <div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -603,8 +603,7 @@ const EmployeeDashboard = () => {
                                                     className="cockpit-module-icon"
                                                     style={{
                                                         background: `${mod.color}15`,
-                                                        color: mod.color,
-                                                        border: `1px solid ${mod.color}25`
+                                                        color: mod.color
                                                     }}
                                                 >
                                                     <ModIcon size={18} strokeWidth={2} />
@@ -650,7 +649,7 @@ const EmployeeDashboard = () => {
                     </div>
 
                     {/* Quick Guidance / Tip Widget */}
-                    <div className="cockpit-tip-card glass-card">
+                    <div className="cockpit-tip-card">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                             <AlertTriangle size={16} strokeWidth={2} color="var(--warning)" />
                             <h4 style={{ fontSize: '13px', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Workflow Tip</h4>
