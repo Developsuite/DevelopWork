@@ -755,6 +755,36 @@ const Finance = () => {
         return Object.entries(cats).map(([name, value]) => ({ name, value }));
     }, [transactions, isWithinDateFilter]);
 
+    // Cash Flow Reserve calculations for current month (must be before dashboardStats)
+    const cashFlowStats = useMemo(() => {
+        const now = new Date();
+        const curKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const thisMonthTx = transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+        const monthExpenses = thisMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const monthRevenue  = thisMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const usePrev = cashFlowReserve.sourceMonth === 'previous';
+        const srcDate = usePrev ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : now;
+        const srcTx = usePrev
+            ? transactions.filter(t => { const d = new Date(t.date); return d.getMonth() === srcDate.getMonth() && d.getFullYear() === srcDate.getFullYear(); })
+            : thisMonthTx;
+        const srcRevenue   = srcTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const srcExpenses  = srcTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const srcNetProfit = Math.max(0, srcRevenue - srcExpenses);
+        const autoReserve  = Math.round(srcNetProfit * (cashFlowReserve.percent / 100));
+        const reserveAmount = cashFlowReserve.enabled
+            ? (monthlyOverrides[curKey] !== undefined ? monthlyOverrides[curKey] : autoReserve)
+            : 0;
+        const isManual = monthlyOverrides[curKey] !== undefined;
+        const usedFromReserve = Math.min(monthExpenses, reserveAmount);
+        const remaining   = Math.max(0, reserveAmount - usedFromReserve);
+        const overReserve = Math.max(0, monthExpenses - reserveAmount);
+        const pctUsed = reserveAmount > 0 ? Math.min(100, Math.round((usedFromReserve / reserveAmount) * 100)) : 0;
+        return { monthRevenue, monthExpenses, srcNetProfit, srcRevenue, srcExpenses, reserveAmount, autoReserve, isManual, usedFromReserve, remaining, overReserve, pctUsed, curKey };
+    }, [transactions, cashFlowReserve, monthlyOverrides]);
+
     const dashboardStats = useMemo(() => {
         const filteredTxForStats = transactions.filter(t => isWithinDateFilter(t.date));
         const totalRev = filteredTxForStats.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -810,50 +840,18 @@ const Finance = () => {
             { label: 'Total Revenue', value: formatCurrency(totalRev), change: revChange, positive: revChange.startsWith('+'), image: img1 },
             { label: 'Total Expenses', value: formatCurrency(totalExp), change: expChange, positive: expChange.startsWith('-'), image: img2 }, // Expense increase is negative
             { label: 'Net Profit', value: formatCurrency(netProfit), change: profitChange, positive: profitChange.startsWith('+'), image: img3 },
-            { label: 'Burn Rate', value: `${formatCurrency(roundedBurn)}/mo`, change: burnChange, positive: burnChange.startsWith('-'), image: img4 }, // Burn rate decrease is positive
+            {
+                label: 'Reserve Remaining',
+                value: cashFlowReserve.enabled ? formatCurrency(cashFlowStats.remaining) : '—',
+                change: cashFlowReserve.enabled
+                    ? (cashFlowStats.overReserve > 0 ? 'Over cap' : `${cashFlowStats.pctUsed}% used`)
+                    : 'Reserve disabled',
+                positive: cashFlowReserve.enabled && cashFlowStats.overReserve === 0,
+                image: img4,
+            },
         ];
-    }, [transactions, chartData, isWithinDateFilter, dateFilter, customStartDate, customEndDate, formatCurrency]);
+    }, [transactions, chartData, isWithinDateFilter, dateFilter, customStartDate, customEndDate, formatCurrency, cashFlowStats, cashFlowReserve]);
 
-    // Cash Flow Reserve calculations for current month
-    const cashFlowStats = useMemo(() => {
-        const now = new Date();
-        const curKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-        // Current month transactions
-        const thisMonthTx = transactions.filter(t => {
-            const d = new Date(t.date);
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        });
-        const monthExpenses = thisMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-        const monthRevenue  = thisMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-
-        // Source month for auto-calc (prev or current)
-        const usePrev = cashFlowReserve.sourceMonth === 'previous';
-        const srcDate = usePrev ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : now;
-        const srcTx = usePrev
-            ? transactions.filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === srcDate.getMonth() && d.getFullYear() === srcDate.getFullYear();
-            })
-            : thisMonthTx;
-        const srcRevenue   = srcTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-        const srcExpenses  = srcTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-        const srcNetProfit = Math.max(0, srcRevenue - srcExpenses);
-
-        // Manual override takes priority; otherwise auto-calc from % of net profit
-        const autoReserve = Math.round(srcNetProfit * (cashFlowReserve.percent / 100));
-        const reserveAmount = cashFlowReserve.enabled
-            ? (monthlyOverrides[curKey] !== undefined ? monthlyOverrides[curKey] : autoReserve)
-            : 0;
-        const isManual = monthlyOverrides[curKey] !== undefined;
-
-        const usedFromReserve = Math.min(monthExpenses, reserveAmount);
-        const remaining  = Math.max(0, reserveAmount - usedFromReserve);
-        const overReserve = Math.max(0, monthExpenses - reserveAmount);
-        const pctUsed = reserveAmount > 0 ? Math.min(100, Math.round((usedFromReserve / reserveAmount) * 100)) : 0;
-
-        return { monthRevenue, monthExpenses, srcNetProfit, srcRevenue, srcExpenses, reserveAmount, autoReserve, isManual, usedFromReserve, remaining, overReserve, pctUsed, curKey };
-    }, [transactions, cashFlowReserve, monthlyOverrides]);
 
     const cashFlowHistory = useMemo(() => {
         const now = new Date();
