@@ -220,18 +220,39 @@ const Finance = () => {
     // ── Cash Flow Reserve ──────────────────────────────────────────────
     const [cashFlowReserve, setCashFlowReserve] = useState(() => {
         try {
-            const saved = localStorage.getItem('dw-cashflow-reserve-v2');
-            return saved ? JSON.parse(saved) : { mode: 'fixed', percent: 20, fixedAmount: 20000, enabled: true, sourceMonth: 'previous' };
-        } catch { return { mode: 'fixed', percent: 20, fixedAmount: 20000, enabled: true, sourceMonth: 'previous' }; }
+            const saved = localStorage.getItem('dw-cashflow-reserve-v3');
+            return saved ? JSON.parse(saved) : { percent: 20, enabled: true, sourceMonth: 'previous' };
+        } catch { return { percent: 20, enabled: true, sourceMonth: 'previous' }; }
     });
+    // Per-month manual override: { '2026-10': 20000, '2026-09': 15000 }
+    const [monthlyOverrides, setMonthlyOverrides] = useState(() => {
+        try {
+            const saved = localStorage.getItem('dw-cfr-overrides');
+            return saved ? JSON.parse(saved) : {};
+        } catch { return {}; }
+    });
+    const [editingMonthKey, setEditingMonthKey] = useState(null);
+    const [editingVal, setEditingVal] = useState('');
     const [isCashFlowModalOpen, setIsCashFlowModalOpen] = useState(false);
     const [cfDraft, setCfDraft] = useState(cashFlowReserve);
 
     const saveCashFlowReserve = (settings) => {
         setCashFlowReserve(settings);
-        try { localStorage.setItem('dw-cashflow-reserve-v2', JSON.stringify(settings)); } catch {}
+        try { localStorage.setItem('dw-cashflow-reserve-v3', JSON.stringify(settings)); } catch {}
         setIsCashFlowModalOpen(false);
-        dispatch(addToast({ title: 'Cash Flow Reserve Saved', message: 'Reserve settings updated for this month.', type: 'success' }));
+        dispatch(addToast({ title: 'Cash Flow Reserve Saved', message: 'Reserve settings updated.', type: 'success' }));
+    };
+    const saveMonthOverride = (key, val) => {
+        const updated = { ...monthlyOverrides, [key]: Number(val) };
+        setMonthlyOverrides(updated);
+        try { localStorage.setItem('dw-cfr-overrides', JSON.stringify(updated)); } catch {}
+        setEditingMonthKey(null);
+    };
+    const clearMonthOverride = (key) => {
+        const updated = { ...monthlyOverrides };
+        delete updated[key];
+        setMonthlyOverrides(updated);
+        try { localStorage.setItem('dw-cfr-overrides', JSON.stringify(updated)); } catch {}
     };
     // ──────────────────────────────────────────────────────────────────
 
@@ -796,8 +817,9 @@ const Finance = () => {
     // Cash Flow Reserve calculations for current month
     const cashFlowStats = useMemo(() => {
         const now = new Date();
+        const curKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        // Current month expenses
+        // Current month transactions
         const thisMonthTx = transactions.filter(t => {
             const d = new Date(t.date);
             return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -805,7 +827,7 @@ const Finance = () => {
         const monthExpenses = thisMonthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
         const monthRevenue  = thisMonthTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
 
-        // Source month for the reserve budget (current or previous)
+        // Source month for auto-calc (prev or current)
         const usePrev = cashFlowReserve.sourceMonth === 'previous';
         const srcDate = usePrev ? new Date(now.getFullYear(), now.getMonth() - 1, 1) : now;
         const srcTx = usePrev
@@ -814,23 +836,24 @@ const Finance = () => {
                 return d.getMonth() === srcDate.getMonth() && d.getFullYear() === srcDate.getFullYear();
             })
             : thisMonthTx;
-        const srcRevenue  = srcTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-        const srcExpenses = srcTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const srcRevenue   = srcTx.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const srcExpenses  = srcTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
         const srcNetProfit = Math.max(0, srcRevenue - srcExpenses);
 
+        // Manual override takes priority; otherwise auto-calc from % of net profit
+        const autoReserve = Math.round(srcNetProfit * (cashFlowReserve.percent / 100));
         const reserveAmount = cashFlowReserve.enabled
-            ? (cashFlowReserve.mode === 'percent'
-                ? Math.round(srcNetProfit * (cashFlowReserve.percent / 100))
-                : cashFlowReserve.fixedAmount)
+            ? (monthlyOverrides[curKey] !== undefined ? monthlyOverrides[curKey] : autoReserve)
             : 0;
+        const isManual = monthlyOverrides[curKey] !== undefined;
 
         const usedFromReserve = Math.min(monthExpenses, reserveAmount);
-        const remaining = Math.max(0, reserveAmount - usedFromReserve);
+        const remaining  = Math.max(0, reserveAmount - usedFromReserve);
         const overReserve = Math.max(0, monthExpenses - reserveAmount);
         const pctUsed = reserveAmount > 0 ? Math.min(100, Math.round((usedFromReserve / reserveAmount) * 100)) : 0;
 
-        return { monthRevenue, monthExpenses, srcNetProfit, srcRevenue, srcExpenses, reserveAmount, usedFromReserve, remaining, overReserve, pctUsed };
-    }, [transactions, cashFlowReserve]);
+        return { monthRevenue, monthExpenses, srcNetProfit, srcRevenue, srcExpenses, reserveAmount, autoReserve, isManual, usedFromReserve, remaining, overReserve, pctUsed, curKey };
+    }, [transactions, cashFlowReserve, monthlyOverrides]);
 
     const cashFlowHistory = useMemo(() => {
         const now = new Date();
@@ -838,6 +861,7 @@ const Finance = () => {
         const usePrev = cashFlowReserve.sourceMonth === 'previous';
         for (let i = 5; i >= 0; i--) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             const monthTx = transactions.filter(t => {
                 const td = new Date(t.date);
                 return td.getMonth() === d.getMonth() && td.getFullYear() === d.getFullYear();
@@ -846,7 +870,7 @@ const Finance = () => {
             const expenses = monthTx.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
             const netProfit = Math.max(0, revenue - expenses);
 
-            // Source for reserve: prev month's net profit or this month's net profit
+            // Source net profit for auto-calc
             let srcNetProfit = netProfit;
             if (usePrev) {
                 const prevD = new Date(d.getFullYear(), d.getMonth() - 1, 1);
@@ -859,20 +883,20 @@ const Finance = () => {
                 srcNetProfit = Math.max(0, prevRev - prevExp);
             }
 
-            const reserve = cashFlowReserve.mode === 'percent'
-                ? Math.round(srcNetProfit * (cashFlowReserve.percent / 100))
-                : cashFlowReserve.fixedAmount;
+            const autoReserve = Math.round(srcNetProfit * (cashFlowReserve.percent / 100));
+            const isManual = monthlyOverrides[monthKey] !== undefined;
+            const reserve  = isManual ? monthlyOverrides[monthKey] : autoReserve;
             const used = Math.min(expenses, reserve);
             const over = Math.max(0, expenses - reserve);
             const pct  = reserve > 0 ? Math.round((used / reserve) * 100) : 0;
             months.push({
-                key: `${d.getFullYear()}-${d.getMonth()}`,
+                key: monthKey,
                 label: d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-                revenue, expenses, netProfit, reserve, used, over, pct,
+                revenue, expenses, netProfit, reserve, autoReserve, isManual, used, over, pct,
             });
         }
         return months;
-    }, [transactions, cashFlowReserve]);
+    }, [transactions, cashFlowReserve, monthlyOverrides]);
 
     const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
@@ -2245,8 +2269,17 @@ const Finance = () => {
                                 <span className="cfr-toggle-track" />
                                 <span className="cfr-toggle-label">{cashFlowReserve.enabled ? 'Enabled' : 'Disabled'}</span>
                             </label>
+                            {cashFlowReserve.enabled && (
+                                <button
+                                    className="cfr-set-month-btn"
+                                    onClick={() => { setEditingMonthKey(cashFlowStats.curKey); setEditingVal(cashFlowStats.reserveAmount); }}
+                                    title="Set a custom reserve for this month"
+                                >
+                                    <Pencil size={13} /> Set this month
+                                </button>
+                            )}
                             <Button variant="primary" size="sm" icon={Settings2} onClick={() => { setCfDraft(cashFlowReserve); setIsCashFlowModalOpen(true); }}>
-                                Configure Reserve
+                                Configure
                             </Button>
                         </div>
                     </div>
@@ -2270,9 +2303,9 @@ const Finance = () => {
                                         <div className="cfr-kpi-card__label">Reserve Budget</div>
                                         <div className="cfr-kpi-card__value">{formatCurrency(cashFlowStats.reserveAmount)}</div>
                                         <div className="cfr-kpi-card__sub">
-                                            {cashFlowReserve.mode === 'percent'
-                                                ? `${cashFlowReserve.percent}% of ${cashFlowReserve.sourceMonth === 'previous' ? 'last' : 'this'} month's net profit`
-                                                : 'Fixed amount'}
+                                            {cashFlowStats.isManual
+                                                ? 'Manually set for this month'
+                                                : `${cashFlowReserve.percent}% of ${cashFlowReserve.sourceMonth === 'previous' ? 'last' : 'this'} month's net profit`}
                                         </div>
                                     </div>
                                 </div>
@@ -2337,7 +2370,9 @@ const Finance = () => {
                                     <div className="cfr-donut-legend">
                                         <div className="cfr-legend-row cfr-legend-row--src">
                                             <span style={{fontSize:11,color:'var(--text-muted)'}}>
-                                                Source: {cashFlowReserve.sourceMonth === 'previous' ? 'Last' : 'This'} month net profit · {formatCurrency(cashFlowStats.srcNetProfit)}
+                                                {cashFlowStats.isManual
+                                                    ? `Manual override · auto would be ${formatCurrency(cashFlowStats.autoReserve)}`
+                                                    : `${cashFlowReserve.sourceMonth === 'previous' ? 'Last' : 'This'} month net profit · ${formatCurrency(cashFlowStats.srcNetProfit)}`}
                                             </span>
                                         </div>
                                         <div className="cfr-legend-row"><span className="cfr-legend-dot cfr-legend-dot--blue" />Used<span className="cfr-legend-val">{formatCurrency(cashFlowStats.usedFromReserve)}</span></div>
@@ -2380,7 +2415,43 @@ const Finance = () => {
                                                     <td className="cfr-hist-month">{row.label}</td>
                                                     <td>{formatCurrency(row.revenue)}</td>
                                                     <td className={row.netProfit > 0 ? 'cfr-hist-profit' : ''}>{formatCurrency(row.netProfit)}</td>
-                                                    <td className="cfr-hist-reserve">{formatCurrency(row.reserve)}</td>
+                                                    <td>
+                                                        {editingMonthKey === row.key ? (
+                                                            <div className="cfr-inline-edit">
+                                                                <input
+                                                                    type="number"
+                                                                    className="cfr-inline-input"
+                                                                    value={editingVal}
+                                                                    min="0"
+                                                                    autoFocus
+                                                                    onChange={e => setEditingVal(e.target.value)}
+                                                                    onKeyDown={e => {
+                                                                        if (e.key === 'Enter') saveMonthOverride(row.key, editingVal);
+                                                                        if (e.key === 'Escape') setEditingMonthKey(null);
+                                                                    }}
+                                                                />
+                                                                <button className="cfr-inline-save" onClick={() => saveMonthOverride(row.key, editingVal)}><Check size={12} /></button>
+                                                                <button className="cfr-inline-cancel" onClick={() => setEditingMonthKey(null)}><X size={12} /></button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="cfr-reserve-cell">
+                                                                <span className={`cfr-hist-reserve ${row.isManual ? 'cfr-hist-reserve--manual' : ''}`}>
+                                                                    {formatCurrency(row.reserve)}
+                                                                    {row.isManual && <span className="cfr-manual-tag">manual</span>}
+                                                                </span>
+                                                                <div className="cfr-reserve-actions">
+                                                                    <button className="cfr-edit-btn" title="Set custom amount" onClick={() => { setEditingMonthKey(row.key); setEditingVal(row.reserve); }}>
+                                                                        <Pencil size={11} />
+                                                                    </button>
+                                                                    {row.isManual && (
+                                                                        <button className="cfr-clear-btn" title="Reset to auto" onClick={() => clearMonthOverride(row.key)}>
+                                                                            <X size={11} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </td>
                                                     <td>{formatCurrency(row.expenses)}</td>
                                                     <td>{formatCurrency(row.used)}</td>
                                                     <td>
@@ -2389,7 +2460,7 @@ const Finance = () => {
                                                             : row.pct >= 80
                                                                 ? <span className="cfr-badge cfr-badge--amber">High usage</span>
                                                                 : row.reserve === 0
-                                                                    ? <span className="cfr-badge cfr-badge--muted">No revenue</span>
+                                                                    ? <span className="cfr-badge cfr-badge--muted">No data</span>
                                                                     : <span className="cfr-badge cfr-badge--green">On track</span>
                                                         }
                                                     </td>
@@ -2407,9 +2478,8 @@ const Finance = () => {
                                     <div>
                                         <div className="cfr-config-card__title">Current Reserve Configuration</div>
                                         <div className="cfr-config-card__desc">
-                                            {cashFlowReserve.mode === 'percent'
-                                                ? `${cashFlowReserve.percent}% of ${cashFlowReserve.sourceMonth === 'previous' ? 'last' : 'this'} month's net profit · ~${formatCurrency(cashFlowStats.reserveAmount)} this month`
-                                                : `Fixed ${formatCurrency(cashFlowReserve.fixedAmount)} held every month`}
+                                            {cashFlowReserve.percent}% of {cashFlowReserve.sourceMonth === 'previous' ? 'last' : 'this'} month's net profit · ~{formatCurrency(cashFlowStats.autoReserve)} auto this month
+                                            {cashFlowStats.isManual && ` · overridden to ${formatCurrency(cashFlowStats.reserveAmount)}`}
                                         </div>
                                     </div>
                                 </div>
@@ -2421,6 +2491,40 @@ const Finance = () => {
                     )}
                 </div>
             )}
+
+            {/* ── Cash Flow: Set Current Month Override Modal ── */}
+            <Modal
+                isOpen={editingMonthKey === cashFlowStats?.curKey && !isCashFlowModalOpen}
+                onClose={() => setEditingMonthKey(null)}
+                title={`Set Reserve for ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`}
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={() => setEditingMonthKey(null)}>Cancel</Button>
+                        {monthlyOverrides[cashFlowStats?.curKey] !== undefined && (
+                            <Button variant="ghost" onClick={() => { clearMonthOverride(cashFlowStats.curKey); setEditingMonthKey(null); }}>Reset to Auto ({formatCurrency(cashFlowStats.autoReserve)})</Button>
+                        )}
+                        <Button variant="primary" onClick={() => saveMonthOverride(cashFlowStats?.curKey, editingVal)}>Save</Button>
+                    </>
+                }
+            >
+                <div className="dw-form">
+                    <div className="dw-form-group">
+                        <label className="dw-form-label">Reserve Amount ({currency})</label>
+                        <input
+                            type="number"
+                            className="dw-form-input"
+                            min="0"
+                            value={editingVal}
+                            onChange={e => setEditingVal(e.target.value)}
+                            placeholder="e.g. 20000"
+                            autoFocus
+                        />
+                        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                            Auto-calculated from last month's net profit: {formatCurrency(cashFlowStats?.autoReserve || 0)}. Setting a custom amount overrides only this month.
+                        </p>
+                    </div>
+                </div>
+            </Modal>
 
             {/* ── Cash Flow Reserve Configure Modal ── */}
             <Modal
@@ -2470,48 +2574,19 @@ const Finance = () => {
                             </div>
 
                             <div className="dw-form-group">
-                                <label className="dw-form-label">Reserve Type</label>
-                                <select
+                                <label className="dw-form-label">Default Reserve Percentage (%)</label>
+                                <input
+                                    type="number"
                                     className="dw-form-input"
-                                    value={cfDraft.mode}
-                                    onChange={e => setCfDraft(p => ({ ...p, mode: e.target.value }))}
-                                >
-                                    <option value="percent">Percentage of net profit</option>
-                                    <option value="fixed">Fixed amount per month</option>
-                                </select>
+                                    min="1" max="100"
+                                    value={cfDraft.percent}
+                                    onChange={e => setCfDraft(p => ({ ...p, percent: Math.min(100, Math.max(1, Number(e.target.value))) }))}
+                                    placeholder="e.g. 20"
+                                />
+                                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                                    {cfDraft.percent}% of {(cfDraft.sourceMonth || 'previous') === 'previous' ? 'last' : 'this'} month's net profit is reserved by default. You can override any specific month directly in the history table.
+                                </p>
                             </div>
-
-                            {cfDraft.mode === 'percent' ? (
-                                <div className="dw-form-group">
-                                    <label className="dw-form-label">Reserve Percentage (%)</label>
-                                    <input
-                                        type="number"
-                                        className="dw-form-input"
-                                        min="1" max="100"
-                                        value={cfDraft.percent}
-                                        onChange={e => setCfDraft(p => ({ ...p, percent: Math.min(100, Math.max(1, Number(e.target.value))) }))}
-                                        placeholder="e.g. 20"
-                                    />
-                                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                                        {cfDraft.percent}% of {(cfDraft.sourceMonth || 'previous') === 'previous' ? 'last' : 'this'} month's net profit will be reserved.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="dw-form-group">
-                                    <label className="dw-form-label">Fixed Reserve Amount ({currency})</label>
-                                    <input
-                                        type="number"
-                                        className="dw-form-input"
-                                        min="0"
-                                        value={cfDraft.fixedAmount}
-                                        onChange={e => setCfDraft(p => ({ ...p, fixedAmount: Math.max(0, Number(e.target.value)) }))}
-                                        placeholder="e.g. 50000"
-                                    />
-                                    <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
-                                        A fixed {formatCurrency(cfDraft.fixedAmount)} is held each month. Expenses above this draw from main funds.
-                                    </p>
-                                </div>
-                            )}
 
                             <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '12px 16px', border: '1px solid var(--border-default)', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                                 <strong style={{ color: 'var(--text-primary)' }}>How it works:</strong><br />

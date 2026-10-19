@@ -1087,8 +1087,55 @@
 .cfr-hist-table tbody tr:hover td { background: var(--bg-hover); }
 .cfr-hist-month  { font-weight: 600; color: var(--text-primary); white-space: nowrap; }
 .cfr-hist-profit { color: #059669; font-weight: 500; }
-.cfr-hist-reserve { color: #2563EB; font-weight: 500; }
+.cfr-hist-reserve { color: #2563EB; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+.cfr-hist-reserve--manual { color: #7C3AED; }
+.cfr-manual-tag { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px; background: #EDE9FE; color: #7C3AED; text-transform: uppercase; letter-spacing: 0.4px; }
+[data-theme='dark'] .cfr-manual-tag { background: rgba(124,58,237,0.2); color: #A78BFA; }
+[data-theme='dark'] .cfr-hist-reserve--manual { color: #A78BFA; }
 .cfr-legend-row--src { margin-bottom: 4px; }
+
+/* Reserve cell with inline edit */
+.cfr-reserve-cell { display: flex; align-items: center; gap: 6px; }
+.cfr-reserve-actions { display: flex; gap: 3px; opacity: 0; transition: opacity 0.15s; }
+tr:hover .cfr-reserve-actions { opacity: 1; }
+.cfr-edit-btn, .cfr-clear-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface); cursor: pointer;
+    color: var(--text-muted); transition: all 0.15s;
+}
+.cfr-edit-btn:hover  { border-color: #2563EB; color: #2563EB; background: #EFF6FF; }
+.cfr-clear-btn:hover { border-color: #DC2626; color: #DC2626; background: #FEF2F2; }
+[data-theme='dark'] .cfr-edit-btn:hover  { background: rgba(37,99,235,0.15); }
+[data-theme='dark'] .cfr-clear-btn:hover { background: rgba(220,38,38,0.15); }
+
+/* Inline edit input row */
+.cfr-inline-edit { display: flex; align-items: center; gap: 4px; }
+.cfr-inline-input {
+    width: 90px; padding: 4px 8px;
+    border: 1px solid #2563EB; border-radius: 6px;
+    background: var(--bg-surface); color: var(--text-primary);
+    font-size: 12px; outline: none;
+}
+[data-theme='dark'] .cfr-inline-input { background: #1E2535; border-color: #3B82F6; color: #E2E8F0; }
+.cfr-inline-save  { display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:6px; border:none; background:#2563EB; color:#fff; cursor:pointer; }
+.cfr-inline-cancel { display:flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:6px; border:1px solid var(--border-color); background:var(--bg-surface); color:var(--text-muted); cursor:pointer; }
+
+/* "Set this month" button in header */
+.cfr-set-month-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+}
+.cfr-set-month-btn:hover { border-color: #7C3AED; color: #7C3AED; background: #F5F3FF; }
+[data-theme='dark'] .cfr-set-month-btn { background: #161B27; border-color: #232B3E; color: #94A3B8; }
+[data-theme='dark'] .cfr-set-month-btn:hover { border-color: #7C3AED; color: #A78BFA; background: rgba(124,58,237,0.12); }
 
 /* Status badges */
 .cfr-badge {
