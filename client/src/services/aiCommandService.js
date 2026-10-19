@@ -7,10 +7,88 @@ import { leadsService } from './leadsService';
 import { docsService } from './docsService';
 import { meetingsService } from './meetingsService';
 import { notificationService } from './notificationService';
+import { supabase } from '../lib/supabase';
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const MODEL = import.meta.env.VITE_AI_MODEL || 'openai/gpt-4o-mini';
 const MAX_TOOL_ITERATIONS = 6;
+
+const USE_EDGE_FUNCTION = !!SUPABASE_URL && !import.meta.env.VITE_AI_DIRECT;
+
+async function callAI(messages, tools) {
+    if (USE_EDGE_FUNCTION) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token) throw new Error('No active session. Please log in again.');
+
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-agent`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ messages, tools }),
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || `AI request failed (${res.status})`);
+        }
+        return res.json();
+    }
+
+    if (!OPENROUTER_API_KEY) throw new Error('OpenRouter API Key is not configured.');
+
+    const body = { model: MODEL, messages, max_tokens: 2000 };
+    if (tools?.length) { body.tools = tools; body.tool_choice = 'auto'; }
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `AI request failed (${res.status})`);
+    }
+    return res.json();
+}
+
+async function callSendEmail(to, subject, type, data) {
+    if (!SUPABASE_URL) return { error: 'Email not configured (no Edge Function)' };
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return { error: 'No active session' };
+
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ to, subject, type, data }),
+    });
+    return res.json();
+}
+
+async function callTelegramSend(userId, message) {
+    if (!SUPABASE_URL) return { error: 'Telegram not configured (no Edge Function)' };
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return { error: 'No active session' };
+
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/telegram-webhook?action=send`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId, message }),
+    });
+    return res.json();
+}
 
 // ── Risk levels ──
 const RISK = {
@@ -346,6 +424,38 @@ const WRITE_TOOLS = [
         risk: RISK.EXTERNAL,
         confirmFields: ['user_id', 'title', 'message'],
     },
+    {
+        name: 'send_email_notification',
+        description: 'Send an email notification to an employee. Use search_employees first to get their email address.',
+        parameters: {
+            type: 'object',
+            properties: {
+                to_email: { type: 'string', description: 'Recipient email address (required)' },
+                subject: { type: 'string', description: 'Email subject line (required)' },
+                email_type: { type: 'string', enum: ['task_assigned', 'meeting_scheduled', 'notification', 'custom'], description: 'Email template type' },
+                body: { type: 'string', description: 'Email body text (for notification/custom type)' },
+                data: { type: 'object', description: 'Structured data for the email template (task_title, priority, deadline, assigned_by, etc.)' },
+            },
+            required: ['to_email', 'subject'],
+        },
+        risk: RISK.EXTERNAL,
+        confirmFields: ['to_email', 'subject', 'email_type'],
+    },
+    {
+        name: 'send_telegram_notification',
+        description: 'Send a Telegram notification to an employee who has connected their Telegram account. Use search_employees first.',
+        parameters: {
+            type: 'object',
+            properties: {
+                user_id: { type: 'string', description: 'Employee user UUID (required). Must have Telegram connected.' },
+                title: { type: 'string', description: 'Notification title (required)' },
+                message: { type: 'string', description: 'Notification message body (required)' },
+            },
+            required: ['user_id', 'title', 'message'],
+        },
+        risk: RISK.EXTERNAL,
+        confirmFields: ['user_id', 'title', 'message'],
+    },
 ];
 
 // Build combined OpenRouter-formatted tool list
@@ -539,7 +649,23 @@ const executeWriteTool = async (name, args) => {
                 message: args.message,
                 type: args.type || 'info',
             });
-            return { success: true, message: `Notification sent.`, data: result };
+            return { success: true, message: `In-app notification sent.`, data: result };
+        }
+        case 'send_email_notification': {
+            const result = await callSendEmail(
+                args.to_email,
+                args.subject,
+                args.email_type || 'notification',
+                args.data || { title: args.subject, message: args.body || '' },
+            );
+            if (result.error) return { success: false, message: `Email failed: ${result.error}` };
+            return { success: true, message: `Email sent to ${args.to_email}.`, data: result };
+        }
+        case 'send_telegram_notification': {
+            const msg = `📋 <b>${args.title || 'Notification'}</b>\n\n${args.message || ''}`;
+            const result = await callTelegramSend(args.user_id, msg);
+            if (result.error) return { success: false, message: `Telegram: ${result.error}` };
+            return { success: true, message: `Telegram notification sent.`, data: result };
         }
         default:
             return { error: `Unknown write tool: ${name}` };
@@ -559,7 +685,9 @@ CAPABILITIES:
 - Create projects, leads, clients, contacts, documents
 - Schedule meetings
 - Draft invoices and expense records
-- Send in-app notifications
+- Send in-app notifications to employees
+- Send email notifications to employees (via Resend)
+- Send Telegram notifications to employees who have connected Telegram
 
 RULES:
 1. ALWAYS use tools to get real data. Never guess or invent data.
@@ -570,7 +698,9 @@ RULES:
 6. Format responses with markdown. Be concise but thorough.
 7. NEVER attempt to delete records, modify permissions, change passwords, or access payroll.
 8. For financial operations (invoices, expenses), explicitly note they are DRAFTS requiring manual review.
-9. When creating a task for someone, also mention you can send them a notification about it.
+9. When creating a task for someone, also offer to send them a notification (in-app, email, or Telegram).
+10. For email notifications, use send_email_notification with the employee's email. Use email_type "task_assigned" for tasks, "meeting_scheduled" for meetings.
+11. For Telegram, the employee must have connected their account first. If Telegram fails with "not connected", tell the admin.
 
 FORMATTING:
 - Use **bold** for names and important values
@@ -599,8 +729,8 @@ export const aiCommandService = {
     },
 
     async sendMessage(messages, user, { onToolCall, onConfirmNeeded, confirmedActions = {} } = {}) {
-        if (!OPENROUTER_API_KEY) {
-            throw new Error('OpenRouter API Key is not configured.');
+        if (!USE_EDGE_FUNCTION && !OPENROUTER_API_KEY) {
+            throw new Error('AI is not configured. Set up the Edge Function or provide an OpenRouter API key.');
         }
         if (user?.role !== 'admin') {
             throw new Error('AI Command Center is restricted to workspace administrators.');
@@ -614,27 +744,7 @@ export const aiCommandService = {
         while (iterations < MAX_TOOL_ITERATIONS) {
             iterations++;
 
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    model: MODEL,
-                    messages: conversation,
-                    tools: OPENROUTER_TOOLS,
-                    tool_choice: 'auto',
-                    max_tokens: 2000,
-                }),
-            });
-
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                throw new Error(err.error?.message || `AI request failed (${response.status})`);
-            }
-
-            const data = await response.json();
+            const data = await callAI(conversation, OPENROUTER_TOOLS);
             const message = data.choices?.[0]?.message;
             if (!message) throw new Error('Empty AI response');
 
@@ -735,19 +845,7 @@ export const aiCommandService = {
 
             const hasPending = pendingActions.some(a => a.status === 'awaiting_confirmation');
             if (hasPending) {
-                const finalResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        model: MODEL,
-                        messages: conversation,
-                        max_tokens: 1500,
-                    }),
-                });
-                const finalData = await finalResponse.json();
+                const finalData = await callAI(conversation, null);
                 const finalMessage = finalData.choices?.[0]?.message;
 
                 return {
