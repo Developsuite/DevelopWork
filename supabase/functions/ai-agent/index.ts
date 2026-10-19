@@ -38,7 +38,7 @@ Deno.serve(async (req: Request) => {
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { data: profile, error: profileError } = await adminClient
-      .from("users")
+      .from("profiles")
       .select("id, name, email, role, tenant_id")
       .eq("id", user.id)
       .single();
