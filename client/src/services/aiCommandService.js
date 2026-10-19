@@ -471,6 +471,20 @@ const OPENROUTER_TOOLS = ALL_TOOL_DEFS.map(t => ({
     },
 }));
 
+// ── Helpers ──
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveUserId(value) {
+    if (!value) return null;
+    if (UUID_RE.test(value)) return value;
+    const users = await managerService.getAllUsers();
+    const q = value.toLowerCase();
+    const match = users.find(u => u.name?.toLowerCase() === q) ||
+                  users.find(u => u.name?.toLowerCase().includes(q));
+    return match?.id || null;
+}
+
 // ── Tool executors ──
 
 const executeReadTool = async (name, args, user) => {
@@ -536,8 +550,16 @@ const executeWriteTool = async (name, args) => {
                 deadline: args.deadline || null,
             };
             if (args.assignee_id) {
-                payload.assignee_id = args.assignee_id;
+                const resolvedId = await resolveUserId(args.assignee_id);
+                if (!resolvedId) return { success: false, message: `Could not find employee "${args.assignee_id}". Use search_employees first.` };
+                payload.assignee_id = resolvedId;
                 payload.assignee_name = args.assignee_name || '';
+            } else if (args.assignee_name) {
+                const resolvedId = await resolveUserId(args.assignee_name);
+                if (resolvedId) {
+                    payload.assignee_id = resolvedId;
+                    payload.assignee_name = args.assignee_name;
+                }
             }
             if (args.project_id) payload.project_id = args.project_id;
             const result = await projectService.createTask(payload);
@@ -545,6 +567,11 @@ const executeWriteTool = async (name, args) => {
         }
         case 'update_task': {
             const { task_id, ...updates } = args;
+            if (updates.assignee_id && !UUID_RE.test(updates.assignee_id)) {
+                const resolvedId = await resolveUserId(updates.assignee_id);
+                if (!resolvedId) return { success: false, message: `Could not find employee "${updates.assignee_id}".` };
+                updates.assignee_id = resolvedId;
+            }
             const result = await projectService.updateTask(task_id, updates);
             return { success: true, message: `Task updated.`, data: result };
         }
@@ -643,8 +670,13 @@ const executeWriteTool = async (name, args) => {
             return { success: true, message: `Expense "${args.description}" recorded: Rs. ${args.amount}`, data: result };
         }
         case 'send_notification': {
+            let recipientId = args.user_id;
+            if (!UUID_RE.test(recipientId)) {
+                recipientId = await resolveUserId(recipientId);
+                if (!recipientId) return { success: false, message: `Could not find employee "${args.user_id}".` };
+            }
             const result = await notificationService.create({
-                recipient_id: args.user_id,
+                recipient_id: recipientId,
                 title: args.title,
                 message: args.message,
                 type: args.type || 'info',
@@ -662,8 +694,13 @@ const executeWriteTool = async (name, args) => {
             return { success: true, message: `Email sent to ${args.to_email}.`, data: result };
         }
         case 'send_telegram_notification': {
+            let recipientId = args.user_id;
+            if (!UUID_RE.test(recipientId)) {
+                recipientId = await resolveUserId(recipientId);
+                if (!recipientId) return { success: false, message: `Could not find employee "${args.user_id}".` };
+            }
             const msg = `📋 <b>${args.title || 'Notification'}</b>\n\n${args.message || ''}`;
-            const result = await callTelegramSend(args.user_id, msg);
+            const result = await callTelegramSend(recipientId, msg);
             if (result.error) return { success: false, message: `Telegram: ${result.error}` };
             return { success: true, message: `Telegram notification sent.`, data: result };
         }
@@ -691,7 +728,7 @@ CAPABILITIES:
 
 RULES:
 1. ALWAYS use tools to get real data. Never guess or invent data.
-2. When asked to create or assign something to a person, FIRST use search_employees to find their exact ID. Never guess user IDs.
+2. When asked to create or assign something to a person, FIRST use search_employees to find their exact UUID (the "id" field). Pass this UUID in assignee_id or user_id fields. NEVER pass a person's name as an ID — always use the UUID from search results.
 3. If multiple employees match a name, list all matches and ask the admin to pick one. Never guess.
 4. For write operations, confirm the action clearly in your response. Show what will be created/changed.
 5. When dates are relative ("tomorrow", "next Monday", "Friday"), resolve them to YYYY-MM-DD format using today's date.
