@@ -412,40 +412,44 @@ const TaskManagement = () => {
                 </div>
             </div>
 
-            {/* Navigation Tabs Bar */}
+            {/* Navigation Tabs Bar — Tagline Pill Navigation */}
             <div className="task-nav-bar">
                 <div className="task-tabs-group">
                     <button
-                        className={`task-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                        className={`task-tab-btn tab-pill--all ${activeTab === 'all' ? 'active' : ''}`}
                         onClick={() => setTab('all')}
                     >
-                        <Table2 size={16} />
+                        <span className="task-tab-dot" />
+                        <Table2 size={15} />
                         <span>All Tasks Directory</span>
                         <span className="task-tab-badge">{tasks.length}</span>
                     </button>
 
                     <button
-                        className={`task-tab-btn ${activeTab === 'delegated' ? 'active' : ''}`}
+                        className={`task-tab-btn tab-pill--delegated ${activeTab === 'delegated' ? 'active' : ''}`}
                         onClick={() => setTab('delegated')}
                     >
-                        <UserCheck size={16} />
+                        <span className="task-tab-dot" />
+                        <UserCheck size={15} />
                         <span>Delegation Center</span>
                         <span className="task-tab-badge">{teamMembers.length} Members</span>
                     </button>
 
                     <button
-                        className={`task-tab-btn ${activeTab === 'kanban' ? 'active' : ''}`}
+                        className={`task-tab-btn tab-pill--kanban ${activeTab === 'kanban' ? 'active' : ''}`}
                         onClick={() => setTab('kanban')}
                     >
-                        <LayoutGrid size={16} />
+                        <span className="task-tab-dot" />
+                        <LayoutGrid size={15} />
                         <span>Kanban Board</span>
                     </button>
 
                     <button
-                        className={`task-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+                        className={`task-tab-btn tab-pill--analytics ${activeTab === 'analytics' ? 'active' : ''}`}
                         onClick={() => setTab('analytics')}
                     >
-                        <BarChart3 size={16} />
+                        <span className="task-tab-dot" />
+                        <BarChart3 size={15} />
                         <span>Workload & Velocity</span>
                     </button>
                 </div>
