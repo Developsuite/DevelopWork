@@ -694,7 +694,7 @@
 .fin-ledger-icon { display: flex; align-items: center; justify-content: center; color: var(--text-muted); background: var(--bg-secondary); width: 32px; height: 32px; border-radius: 8px; }
 
 .fin-ledger-content { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.fin-ledger-content .title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.fin-ledger-content .title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; white-space: normal; max-width: 340px; }
 .fin-ledger-content .meta { font-size: 11px; color: var(--text-muted); font-weight: 500; }
 
 .stakeholder-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
