@@ -83,7 +83,13 @@
 .doc-detail__header h2 { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
 .doc-detail__meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 16px; flex-wrap: wrap; }
 .doc-detail__actions { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
-.doc-back-btn { background: none; border: none; color: var(--primary-500); font-size: 13px; cursor: pointer; font-weight: 500; font-family: inherit; }
+.doc-back-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border-light, #e2e8f0); color: var(--text-secondary); font-size: 13px; cursor: pointer; font-weight: 500; font-family: inherit; padding: 6px 14px; border-radius: 8px; margin-bottom: 16px; transition: all 0.15s; }
+.doc-back-btn:hover { background: var(--bg-hover, #f8fafc); color: var(--primary-500); border-color: var(--primary-300, #93c5fd); }
+
+/* Editor top bar (back + title + save) */
+.doc-editor-topbar { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--border-default); background: var(--bg-surface); }
+.doc-editor-topbar .doc-back-btn { margin-bottom: 0; flex-shrink: 0; }
+.doc-editor-title { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .doc-detail__versions { border-top: 1px solid var(--border-default); padding-top: 20px; }
 .doc-detail__versions h4 { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; }
 .doc-version { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }

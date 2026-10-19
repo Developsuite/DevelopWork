@@ -1114,6 +1114,13 @@ const Docs = () => {
                         {selectedDoc ? (
                             <div className="doc-detail">
                                 <div className="doc-detail__content">
+                                    <button className="doc-back-btn" onClick={() => {
+                                        setActiveTab('all');
+                                        setSelectedDoc(null);
+                                        navigate(activeFolder ? `/docs?folder=${activeFolder}` : '/docs');
+                                    }}>
+                                        <ArrowLeft size={15} /> Back to {activeFolder || 'Folders'}
+                                    </button>
                                     <div className="doc-detail__header">
                                         <h2>{selectedDoc.title}</h2>
                                         <div className="doc-detail__meta">
@@ -1126,13 +1133,6 @@ const Docs = () => {
                                             <Button variant="ghost" size="sm" icon={Share2}>Share</Button>
                                             <Button variant="ghost" size="sm" icon={Download} onClick={handleExportPDF}>Export PDF</Button>
                                             <Button variant="ghost" size="sm" icon={Trash2} onClick={() => handleDeleteDoc(selectedDoc.id)} style={{ color: 'var(--danger)' }}>Delete</Button>
-                                            <button className="doc-back-btn" onClick={() => { 
-                                    setActiveTab('all'); 
-                                    setSelectedDoc(null); 
-                                    navigate(activeFolder ? `/docs?folder=${activeFolder}` : '/docs');
-                                }}>
-                                    <ArrowLeft size={16} /> Back to {activeFolder || 'Folders'}
-                                </button>
                                         </div>
                                     </div>
                                     <div className="doc-detail__versions">
@@ -1325,6 +1325,24 @@ const Docs = () => {
             {activeTab === 'editor' && (
                 <div className="doc-editor-container glass-card">
                     <input type="file" ref={fileInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+
+                    {/* Editor top bar: back button + doc title + save */}
+                    <div className="doc-editor-topbar">
+                        <button className="doc-back-btn" onClick={() => {
+                            setActiveTab('all');
+                            navigate(activeFolder ? `/docs?folder=${activeFolder}` : '/docs');
+                        }}>
+                            <ArrowLeft size={15} />
+                            Back to {activeFolder || 'Documents'}
+                        </button>
+                        {selectedDoc && (
+                            <span className="doc-editor-title">{selectedDoc.title}</span>
+                        )}
+                        <div style={{ marginLeft: 'auto' }}>
+                            <Button variant="primary" size="sm" onClick={handleSaveFromEditor}>Save Changes</Button>
+                        </div>
+                    </div>
+
                     <div className="doc-editor-toolbar">
                         {[
                             { icon: Undo, label: 'Undo', type: 'undo' }, { icon: Redo, label: 'Redo', type: 'redo' }, null,
@@ -1336,7 +1354,7 @@ const Docs = () => {
                         ) : (
                             <div key={i} className="doc-editor-divider" />
                         ))}
-                        
+
                         {/* Table Tools */}
                         <div className="doc-editor-divider" />
                         <div style={{ display: 'flex', gap: '4px', alignItems: 'center', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: '8px', border: '1px solid var(--border-default)' }}>
@@ -1350,15 +1368,12 @@ const Docs = () => {
                             <button className="doc-editor-btn sm danger" title="Delete Column" onClick={() => handleTableAction('delCol')}><Columns size={14} /></button>
                             <button className="doc-editor-btn sm danger" title="Delete Table" onClick={() => handleTableAction('delTable')}><Trash2 size={14} /></button>
                         </div>
-
-                        <div style={{ marginLeft: 'auto' }}>
-                            <Button variant="primary" size="sm" onClick={handleSaveFromEditor}>Save Changes</Button>
-                        </div>
                     </div>
+
                     <div style={{ position: 'relative', flex: 1, overflow: 'auto' }}>
-                        <div 
+                        <div
                             ref={editorRef}
-                            className="doc-editor-area" 
+                            className="doc-editor-area"
                             contentEditable
                             suppressContentEditableWarning
                             onInput={handleEditorInput}
