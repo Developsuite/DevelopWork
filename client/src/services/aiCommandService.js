@@ -549,28 +549,44 @@ const executeWriteTool = async (name, args) => {
                 priority: args.priority || 'Medium',
                 deadline: args.deadline || null,
             };
-            if (args.assignee_id) {
-                const resolvedId = await resolveUserId(args.assignee_id);
-                if (!resolvedId) return { success: false, message: `Could not find employee "${args.assignee_id}". Use search_employees first.` };
-                payload.assignee_id = resolvedId;
-                payload.assignee_name = args.assignee_name || '';
-            } else if (args.assignee_name) {
-                const resolvedId = await resolveUserId(args.assignee_name);
-                if (resolvedId) {
-                    payload.assignee_id = resolvedId;
-                    payload.assignee_name = args.assignee_name;
+            const nameHint = args.assignee_name || args.assignee_id || '';
+            if (args.assignee_id || args.assignee_name) {
+                const lookupValue = args.assignee_id || args.assignee_name;
+                const users = await managerService.getAllUsers();
+                let match = null;
+                if (UUID_RE.test(lookupValue)) {
+                    match = users.find(u => u.id === lookupValue);
                 }
+                if (!match) {
+                    const q = nameHint.toLowerCase();
+                    match = users.find(u => u.name?.toLowerCase() === q) ||
+                            users.find(u => u.name?.toLowerCase().includes(q));
+                }
+                if (!match) return { success: false, message: `Could not find employee "${nameHint}". Use search_employees first to find the correct person.` };
+                payload.assignee_id = match.id;
+                payload.assignee_name = match.name;
             }
             if (args.project_id) payload.project_id = args.project_id;
             const result = await projectService.createTask(payload);
-            return { success: true, message: `Task "${result.title}" created.`, data: result };
+            return { success: true, message: `Task "${result.title}" created and assigned to ${payload.assignee_name || 'unassigned'}.`, data: result };
         }
         case 'update_task': {
             const { task_id, ...updates } = args;
-            if (updates.assignee_id && !UUID_RE.test(updates.assignee_id)) {
-                const resolvedId = await resolveUserId(updates.assignee_id);
-                if (!resolvedId) return { success: false, message: `Could not find employee "${updates.assignee_id}".` };
-                updates.assignee_id = resolvedId;
+            if (updates.assignee_id || updates.assignee_name) {
+                const lookupValue = updates.assignee_id || updates.assignee_name;
+                const users = await managerService.getAllUsers();
+                let match = null;
+                if (UUID_RE.test(lookupValue)) {
+                    match = users.find(u => u.id === lookupValue);
+                }
+                if (!match) {
+                    const q = (updates.assignee_name || updates.assignee_id || '').toLowerCase();
+                    match = users.find(u => u.name?.toLowerCase() === q) ||
+                            users.find(u => u.name?.toLowerCase().includes(q));
+                }
+                if (!match) return { success: false, message: `Could not find employee "${lookupValue}".` };
+                updates.assignee_id = match.id;
+                updates.assignee_name = match.name;
             }
             const result = await projectService.updateTask(task_id, updates);
             return { success: true, message: `Task updated.`, data: result };
