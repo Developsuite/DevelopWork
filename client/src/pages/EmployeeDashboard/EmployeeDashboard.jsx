@@ -29,7 +29,9 @@ import {
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import { permissionsService } from '../../services/permissionsService';
+import { notificationService } from '../../services/notificationService';
 import { addToast } from '../../store/slices/uiSlice';
+import { fetchNotifications } from '../../store/slices/notificationsSlice';
 import Avatar from '../../components/common/Avatar/Avatar';
 import { supabase } from '../../lib/supabase';
 import './EmployeeDashboard.css';
@@ -171,10 +173,20 @@ const EmployeeDashboard = () => {
 
     const handleStatusChange = async (taskId, newStatus) => {
         try {
-            // Optimistic update
+            const task = tasks.find((t) => t.id === taskId);
             setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
             await projectService.updateTask(taskId, { status: newStatus });
             dispatch(addToast({ title: 'Status Updated', message: `Task moved to "${newStatus}"`, type: 'success' }));
+
+            if (newStatus.toLowerCase() === 'done' && task) {
+                await notificationService.notifyTaskCompleted({
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    senderId: user?.id,
+                    senderName: user?.name || 'Employee',
+                });
+                dispatch(fetchNotifications(user?.id));
+            }
         } catch (error) {
             console.error('Failed to update task status:', error);
             dispatch(addToast({ title: 'Error', message: 'Failed to update task status', type: 'error' }));

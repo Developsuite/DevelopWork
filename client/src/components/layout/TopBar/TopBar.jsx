@@ -1,15 +1,27 @@
+import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toggleSidebar } from '../../../store/slices/uiSlice';
+import {
+    fetchNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+    prependNotification,
+} from '../../../store/slices/notificationsSlice';
+import { notificationService } from '../../../services/notificationService';
 import Avatar from '../../common/Avatar/Avatar';
 import ThemeToggle from '../../common/ThemeToggle/ThemeToggle';
-import { mockUser, mockBoards, mockNotifications } from '../../../utils/mockData';
+import { mockBoards } from '../../../utils/mockData';
 import {
     Menu,
     Search,
     Bell,
     Settings,
     ChevronRight,
+    CheckCheck,
+    Trash2,
+    CheckCircle2,
 } from 'lucide-react';
 import './TopBar.css';
 
@@ -19,21 +31,60 @@ const TopBar = () => {
     const navigate = useNavigate();
     const sidebarOpen = useSelector((state) => state.ui.sidebarOpen);
     const { user } = useSelector((state) => state.auth);
+    const { items: notifications } = useSelector((state) => state.notifications);
 
-    const unreadCount = mockNotifications.filter((n) => !n.read).length;
+    const [dropOpen, setDropOpen] = useState(false);
+    const dropRef = useRef(null);
+    const channelRef = useRef(null);
 
-    // Build breadcrumb from path
+    const unreadCount = notifications.filter((n) => !n.read).length;
+
+    // Fetch notifications and set up realtime on mount
+    useEffect(() => {
+        if (!user?.id) return;
+        dispatch(fetchNotifications(user.id));
+
+        channelRef.current = notificationService.subscribeToUser(user.id, (newNotif) => {
+            dispatch(prependNotification(newNotif));
+        });
+
+        return () => {
+            notificationService.unsubscribe(channelRef.current);
+        };
+    }, [user?.id, dispatch]);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handler = (e) => {
+            if (dropRef.current && !dropRef.current.contains(e.target)) {
+                setDropOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const handleBellClick = () => setDropOpen((prev) => !prev);
+
+    const handleMarkRead = (id) => dispatch(markNotificationRead(id));
+
+    const handleMarkAllRead = () => {
+        if (user?.id) dispatch(markAllNotificationsRead(user.id));
+    };
+
+    const handleDelete = (e, id) => {
+        e.stopPropagation();
+        dispatch(deleteNotification(id));
+    };
+
     const getBreadcrumb = () => {
         const path = location.pathname;
         const parts = [];
-
         if (path.startsWith('/board/')) {
             const boardId = path.split('/')[2];
             const board = mockBoards.find((b) => b._id === boardId);
             parts.push({ label: 'Projects', path: '/projects' });
-            if (board) {
-                parts.push({ label: board.name, path: path, current: true });
-            }
+            if (board) parts.push({ label: board.name, path, current: true });
         } else if (path === '/modules') {
             parts.push({ label: 'Module Hub', path: '/modules', current: true });
         } else if (path === '/projects') {
@@ -53,11 +104,18 @@ const TopBar = () => {
         } else if (path === '/settings') {
             parts.push({ label: 'Settings', path: '/settings', current: true });
         }
-
         return parts;
     };
 
     const breadcrumb = getBreadcrumb();
+
+    const timeAgo = (dateStr) => {
+        const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+    };
 
     return (
         <header className={`topbar glass-topbar ${!sidebarOpen ? 'sidebar-collapsed' : ''}`}>
@@ -70,13 +128,10 @@ const TopBar = () => {
                     <Menu size={20} />
                 </button>
 
-                {/* Breadcrumb */}
                 <nav className="topbar__breadcrumb">
                     {breadcrumb.map((item, index) => (
                         <span key={index} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {index > 0 && (
-                                <ChevronRight size={12} className="topbar__breadcrumb-sep" />
-                            )}
+                            {index > 0 && <ChevronRight size={12} className="topbar__breadcrumb-sep" />}
                             <button
                                 className={`topbar__breadcrumb-item ${item.current ? 'current' : ''}`}
                                 onClick={() => !item.current && navigate(item.path)}
@@ -88,7 +143,6 @@ const TopBar = () => {
                 </nav>
             </div>
 
-            {/* Search */}
             <div className="topbar__search">
                 <Search size={15} className="topbar__search-icon" />
                 <input
@@ -100,15 +154,70 @@ const TopBar = () => {
                 <span className="topbar__search-shortcut">⌘K</span>
             </div>
 
-            {/* Right Actions */}
             <div className="topbar__right">
                 <ThemeToggle />
-                <button className="topbar__icon-btn" title="Notifications" id="notifications-btn">
-                    <Bell size={19} />
-                    {unreadCount > 0 && (
-                        <span className="topbar__badge">{unreadCount}</span>
+
+                {/* Notification Bell */}
+                <div className="topbar__notif-wrap" ref={dropRef}>
+                    <button
+                        className={`topbar__icon-btn ${dropOpen ? 'active' : ''}`}
+                        title="Notifications"
+                        onClick={handleBellClick}
+                    >
+                        <Bell size={19} />
+                        {unreadCount > 0 && (
+                            <span className="topbar__badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                        )}
+                    </button>
+
+                    {dropOpen && (
+                        <div className="notif-dropdown">
+                            <div className="notif-dropdown__header">
+                                <span className="notif-dropdown__title">Notifications</span>
+                                {unreadCount > 0 && (
+                                    <button className="notif-dropdown__mark-all" onClick={handleMarkAllRead}>
+                                        <CheckCheck size={13} />
+                                        Mark all read
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="notif-dropdown__list">
+                                {notifications.length === 0 ? (
+                                    <div className="notif-dropdown__empty">
+                                        <Bell size={28} strokeWidth={1.5} />
+                                        <p>No notifications yet</p>
+                                    </div>
+                                ) : (
+                                    notifications.map((n) => (
+                                        <div
+                                            key={n.id}
+                                            className={`notif-item ${n.read ? '' : 'notif-item--unread'}`}
+                                            onClick={() => !n.read && handleMarkRead(n.id)}
+                                        >
+                                            <div className="notif-item__icon">
+                                                <CheckCircle2 size={16} />
+                                            </div>
+                                            <div className="notif-item__body">
+                                                <p className="notif-item__title">{n.title}</p>
+                                                <p className="notif-item__message">{n.message}</p>
+                                                <span className="notif-item__time">{timeAgo(n.created_at)}</span>
+                                            </div>
+                                            <button
+                                                className="notif-item__delete"
+                                                onClick={(e) => handleDelete(e, n.id)}
+                                                title="Dismiss"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
                     )}
-                </button>
+                </div>
+
                 <button className="topbar__icon-btn" title="Settings" id="settings-btn" onClick={() => navigate('/settings')}>
                     <Settings size={19} />
                 </button>

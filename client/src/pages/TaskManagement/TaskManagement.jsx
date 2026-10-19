@@ -30,7 +30,9 @@ import {
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import { managerService } from '../../services/managerService';
+import { notificationService } from '../../services/notificationService';
 import { addToast } from '../../store/slices/uiSlice';
+import { fetchNotifications } from '../../store/slices/notificationsSlice';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Modal from '../../components/common/Modal/Modal';
 import Button from '../../components/common/Button/Button';
@@ -292,9 +294,20 @@ const TaskManagement = () => {
 
     const handleQuickStatusChange = async (taskId, newStatus) => {
         try {
+            const task = tasks.find(t => t.id === taskId);
             setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
             await projectService.updateTask(taskId, { status: newStatus });
             dispatch(addToast({ title: 'Status Updated', message: `Task moved to ${newStatus}`, type: 'success' }));
+
+            if (newStatus.toLowerCase() === 'done' && task) {
+                await notificationService.notifyTaskCompleted({
+                    taskId: task.id,
+                    taskTitle: task.title,
+                    senderId: user?.id,
+                    senderName: user?.name || 'Admin',
+                });
+                dispatch(fetchNotifications(user?.id));
+            }
         } catch (err) {
             console.error('Failed to update status:', err);
             dispatch(addToast({ title: 'Error', message: 'Failed to update task status.', type: 'error' }));

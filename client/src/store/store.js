@@ -5,6 +5,7 @@ import boardReducer from './slices/boardSlice';
 import uiReducer from './slices/uiSlice';
 import accessReducer from './slices/accessSlice';
 import projectReducer from './slices/projectSlice';
+import notificationsReducer from './slices/notificationsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     ui: uiReducer,
     access: accessReducer,
     project: projectReducer,
+    notifications: notificationsReducer,
   },
 });
 
