@@ -9,7 +9,7 @@ import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
 import EmployeeLayout from './components/layout/EmployeeLayout/EmployeeLayout';
 import ToastContainer from './components/common/Toast/Toast';
-import AIChatbot from './components/common/AIChatbot/AIChatbot';
+import AICommandCenter from './components/common/AICommandCenter/AICommandCenter';
 import AdminRoute from './components/guards/AdminRoute';
 import ManagerRoute from './components/guards/ManagerRoute';
 import EmployeeRoute from './components/guards/EmployeeRoute';
@@ -227,7 +227,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      {isAuthenticated && user && <AIChatbot />}
+      {isAuthenticated && user && <AICommandCenter />}
       <Routes>
         {/* Public Routes */}
         <Route path="/landing" element={<Landing />} />
