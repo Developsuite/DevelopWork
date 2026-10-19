@@ -419,7 +419,6 @@ const TaskManagement = () => {
                         className={`task-tab-btn tab-pill--all ${activeTab === 'all' ? 'active' : ''}`}
                         onClick={() => setTab('all')}
                     >
-                        <span className="task-tab-dot" />
                         <Table2 size={15} />
                         <span>All Tasks Directory</span>
                         <span className="task-tab-badge">{tasks.length}</span>
@@ -429,7 +428,6 @@ const TaskManagement = () => {
                         className={`task-tab-btn tab-pill--delegated ${activeTab === 'delegated' ? 'active' : ''}`}
                         onClick={() => setTab('delegated')}
                     >
-                        <span className="task-tab-dot" />
                         <UserCheck size={15} />
                         <span>Delegation Center</span>
                         <span className="task-tab-badge">{teamMembers.length} Members</span>
@@ -439,7 +437,6 @@ const TaskManagement = () => {
                         className={`task-tab-btn tab-pill--kanban ${activeTab === 'kanban' ? 'active' : ''}`}
                         onClick={() => setTab('kanban')}
                     >
-                        <span className="task-tab-dot" />
                         <LayoutGrid size={15} />
                         <span>Kanban Board</span>
                     </button>
@@ -448,7 +445,6 @@ const TaskManagement = () => {
                         className={`task-tab-btn tab-pill--analytics ${activeTab === 'analytics' ? 'active' : ''}`}
                         onClick={() => setTab('analytics')}
                     >
-                        <span className="task-tab-dot" />
                         <BarChart3 size={15} />
                         <span>Workload & Velocity</span>
                     </button>

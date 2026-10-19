@@ -241,25 +241,25 @@
     transition: all 0.15s ease;
 }
 
-/* Active State: Tagline Pill Style — Unified Blue (matches other modules) */
+/* Active State: Solid filled blue pill */
 .task-tab-btn.active {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    color: #2563eb;
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: none;
     transform: none;
 }
 
 .task-tab-btn.active .task-tab-dot {
-    background: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    background: #ffffff;
+    box-shadow: none;
 }
 
 .task-tab-btn.active .task-tab-badge {
-    background: #dbeafe;
-    color: #1d4ed8;
-    border-color: #bfdbfe;
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Dark Mode Tagline Pills */
@@ -286,22 +286,22 @@
     color: #9CA3B5;
 }
 
-/* Dark Mode Active Pills — Unified Blue */
+/* Dark Mode Active Pills — Solid Blue */
 [data-theme='dark'] .task-tab-btn.active {
-    background: rgba(0, 85, 254, 0.15);
-    border-color: rgba(0, 85, 254, 0.35);
-    color: #579BFC;
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
 }
 
 [data-theme='dark'] .task-tab-btn.active .task-tab-dot {
-    background: #579BFC;
-    box-shadow: 0 0 0 2px rgba(0, 85, 254, 0.25);
+    background: #ffffff;
+    box-shadow: none;
 }
 
 [data-theme='dark'] .task-tab-btn.active .task-tab-badge {
-    background: rgba(0, 85, 254, 0.25);
-    border-color: rgba(0, 85, 254, 0.4);
-    color: #93C5FD;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
 }
 
 
@@ -510,15 +510,15 @@
 .task-priority--high { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
 .task-priority--high .task-priority-dot { background: #D97706; }
 
-.task-priority--medium { background: #F8FAFC; color: #475569; border: 1px solid #CBD5E1; }
-.task-priority--medium .task-priority-dot { background: #64748B; }
+.task-priority--medium { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+.task-priority--medium .task-priority-dot { background: #3B82F6; }
 
 .task-priority--low { background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; }
 .task-priority--low .task-priority-dot { background: #94A3B8; }
 
 [data-theme='dark'] .task-priority--urgent { background: rgba(220, 38, 38, 0.2); color: #FCA5A5; border-color: rgba(220, 38, 38, 0.4); }
 [data-theme='dark'] .task-priority--high { background: rgba(217, 119, 6, 0.2); color: #FCD34D; border-color: rgba(217, 119, 6, 0.4); }
-[data-theme='dark'] .task-priority--medium { background: rgba(100, 116, 139, 0.2); color: #CBD5E1; border-color: rgba(100, 116, 139, 0.4); }
+[data-theme='dark'] .task-priority--medium { background: rgba(37, 99, 235, 0.15); color: #93C5FD; border-color: rgba(37, 99, 235, 0.35); }
 [data-theme='dark'] .task-priority--low { background: rgba(71, 85, 105, 0.2); color: #94A3B8; border-color: rgba(71, 85, 105, 0.4); }
 
 /* Deadline Pills */
@@ -1090,13 +1090,13 @@
 }
 
 .task-scope-pill.scope--operational {
-    background: #F1F5F9;
-    color: #334155;
-    border: 1px solid #CBD5E1;
+    background: #F0FDFA;
+    color: #0F766E;
+    border: 1px solid #99F6E4;
 }
 
 .task-scope-pill.scope--operational svg {
-    color: #475569;
+    color: #14B8A6;
 }
 
 .task-scope-pill.scope--project {
@@ -1111,13 +1111,13 @@
 
 /* Dark mode fine-tuning */
 [data-theme='dark'] .task-scope-pill.scope--operational {
-    background: #1E293B;
-    color: #CBD5E1;
-    border-color: #334155;
+    background: rgba(20, 184, 166, 0.15);
+    color: #5EEAD4;
+    border-color: rgba(20, 184, 166, 0.35);
 }
 
 [data-theme='dark'] .task-scope-pill.scope--operational svg {
-    color: #94A3B8;
+    color: #5EEAD4;
 }
 
 [data-theme='dark'] .task-scope-pill.scope--project {
