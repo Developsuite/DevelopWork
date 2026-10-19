@@ -1,7 +1,7 @@
 /* ==========================================================================
    DEVELOPWORK ENTERPRISE EMPLOYEE COCKPIT STYLES
    Crisp, Clean Card Theme Design System
-   Full Light & Dark Theme [data-theme="dark"] Support
+   Full Light & True Obsidian Dark Theme [data-theme="dark"] Support
    ========================================================================== */
 
 .employee-cockpit {
@@ -22,7 +22,7 @@
     flex-direction: column;
     gap: 24px;
     padding: 24px 28px;
-    background: #ffffff;
+    background: var(--bg-surface, #ffffff);
     border: 1px solid var(--border-light, #e2e8f0);
     border-radius: 14px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
@@ -80,7 +80,7 @@
     color: var(--primary-600, #2563eb);
 }
 
-/* KPI Stat Cards Row */
+/* KPI Stat Cards Row — Clean Cards Without Harsh Outline */
 .cockpit-kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -103,12 +103,6 @@
 .cockpit-kpi-card:hover {
     border-color: var(--border-medium, #cbd5e1);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-}
-
-.cockpit-kpi-card.active-filter {
-    border: 2px solid var(--primary-600, #2563eb);
-    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15);
-    background: var(--bg-surface, #ffffff);
 }
 
 .cockpit-kpi-icon {
@@ -863,213 +857,249 @@
 
 /* --------------------------------------------------------------------------
    DARK THEME SPECIALIZATIONS ([data-theme="dark"])
-   Seamless crisp dark mode card surfaces
+   True Pitch-Black Obsidian Theme (OpenRouter Style)
+   Matches global darkmode.css (#0E0F14 / #0D0E13 / #0A0B0F / rgba(255,255,255,0.08))
    -------------------------------------------------------------------------- */
 [data-theme="dark"] .cockpit-welcome,
 [data-theme="dark"] .cockpit-tasks-section,
 [data-theme="dark"] .cockpit-rbac-card,
 [data-theme="dark"] .cockpit-tip-card {
-    background: #1e293b;
-    border-color: #334155;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    background: #0E0F14;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 [data-theme="dark"] .cockpit-welcome__greeting {
-    color: #f8fafc;
+    color: #F4F6FB;
 }
 
 [data-theme="dark"] .cockpit-welcome__greeting span {
-    color: #60a5fa;
+    color: #579BFC;
 }
 
 [data-theme="dark"] .cockpit-welcome__sub,
 [data-theme="dark"] .cockpit-section-sub,
 [data-theme="dark"] .cockpit-kpi-label,
-[data-theme="dark"] .cockpit-empty-state p {
-    color: #94a3b8;
+[data-theme="dark"] .cockpit-empty-state p,
+[data-theme="dark"] .cockpit-module-feat-count {
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-welcome__date {
-    background: #0f172a;
-    border-color: #334155;
-    color: #94a3b8;
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-welcome__date svg {
-    color: #60a5fa;
+    color: #579BFC;
 }
 
+/* KPI Stat Cards in Dark Mode: Uniform, No blue outline box */
 [data-theme="dark"] .cockpit-kpi-card {
-    background: #1e293b;
-    border-color: #334155;
+    background: #0D0E13;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] .cockpit-kpi-card:hover {
-    border-color: #475569;
-}
-
-[data-theme="dark"] .cockpit-kpi-card.active-filter {
-    border-color: #3b82f6;
-    background: #1e293b;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
+    background: #13141B;
+    border-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
 }
 
 [data-theme="dark"] .cockpit-kpi-value {
-    color: #f8fafc;
+    color: #F4F6FB;
 }
 
 [data-theme="dark"] .kpi-icon--total {
-    background: rgba(37, 99, 235, 0.15);
-    color: #60a5fa;
+    background: rgba(0, 85, 254, 0.15);
+    color: #579BFC;
 }
 
 [data-theme="dark"] .kpi-icon--progress {
-    background: rgba(217, 119, 6, 0.15);
-    color: #fbbf24;
+    background: rgba(245, 158, 11, 0.15);
+    color: #FBBF24;
 }
 
 [data-theme="dark"] .kpi-icon--review {
-    background: rgba(124, 58, 237, 0.15);
-    color: #a78bfa;
+    background: rgba(139, 92, 246, 0.15);
+    color: #C084FC;
 }
 
 [data-theme="dark"] .kpi-icon--done {
-    background: rgba(5, 150, 105, 0.15);
-    color: #34d399;
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
 }
 
+/* Headers & Badges */
 [data-theme="dark"] .cockpit-section-header h2,
 [data-theme="dark"] .cockpit-section-header h3,
 [data-theme="dark"] .cockpit-empty-state h3,
 [data-theme="dark"] .cockpit-module-title,
 [data-theme="dark"] .cockpit-task-card__title {
-    color: #f8fafc;
+    color: #F4F6FB;
 }
 
 [data-theme="dark"] .cockpit-count-badge {
-    background: #0f172a;
-    border-color: #334155;
-    color: #94a3b8;
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-refresh-btn {
-    background: #0f172a;
-    border-color: #334155;
-    color: #e2e8f0;
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-refresh-btn:hover {
-    background: #1e293b;
-    border-color: #60a5fa;
-    color: #60a5fa;
+    background: #14151C;
+    border-color: rgba(0, 85, 254, 0.4);
+    color: #579BFC;
 }
 
+/* Scope Selector Chips */
 [data-theme="dark"] .cockpit-scope-chip {
-    background: #0f172a;
-    border-color: #334155;
-    color: #94a3b8;
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-scope-chip:hover {
-    color: #f8fafc;
-    border-color: #475569;
+    background: #13141B;
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #F4F6FB;
 }
 
 [data-theme="dark"] .cockpit-scope-chip.active,
 [data-theme="dark"] .cockpit-scope-chip.scope--op.active,
 [data-theme="dark"] .cockpit-scope-chip.scope--proj.active {
-    background: #0f172a;
-    border-color: #3b82f6;
-    color: #60a5fa;
+    background: rgba(0, 85, 254, 0.12);
+    border-color: rgba(0, 85, 254, 0.4);
+    color: #579BFC;
 }
 
+/* Tabs */
 [data-theme="dark"] .cockpit-tab {
-    color: #94a3b8;
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-tab:hover {
-    background: #0f172a;
-    color: #f8fafc;
+    background: rgba(255, 255, 255, 0.04);
+    color: #F4F6FB;
 }
 
 [data-theme="dark"] .cockpit-tab.active {
-    background: rgba(37, 99, 235, 0.15);
-    border-color: #3b82f6;
-    color: #60a5fa;
+    background: rgba(0, 85, 254, 0.15);
+    border-color: rgba(0, 85, 254, 0.35);
+    color: #579BFC;
 }
 
 [data-theme="dark"] .cockpit-tab-badge {
-    background: #0f172a;
-    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.06);
+    color: #717788;
 }
 
 [data-theme="dark"] .cockpit-tab.active .cockpit-tab-badge {
-    background: rgba(37, 99, 235, 0.25);
-    color: #93c5fd;
+    background: rgba(0, 85, 254, 0.25);
+    color: #93C5FD;
 }
 
+/* Search Row */
 [data-theme="dark"] .cockpit-search-input-wrap input,
 [data-theme="dark"] .cockpit-priority-select {
-    background: #0f172a;
-    border-color: #334155;
-    color: #f8fafc;
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #F4F6FB;
 }
 
 [data-theme="dark"] .cockpit-search-input-wrap input:focus,
 [data-theme="dark"] .cockpit-priority-select:focus {
-    border-color: #3b82f6;
+    background: #0E0F15;
+    border-color: #0055FE;
+    box-shadow: 0 0 0 3px rgba(0, 85, 254, 0.18);
 }
 
+/* Task Cards & Sub-Cards */
 [data-theme="dark"] .cockpit-task-card,
 [data-theme="dark"] .cockpit-module-card {
-    background: #0f172a;
-    border-color: #334155;
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="dark"] .cockpit-task-card:hover,
 [data-theme="dark"] .cockpit-module-card:hover {
-    border-color: #475569;
+    background: #111218;
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .cockpit-task-card.task-card--done {
+    background: #07080B;
+    opacity: 0.6;
 }
 
 [data-theme="dark"] .cockpit-status-dropdown,
 [data-theme="dark"] .cockpit-complete-btn,
 [data-theme="dark"] .cockpit-expand-btn,
 [data-theme="dark"] .cockpit-launch-btn {
-    background: #1e293b;
-    border-color: #334155;
-    color: #94a3b8;
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-status-dropdown:focus {
-    border-color: #3b82f6;
+    border-color: #0055FE;
 }
 
-[data-theme="dark"] .cockpit-launch-btn:hover {
-    background: #334155;
-    color: #f8fafc;
+[data-theme="dark"] .cockpit-launch-btn:hover,
+[data-theme="dark"] .cockpit-expand-btn:hover {
+    background: #14151C;
+    border-color: rgba(255, 255, 255, 0.16);
+    color: #F4F6FB;
 }
 
 [data-theme="dark"] .cockpit-feat-tag,
 [data-theme="dark"] .cockpit-feat-tag-more {
-    background: #1e293b;
-    border-color: #334155;
-    color: #94a3b8;
+    background: #121319;
+    border-color: rgba(255, 255, 255, 0.07);
+    color: #9CA3B5;
 }
 
 [data-theme="dark"] .cockpit-feat-tag:hover {
-    color: #f8fafc;
-    border-color: #475569;
-    background: #334155;
+    color: #579BFC;
+    border-color: rgba(0, 85, 254, 0.35);
+    background: #191B24;
+}
+
+[data-theme="dark"] .cockpit-no-perms-card {
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #5E6475;
 }
 
 [data-theme="dark"] .cockpit-task-desc-block {
-    background: #1e293b;
-    border-color: #334155;
+    background: #0D0E13;
+    border-color: rgba(255, 255, 255, 0.07);
 }
 
 [data-theme="dark"] .cockpit-task-desc-text,
 [data-theme="dark"] .cockpit-meta-val {
-    color: #f8fafc;
+    color: #F4F6FB;
+}
+
+[data-theme="dark"] .deadline--normal,
+[data-theme="dark"] .deadline--none {
+    background: #0A0B0F;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #9CA3B5;
+}
+
+[data-theme="dark"] .priority-badge--low {
+    background: #121319;
+    color: #9CA3B5;
 }
 
 /* --------------------------------------------------------------------------
