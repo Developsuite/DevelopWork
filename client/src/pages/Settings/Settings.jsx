@@ -814,8 +814,6 @@ const Settings = () => {
                                     <p className="field-hint">Select between Dollars ($) and Rupees (PKR) for all financial views.</p>
                                 </div>
                             </div>
-
-                            </div>
                         </div>
                     )}
 
