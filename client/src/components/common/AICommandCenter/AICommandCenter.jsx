@@ -257,7 +257,7 @@ const AICommandCenter = () => {
         <div className={`aicc-container ${isExpanded ? 'aicc-container--expanded' : ''}`}>
             {/* Trigger Button */}
             {!isOpen && (
-                <button className="aicc-trigger" onClick={() => setIsOpen(true)} aria-label="Open AI Command Center">
+                <button className="aicc-trigger" onClick={() => setIsOpen(true)} aria-label="Open Jarvis">
                     <div className="aicc-trigger__inner">
                         <img src="/images/newai.png" alt="AI" className="aicc-trigger__img" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
                         <span className="aicc-trigger__fallback"><Sparkles size={24} /></span>
@@ -278,7 +278,7 @@ const AICommandCenter = () => {
                                 <img src="/images/newai.png" alt="" className="aicc-header__avatar-img" onError={(e) => e.target.style.display = 'none'} />
                             </div>
                             <div className="aicc-header__info">
-                                <h3>AI Command Center</h3>
+                                <h3>Jarvis</h3>
                                 <span><Shield size={10} /> Admin Only</span>
                             </div>
                         </div>
@@ -325,7 +325,7 @@ const AICommandCenter = () => {
                                 <div className="aicc-welcome__icon">
                                     <Zap size={28} />
                                 </div>
-                                <h4>Welcome to AI Command Center</h4>
+                                <h4>Hi, I'm Jarvis</h4>
                                 <p>Manage your workspace with natural language commands.</p>
                                 <div className="aicc-suggestions">
                                     {SUGGESTED_COMMANDS.map((cmd, i) => (

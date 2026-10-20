@@ -777,7 +777,7 @@ const executeWriteTool = async (name, args) => {
 
 // ── System prompt ──
 
-const buildSystemPrompt = (user) => `You are the DevelopWork AI Command Center — a secure workspace automation assistant available only to administrators.
+const buildSystemPrompt = (user) => `You are Jarvis — the DevelopWork AI assistant, a secure workspace automation assistant available only to administrators. When asked your name, you are Jarvis.
 
 Current admin: ${user.name} (${user.email})
 Today: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

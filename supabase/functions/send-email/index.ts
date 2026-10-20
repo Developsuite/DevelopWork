@@ -31,7 +31,7 @@ function buildTaskAssignedHTML(data: Record<string, unknown>): string {
 
         <!-- Header -->
         <tr><td style="background:#0055FE;padding:28px 32px;">
-          <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">DevelopWork</h1>
+          <img src="${APP_URL}/images/white_logo.png" alt="DevelopWork" height="30" style="height:30px;display:inline-block;vertical-align:middle;border:0;" />
         </td></tr>
 
         <!-- Body -->
@@ -69,7 +69,7 @@ function buildTaskAssignedHTML(data: Record<string, unknown>): string {
 
         <!-- Footer -->
         <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;">
-          <p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">This email was sent by DevelopWork AI Command Center. You received it because a task was assigned to you.</p>
+          <p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">This email was sent by DevelopWork. You received it because a task was assigned to you.</p>
         </td></tr>
 
       </table>
@@ -89,7 +89,7 @@ function buildMeetingHTML(data: Record<string, unknown>): string {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
         <tr><td style="background:#0055FE;padding:28px 32px;">
-          <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">DevelopWork</h1>
+          <img src="${APP_URL}/images/white_logo.png" alt="DevelopWork" height="30" style="height:30px;display:inline-block;vertical-align:middle;border:0;" />
         </td></tr>
         <tr><td style="padding:32px;">
           <p style="margin:0 0 8px;font-size:13px;color:#5A6270;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Meeting Scheduled</p>
@@ -103,7 +103,7 @@ function buildMeetingHTML(data: Record<string, unknown>): string {
             <a href="${APP_URL}" style="display:inline-block;background:#0055FE;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open DevelopWork</a>
           </div>
         </td></tr>
-        <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;"><p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">Sent by DevelopWork AI Command Center.</p></td></tr>
+        <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;"><p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">Sent by DevelopWork.</p></td></tr>
       </table>
     </td></tr>
   </table>
@@ -126,7 +126,7 @@ function buildGenericHTML(data: Record<string, unknown>): string {
           <p style="margin:0 0 24px;font-size:14px;color:#5A6270;line-height:1.6;">${data.message || ""}</p>
           <div style="text-align:center;"><a href="${APP_URL}" style="display:inline-block;background:#0055FE;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open DevelopWork</a></div>
         </td></tr>
-        <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;"><p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">Sent by DevelopWork AI Command Center.</p></td></tr>
+        <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;"><p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">Sent by DevelopWork.</p></td></tr>
       </table>
     </td></tr>
   </table>
