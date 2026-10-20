@@ -17,7 +17,6 @@ import {
     User,
     Building2,
     Shield,
-    Bell,
     Globe,
     CreditCard,
     LayoutGrid,
@@ -39,7 +38,6 @@ import {
     ShieldAlert,
     Video,
     Send,
-    CheckCircle2,
     Plug,
     CalendarCheck,
     Unplug,
@@ -57,7 +55,11 @@ const moduleIconMap = {
 };
 
 const Settings = () => {
-    const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') || 'profile');
+    const [activeTab, setActiveTab] = useState(() => {
+        const requestedTab = new URLSearchParams(window.location.search).get('tab');
+        // Preserve old links now that notification services live in Integrations.
+        return requestedTab === 'notifications' ? 'integrations' : requestedTab || 'profile';
+    });
     const [showPassword, setShowPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -80,7 +82,7 @@ const Settings = () => {
     };
 
     useEffect(() => {
-        if (activeTab !== 'notifications') return;
+        if (activeTab !== 'integrations') return;
         let cancelled = false;
         (async () => {
             try {
@@ -173,8 +175,12 @@ const Settings = () => {
             return;
         }
 
-        if (newPassword.length < 6) {
-            dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 6 characters.', type: 'error' }));
+        if (newPassword.length < 8) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 8 characters.', type: 'error' }));
+            return;
+        }
+        if (!/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+            dispatch(addToast({ title: 'Validation Error', message: 'Password must include at least one letter and one number.', type: 'error' }));
             return;
         }
 
@@ -573,8 +579,7 @@ const Settings = () => {
         { id: 'workspace', label: 'Workspace', icon: Building2, adminOnly: true },
         { id: 'team', label: 'Team & Managers', icon: Users, adminOnly: true },
         { id: 'modules', label: 'Modules', icon: LayoutGrid, adminOnly: true },
-        { id: 'integrations', label: 'Integrations', icon: Plug, adminOnly: true },
-        { id: 'notifications', label: 'Notifications', icon: Bell },
+        { id: 'integrations', label: 'Integrations', icon: Plug },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'billing', label: 'Billing', icon: CreditCard, adminOnly: true },
     ].filter(tab => !tab.adminOnly || user?.role === 'admin');
@@ -884,86 +889,113 @@ const Settings = () => {
                         </div>
                     )}
 
-                    {activeTab === 'notifications' && (
+                    {activeTab === 'integrations' && (
                         <div className="settings-section">
-                            <h2 className="settings-section-title">Notifications</h2>
-                            <p className="settings-section-hint">Connect your Telegram to receive task assignments, meeting reminders, and updates directly on your phone.</p>
+                            <h2 className="settings-section-title">Integrations</h2>
+                            <p className="settings-section-hint">Manage workspace services and the notification channels connected to your account.</p>
 
-                            <div className="tg-connect-card">
-                                <div className="tg-connect-card__icon"><Send size={22} /></div>
-                                <div className="tg-connect-card__body">
-                                    <strong>Telegram Notifications</strong>
-                                    {telegramStatus.loading ? (
-                                        <span className="tg-connect-card__status">Checking connection…</span>
-                                    ) : telegramStatus.connected ? (
-                                        <span className="tg-connect-card__status tg-connect-card__status--on">
-                                            <CheckCircle2 size={14} /> Connected — you'll receive notifications here
-                                        </span>
-                                    ) : (
-                                        <span className="tg-connect-card__status">Not connected yet</span>
-                                    )}
-                                </div>
-                                <Button
-                                    variant={telegramStatus.connected ? 'outline' : 'primary'}
-                                    icon={Send}
-                                    loading={telegramConnecting}
-                                    onClick={handleConnectTelegram}
-                                >
-                                    {telegramStatus.connected ? 'Reconnect' : 'Connect Telegram'}
-                                </Button>
-                            </div>
-
-                            <ol className="tg-connect-steps">
-                                <li>Click <strong>Connect Telegram</strong> — it opens your DevelopWork bot in Telegram.</li>
-                                <li>Tap <strong>START</strong> (or send <code>/start</code>) in the bot chat.</li>
-                                <li>You're linked — notifications will arrive in that chat. To stop, send <code>/disconnect</code>.</li>
-                            </ol>
-                        </div>
-                    )}
-
-                    {activeTab === 'integrations' && user?.role === 'admin' && (
-                        <div className="settings-section">
-                            <h2 className="settings-section-title">Workspace Integrations</h2>
-                            <p className="settings-section-hint">Connect shared services for this workspace. Only workspace admins can change these connections.</p>
-
-                            <div className="integration-connect-card integration-connect-card--google">
-                                <div className="integration-connect-card__icon"><CalendarCheck size={22} /></div>
-                                <div className="integration-connect-card__body">
-                                    <div className="integration-connect-card__heading">
-                                        <strong>Google Calendar &amp; Meet</strong>
-                                        {!googleCalendarStatus.loading && (
-                                            <span className={`integration-status-pill ${googleCalendarStatus.connected ? 'is-connected' : ''}`}>
-                                                <span className="integration-status-pill__dot" />
-                                                {googleCalendarStatus.connected ? 'Connected' : 'Not connected'}
+                            <div className="integration-connect-list">
+                                <div className="integration-connect-card integration-connect-card--google">
+                                    <div className="integration-connect-card__icon"><CalendarCheck size={22} /></div>
+                                    <div className="integration-connect-card__body">
+                                        <div className="integration-connect-card__heading">
+                                            <strong>Google Calendar &amp; Meet</strong>
+                                            {!googleCalendarStatus.loading && (
+                                                <span className={`integration-status-pill ${googleCalendarStatus.connected ? 'is-connected' : ''}`}>
+                                                    <span className="integration-status-pill__dot" />
+                                                    {googleCalendarStatus.connected ? 'Connected' : 'Not connected'}
+                                                </span>
+                                            )}
+                                            <span className="integration-scope-label">Workspace</span>
+                                        </div>
+                                        {googleCalendarStatus.loading ? (
+                                            <span className="integration-connect-card__status">Checking workspace connection...</span>
+                                        ) : googleCalendarStatus.connected ? (
+                                            <span className="integration-connect-card__status">
+                                                Using <strong>{googleCalendarStatus.google_email}</strong>. Meetings can create calendar invitations and genuine Google Meet links.
+                                            </span>
+                                        ) : (
+                                            <span className="integration-connect-card__status">
+                                                {user?.role === 'admin'
+                                                    ? "Connect the Google account whose calendar should own this workspace's meetings."
+                                                    : 'A workspace administrator must connect the shared calendar.'}
                                             </span>
                                         )}
                                     </div>
-                                    {googleCalendarStatus.loading ? (
-                                        <span className="integration-connect-card__status">Checking workspace connection...</span>
-                                    ) : googleCalendarStatus.connected ? (
-                                        <span className="integration-connect-card__status">
-                                            Using <strong>{googleCalendarStatus.google_email}</strong>. New meetings create calendar events, invitations, and real Google Meet links.
-                                        </span>
-                                    ) : (
-                                        <span className="integration-connect-card__status">Connect the Google account whose calendar should own this workspace's meetings.</span>
+                                    {user?.role === 'admin' && (
+                                        <div className="integration-connect-card__actions">
+                                            {googleCalendarStatus.connected ? (
+                                                <Button variant="outline" icon={Unplug} loading={googleCalendarConnecting} onClick={handleDisconnectGoogleCalendar}>
+                                                    Disconnect
+                                                </Button>
+                                            ) : (
+                                                <Button variant="primary" icon={CalendarCheck} loading={googleCalendarConnecting} onClick={handleConnectGoogleCalendar}>
+                                                    Connect Google
+                                                </Button>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
-                                <div className="integration-connect-card__actions">
-                                    {googleCalendarStatus.connected ? (
-                                        <Button variant="outline" icon={Unplug} loading={googleCalendarConnecting} onClick={handleDisconnectGoogleCalendar}>
-                                            Disconnect
+
+                                <div className="integration-connect-card integration-connect-card--telegram">
+                                    <div className="integration-connect-card__icon"><Send size={22} /></div>
+                                    <div className="integration-connect-card__body">
+                                        <div className="integration-connect-card__heading">
+                                            <strong>Telegram Notifications</strong>
+                                            {!telegramStatus.loading && (
+                                                <span className={`integration-status-pill ${telegramStatus.connected ? 'is-connected' : ''}`}>
+                                                    <span className="integration-status-pill__dot" />
+                                                    {telegramStatus.connected ? 'Connected' : 'Not connected'}
+                                                </span>
+                                            )}
+                                            <span className="integration-scope-label">Personal</span>
+                                        </div>
+                                        {telegramStatus.loading ? (
+                                            <span className="integration-connect-card__status">Checking Telegram connection...</span>
+                                        ) : telegramStatus.connected ? (
+                                            <span className="integration-connect-card__status">Your DevelopWork bot is ready to deliver supported notifications. Send <code>/disconnect</code> in Telegram to unlink it.</span>
+                                        ) : (
+                                            <span className="integration-connect-card__status">Open the DevelopWork bot, tap <strong>START</strong>, and receive supported notifications in Telegram.</span>
+                                        )}
+                                    </div>
+                                    <div className="integration-connect-card__actions">
+                                        <Button
+                                            variant={telegramStatus.connected ? 'outline' : 'primary'}
+                                            icon={Send}
+                                            loading={telegramConnecting}
+                                            onClick={handleConnectTelegram}
+                                        >
+                                            {telegramStatus.connected ? 'Reconnect' : 'Connect Telegram'}
                                         </Button>
-                                    ) : (
-                                        <Button variant="primary" icon={CalendarCheck} loading={googleCalendarConnecting} onClick={handleConnectGoogleCalendar}>
-                                            Connect Google
-                                        </Button>
-                                    )}
+                                    </div>
+                                </div>
+
+                                <div className="integration-connect-card integration-connect-card--email">
+                                    <div className="integration-connect-card__icon"><Mail size={22} /></div>
+                                    <div className="integration-connect-card__body">
+                                        <div className="integration-connect-card__heading">
+                                            <strong>Email Notifications</strong>
+                                            <span className={`integration-status-pill ${user?.email ? 'is-connected' : ''}`}>
+                                                <span className="integration-status-pill__dot" />
+                                                {user?.email ? 'Ready' : 'Email required'}
+                                            </span>
+                                            <span className="integration-scope-label">Personal</span>
+                                        </div>
+                                        <span className="integration-connect-card__status">
+                                            {user?.email
+                                                ? <>Supported notifications are delivered to <strong>{user.email}</strong>. No separate connection is required.</>
+                                                : 'Add an email address to your profile to receive supported email notifications.'}
+                                        </span>
+                                    </div>
+                                    <div className="integration-connect-card__actions integration-connect-card__actions--text">
+                                        Managed automatically
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="integration-note">
                                 <ShieldCheck size={17} />
-                                <span>The connection is isolated to this workspace. DevelopWork stores the refresh token encrypted and requests calendar-event access only.</span>
+                                <span>Personal notification channels stay linked to your account. The shared Google Calendar connection remains isolated to this workspace and can only be changed by an administrator.</span>
                             </div>
                         </div>
                     )}
@@ -1161,7 +1193,7 @@ const Settings = () => {
                                         return;
                                     }
                                     if (!isValidPassword(inviteForm.password)) {
-                                        dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 6 characters.', type: 'warning' }));
+                                        dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 8 characters and include a letter and a number.', type: 'warning' }));
                                         return;
                                     }
                                     setInviteLoading(true);
@@ -1243,7 +1275,7 @@ const Settings = () => {
                                         return;
                                     }
                                     if (!isValidPassword(inviteEmployeeForm.password)) {
-                                        dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 6 characters.', type: 'warning' }));
+                                        dispatch(addToast({ title: 'Validation Error', message: 'Password must be at least 8 characters and include a letter and a number.', type: 'warning' }));
                                         return;
                                     }
                                     setInviteLoading(true);

@@ -45,7 +45,7 @@ const Register = () => {
             return;
         }
         if (!isValidPassword(form.password)) {
-            setLocalError('Password must be at least 6 characters.');
+            setLocalError('Password must be at least 8 characters and include a letter and a number.');
             return;
         }
         if (form.password !== form.confirmPassword) {

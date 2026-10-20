@@ -26,8 +26,11 @@ export const superAdminService = {
     createWorkspace({ name, email, password }) {
         return call('create_workspace', { name, email, password });
     },
-    resetPassword(adminId, password) {
-        return call('reset_password', { admin_id: adminId, password });
+    listWorkspaceMembers(adminId) {
+        return call('list_workspace_members', { admin_id: adminId });
+    },
+    resetPassword(userId, password) {
+        return call('reset_password', { user_id: userId, password });
     },
     toggleWorkspace(adminId, disabled) {
         return call('toggle_workspace', { admin_id: adminId, disabled });

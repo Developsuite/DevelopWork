@@ -22,6 +22,11 @@ const SuperAdmin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [resetId, setResetId] = useState(null);
     const [resetPassword, setResetPassword] = useState('');
+    const [resetSubmittingId, setResetSubmittingId] = useState(null);
+    const [membersWorkspace, setMembersWorkspace] = useState(null);
+    const [members, setMembers] = useState([]);
+    const [membersLoading, setMembersLoading] = useState(false);
+    const [memberResetId, setMemberResetId] = useState(null);
     const [activeView, setActiveView] = useState('overview');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -72,18 +77,48 @@ const SuperAdmin = () => {
         }
     };
 
-    const handleReset = async (adminId) => {
-        if (!resetPassword || resetPassword.length < 6) {
-            dispatch(addToast({ title: 'Validation', message: 'Password must be at least 6 characters.', type: 'warning' }));
+    const handleReset = async (target, closeMemberReset = false) => {
+        if (!resetPassword || resetPassword.length < 8) {
+            dispatch(addToast({ title: 'Validation', message: 'Password must be at least 8 characters.', type: 'warning' }));
             return;
         }
+        if (!/[A-Za-z]/.test(resetPassword) || !/\d/.test(resetPassword)) {
+            dispatch(addToast({ title: 'Validation', message: 'Password must include at least one letter and one number.', type: 'warning' }));
+            return;
+        }
+        setResetSubmittingId(target.id);
         try {
-            await superAdminService.resetPassword(adminId, resetPassword);
-            dispatch(addToast({ title: 'Password Reset', message: 'New password set. Share it with the admin.', type: 'success' }));
-            setResetId(null);
+            await superAdminService.resetPassword(target.id, resetPassword);
+            dispatch(addToast({
+                title: 'Password Updated',
+                message: `${target.name || target.email}'s password was changed by the Super Admin.`,
+                type: 'success',
+            }));
+            if (closeMemberReset) setMemberResetId(null);
+            else setResetId(null);
             setResetPassword('');
         } catch (err) {
             dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
+        } finally {
+            setResetSubmittingId(null);
+        }
+    };
+
+    const openWorkspaceMembers = async (workspace) => {
+        setMembersWorkspace(workspace);
+        setMembers([]);
+        setMemberResetId(null);
+        setResetId(null);
+        setResetPassword('');
+        setMembersLoading(true);
+        try {
+            const response = await superAdminService.listWorkspaceMembers(workspace.id);
+            setMembers(response.members || []);
+        } catch (err) {
+            dispatch(addToast({ title: 'Error', message: err.message, type: 'error' }));
+            setMembersWorkspace(null);
+        } finally {
+            setMembersLoading(false);
         }
     };
 
@@ -151,16 +186,19 @@ const SuperAdmin = () => {
                         </div>
                         <div className="sa-card__actions" aria-label={`Actions for ${workspace.name}`}>
                             <button className="sa-icon-btn sa-icon-btn--copy" title="Copy administrator email" aria-label="Copy administrator email" onClick={() => copyCreds(workspace)}><Copy size={15} /></button>
-                            <button className="sa-icon-btn sa-icon-btn--key" title="Reset administrator password" aria-label="Reset administrator password" onClick={() => { setResetId(workspace.id); setResetPassword(genPassword()); }}><KeyRound size={15} /></button>
+                            <button className="sa-icon-btn" title="Manage workspace members" aria-label="Manage workspace members" onClick={() => openWorkspaceMembers(workspace)}><Users size={15} /></button>
+                            <button className="sa-icon-btn sa-icon-btn--key" title="Set administrator password" aria-label="Set administrator password" onClick={() => { setResetId(workspace.id); setResetPassword(genPassword()); }}><KeyRound size={15} /></button>
                             <button className={`sa-icon-btn ${workspace.disabled ? 'sa-icon-btn--on' : 'sa-icon-btn--off'}`} title={workspace.disabled ? 'Enable workspace' : 'Suspend workspace'} aria-label={workspace.disabled ? 'Enable workspace' : 'Suspend workspace'} onClick={() => handleToggle(workspace)}><Power size={15} /></button>
                         </div>
 
                         {resetId === workspace.id && (
                             <div className="sa-reset">
-                                <div className="sa-reset__copy"><KeyRound size={16} /><div><strong>Set a temporary password</strong><span>The workspace admin should change it after signing in.</span></div></div>
-                                <input type="text" value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} placeholder="New password" />
-                                <button className="sa-btn sa-btn--primary sa-btn--sm" onClick={() => handleReset(workspace.id)}>Update</button>
-                                <button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => { setResetId(null); setResetPassword(''); }}>Cancel</button>
+                                <div className="sa-reset__copy"><KeyRound size={16} /><div><strong>Set an emergency password</strong><span>The workspace admin should change it after signing in.</span></div></div>
+                                <input type="text" value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} placeholder="New password" autoComplete="new-password" />
+                                <button className="sa-btn sa-btn--primary sa-btn--sm" disabled={resetSubmittingId === workspace.id} onClick={() => handleReset(workspace)}>
+                                    {resetSubmittingId === workspace.id ? <><Loader2 size={14} className="sa-spin" /> Updating...</> : 'Update'}
+                                </button>
+                                <button className="sa-btn sa-btn--ghost sa-btn--sm" disabled={resetSubmittingId === workspace.id} onClick={() => { setResetId(null); setResetPassword(''); }}>Cancel</button>
                             </div>
                         )}
                     </article>
@@ -259,13 +297,70 @@ const SuperAdmin = () => {
 
                     {activeView === 'security' && (
                         <section className="sa-security-grid">
-                            <article className="sa-security-card"><span className="sa-security-card__icon blue"><ShieldCheck size={20} /></span><div><h2>Super-admin boundary</h2><p>Only authenticated super administrators can provision workspaces or reset administrator credentials.</p></div><span className="sa-security-card__status"><CircleCheck size={14} /> Enforced</span></article>
+                            <article className="sa-security-card"><span className="sa-security-card__icon blue"><ShieldCheck size={20} /></span><div><h2>Super-admin boundary</h2><p>Only authenticated super administrators can provision workspaces or set emergency credentials for workspace members.</p></div><span className="sa-security-card__status"><CircleCheck size={14} /> Enforced</span></article>
                             <article className="sa-security-card"><span className="sa-security-card__icon violet"><Building2 size={20} /></span><div><h2>Workspace isolation</h2><p>Each administrator owns an isolated tenant containing their members and operational data.</p></div><span className="sa-security-card__status"><CircleCheck size={14} /> Enabled</span></article>
-                            <article className="sa-security-card"><span className="sa-security-card__icon amber"><KeyRound size={20} /></span><div><h2>Credential recovery</h2><p>Temporary passwords can be generated from the workspace directory and shared through a secure channel.</p></div><button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => setActiveView('workspaces')}>Manage workspaces</button></article>
+                            <article className="sa-security-card"><span className="sa-security-card__icon amber"><KeyRound size={20} /></span><div><h2>Credential recovery</h2><p>Users can recover their own account by email. The Super Admin can also set an emergency password for any workspace member.</p></div><button className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => setActiveView('workspaces')}>Manage workspaces</button></article>
                         </section>
                     )}
                 </div>
             </main>
+
+            {membersWorkspace && (
+                <div className="sa-modal-overlay" onClick={() => { setMembersWorkspace(null); setMemberResetId(null); setResetPassword(''); }}>
+                    <div className="sa-modal sa-modal--wide" onClick={(event) => event.stopPropagation()}>
+                        <div className="sa-modal__head">
+                            <div>
+                                <span className="sa-modal__eyebrow">Workspace access</span>
+                                <h3>{membersWorkspace.name} members</h3>
+                            </div>
+                            <button className="sa-icon-btn" onClick={() => { setMembersWorkspace(null); setMemberResetId(null); setResetPassword(''); }} aria-label="Close"><X size={18} /></button>
+                        </div>
+
+                        {membersLoading ? (
+                            <div className="sa-loading"><Loader2 size={20} className="sa-spin" /> Loading members...</div>
+                        ) : members.length === 0 ? (
+                            <div className="sa-empty"><Users size={24} /><strong>No members found</strong></div>
+                        ) : (
+                            <div className="sa-member-list">
+                                {members.map((member) => (
+                                    <div key={member.id} className="sa-member-row">
+                                        <div className="sa-member-row__summary">
+                                            <span className="sa-member-row__avatar">{(member.name || member.email || '?').charAt(0).toUpperCase()}</span>
+                                            <div>
+                                                <strong>{member.name || 'Unnamed member'}</strong>
+                                                <span>{member.email}</span>
+                                            </div>
+                                            <span className={`sa-member-role sa-member-role--${member.role}`}>{member.role === 'admin' ? 'Workspace admin' : member.role}</span>
+                                            <button
+                                                className="sa-icon-btn sa-icon-btn--key"
+                                                title={`Set password for ${member.name || member.email}`}
+                                                aria-label={`Set password for ${member.name || member.email}`}
+                                                onClick={() => { setMemberResetId(member.id); setResetPassword(genPassword()); }}
+                                            >
+                                                <KeyRound size={15} />
+                                            </button>
+                                        </div>
+
+                                        {memberResetId === member.id && (
+                                            <div className="sa-member-reset">
+                                                <div>
+                                                    <strong>Set emergency password</strong>
+                                                    <span>The member should change this password after signing in.</span>
+                                                </div>
+                                                <input type="text" value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} autoComplete="new-password" aria-label={`New password for ${member.name || member.email}`} />
+                                                <button className="sa-btn sa-btn--primary sa-btn--sm" disabled={resetSubmittingId === member.id} onClick={() => handleReset(member, true)}>
+                                                    {resetSubmittingId === member.id ? <><Loader2 size={14} className="sa-spin" /> Updating...</> : 'Update'}
+                                                </button>
+                                                <button className="sa-btn sa-btn--ghost sa-btn--sm" disabled={resetSubmittingId === member.id} onClick={() => { setMemberResetId(null); setResetPassword(''); }}>Cancel</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {isCreateOpen && (
                 <div className="sa-modal-overlay" onClick={() => setIsCreateOpen(false)}>

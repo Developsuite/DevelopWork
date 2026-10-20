@@ -18,6 +18,7 @@ import SuperAdmin from './pages/SuperAdmin/SuperAdmin';
 import Login from './pages/Auth/Login/Login';
 import Register from './pages/Auth/Register/Register';
 import ForgotPassword from './pages/Auth/ForgotPassword/ForgotPassword';
+import ResetPassword from './pages/Auth/ResetPassword/ResetPassword';
 import Board from './pages/Board/Board';
 import HR from './pages/HR/HR';
 import Finance from './pages/Finance/Finance';
@@ -139,6 +140,24 @@ function App() {
           return;
         }
 
+        // Recovery sessions may update credentials only. Do not turn them
+        // into an authenticated application session before the reset ends.
+        if (event === 'PASSWORD_RECOVERY') {
+          authRevision += 1;
+          if (isMounted) dispatch(setUser(null));
+          return;
+        }
+
+        if (
+          window.location.pathname === '/reset-password'
+          && session
+          && (event === 'SIGNED_IN' || event === 'USER_UPDATED')
+        ) {
+          authRevision += 1;
+          if (isMounted) dispatch(setUser(null));
+          return;
+        }
+
         // ONLY clear user on an explicit sign-out.
         if (event === 'SIGNED_OUT') {
           authRevision += 1;
@@ -241,6 +260,7 @@ function App() {
         <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/onboarding" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
 

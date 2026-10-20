@@ -105,10 +105,16 @@ export const signInWithGoogle = createAsyncThunk(
 
 export const restoreSession = createAsyncThunk(
     'auth/restoreSession',
-    async (_, { rejectWithValue }) => {
+    async () => {
         try {
             const session = await authService.getSession();
             if (!session) return null;
+
+            // A recovery session is temporary authorization to set a new
+            // password, not a normal application sign-in.
+            if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
+                return null;
+            }
             
             try {
                 const profile = await authService.getProfile(session.user.id);
@@ -277,6 +283,11 @@ const authSlice = createSlice({
                 state.isLoading = false;
             })
             // Reset Password
+            .addCase(resetPassword.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+                state.resetSuccess = false;
+            })
             .addCase(resetPassword.fulfilled, (state) => {
                 state.resetSuccess = true;
                 state.isLoading = false;

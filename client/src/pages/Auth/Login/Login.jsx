@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { signInWithEmail, signInWithGoogle, clearError } from '../../../store/slices/authSlice';
-import { addToast } from '../../../store/slices/uiSlice';
 import { isValidEmail, formatAuthError } from '../../../utils/validation';
 import ThemeToggle from '../../../components/common/ThemeToggle/ThemeToggle';
 import { Zap, LayoutDashboard, Users, BarChart3, Shield, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
@@ -10,6 +9,7 @@ import './Login.css';
 
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
     const { isAuthenticated, isLoading, error, user } = useSelector((state) => state.auth);
     const [email, setEmail] = useState('');
@@ -33,7 +33,6 @@ const Login = () => {
     // Clear errors when component mounts
     useEffect(() => {
         dispatch(clearError());
-        setLocalError('');
     }, [dispatch]);
 
     const handleSubmit = async (e) => {
@@ -95,6 +94,13 @@ const Login = () => {
                 <div className="login-page__form-container">
                     <h1 className="login-page__form-title">Welcome back</h1>
                     <p className="login-page__form-subtitle">Sign in to your DevelopWork account</p>
+
+                    {location.state?.passwordReset && (
+                        <div className="login-page__success login-page__success--compact" role="status">
+                            <strong>Password updated</strong>
+                            <p>Sign in with your new password.</p>
+                        </div>
+                    )}
 
                     {(() => {
                         const displayError = localError || (error ? formatAuthError(error) : null);
@@ -197,7 +203,7 @@ const Login = () => {
                     </form>
 
                     <div className="login-page__footer">
-                        Don't have an account? <Link to="/register">Sign up free</Link>
+                        Need an account? Ask your workspace administrator for access.
                     </div>
                 </div>
             </div>

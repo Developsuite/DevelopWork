@@ -648,10 +648,16 @@
     align-items: center;
     gap: 16px;
     padding: 20px;
-    margin-top: 22px;
+    margin-top: 0;
     border: 1px solid var(--border-light);
     border-radius: 14px;
     background: var(--bg-secondary);
+}
+
+.integration-connect-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 22px;
 }
 
 .integration-connect-card__icon {
@@ -699,6 +705,43 @@
 
 .integration-connect-card__actions {
     flex-shrink: 0;
+}
+
+.integration-connect-card__actions--text {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.integration-connect-card--telegram .integration-connect-card__icon {
+    color: #0284c7;
+    background: #f0f9ff;
+    border-color: #bae6fd;
+}
+
+.integration-connect-card--email .integration-connect-card__icon {
+    color: #7c3aed;
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+}
+
+.integration-connect-card__status code {
+    padding: 1px 5px;
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+    border-radius: 5px;
+    font-size: 11px;
+}
+
+.integration-scope-label {
+    padding: 2px 7px;
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }
 
 .integration-status-pill {

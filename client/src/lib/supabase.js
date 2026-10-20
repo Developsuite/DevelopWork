@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { capturePasswordRecoveryIntent, markPasswordRecoveryReady } from './passwordRecovery';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder';
@@ -6,6 +7,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder';
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
     console.error('Missing Supabase environment variables. Check your .env file.');
 }
+
+// Capture the recovery URL before Supabase consumes and cleans its hash parameters.
+capturePasswordRecoveryIntent();
 
 // Module-level reference used by the retry-fetch wrapper below.
 // Set immediately after the client is created (line ~50).
@@ -63,6 +67,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
         fetch: autoRetryFetch,
     },
+});
+
+// Keep a small, session-scoped proof that this browser received a genuine
+// Supabase password-recovery session. The reset page will not accept an
+// ordinary logged-in session as authority to change a password.
+supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+        markPasswordRecoveryReady(session?.user?.id);
+    }
 });
 
 // Wire up the module-level reference now that the client exists.

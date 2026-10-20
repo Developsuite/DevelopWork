@@ -12,7 +12,7 @@ export const isValidPhone = (phone) => {
 };
 
 export const isValidPassword = (password) => {
-    return password && password.length >= 6;
+    return Boolean(password && password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password));
 };
 
 export const isPositiveNumber = (num) => {
@@ -38,7 +38,7 @@ export const formatAuthError = (err) => {
         return 'Please confirm your email address before signing in, or check your inbox.';
     }
     if (lower.includes('password should be at least') || lower.includes('password is too short')) {
-        return 'Password must be at least 6 characters long.';
+        return 'Password must be at least 8 characters and include a letter and a number.';
     }
     if (lower.includes('user not found')) {
         return 'No account found with this email. Please sign up first.';

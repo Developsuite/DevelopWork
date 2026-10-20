@@ -46,15 +46,15 @@ export const authService = {
     },
 
     // Sign out
-    async signOut() {
-        const { error } = await supabase.auth.signOut();
+    async signOut(scope = 'global') {
+        const { error } = await supabase.auth.signOut({ scope });
         if (error) throw error;
     },
 
     // Reset password (sends email)
     async resetPassword(email) {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/login',
+            redirectTo: new URL('/reset-password', window.location.origin).toString(),
         });
         if (error) throw error;
     },
