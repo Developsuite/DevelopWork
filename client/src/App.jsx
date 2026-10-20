@@ -13,6 +13,8 @@ import AICommandCenter from './components/common/AICommandCenter/AICommandCenter
 import AdminRoute from './components/guards/AdminRoute';
 import ManagerRoute from './components/guards/ManagerRoute';
 import EmployeeRoute from './components/guards/EmployeeRoute';
+import SuperAdminRoute from './components/guards/SuperAdminRoute';
+import SuperAdmin from './pages/SuperAdmin/SuperAdmin';
 import Login from './pages/Auth/Login/Login';
 import Register from './pages/Auth/Register/Register';
 import ForgotPassword from './pages/Auth/ForgotPassword/ForgotPassword';
@@ -191,6 +193,7 @@ function App() {
   // Smart redirect for root path based on role
   const getRootRedirect = () => {
     if (!isAuthenticated || !user) return '/landing';
+    if (user.role === 'super_admin') return '/super-admin';
     if (user.role === 'manager') {
       const accessibleModules = permissionsService.getAccessibleModules(user);
       const firstMod = accessibleModules[0]?.key || 'projects';
@@ -232,9 +235,13 @@ function App() {
         {/* Public Routes */}
         <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public self-registration is disabled — only the Super Admin provisions workspaces */}
+        <Route path="/register" element={<Navigate to="/login" replace />} />
+        <Route path="/onboarding" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+
+        {/* Super Admin Console */}
+        <Route path="/super-admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>} />
 
         {/* Admin / Full App Routes (with Layout) */}
         <Route element={<AdminRoute><AppLayout /></AdminRoute>}>
