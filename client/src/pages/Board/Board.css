@@ -243,3 +243,20 @@
 [data-theme="dark"] .brd__search { border-color: rgba(255,255,255,0.06); }
 [data-theme="dark"] .brd__table th { background: rgba(255,255,255,0.03); }
 [data-theme="dark"] .brd__icon-btn { border-color: rgba(255,255,255,0.06); }
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+    .brd { padding: 0 0 24px; }
+    .brd__banner { height: auto; min-height: 130px; padding: 24px 22px; margin-bottom: 20px; }
+    .brd__banner-content h1 { font-size: 24px; }
+    .brd__column,
+    .brd__column { min-width: min(80vw, 300px); width: min(80vw, 300px); }
+    .brd__drawer { width: 100%; max-width: 480px; }
+}
+
+@media (max-width: 480px) {
+    .brd__banner-content h1 { font-size: 21px; }
+    .brd__column,
+    .brd__column { min-width: 86vw; width: 86vw; }
+    .brd__drawer { max-width: 100%; }
+}

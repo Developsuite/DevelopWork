@@ -81,13 +81,115 @@ iframe {
         max-width: 100%;
     }
 
-    /* Generic modal panels should never exceed the screen */
-    [class*="modal__panel"],
-    [class*="modal-content"],
-    [class*="Modal__panel"] {
+    /* Known page-level CRUD modals should never exceed the screen */
+    .cl__pay-modal,
+    .module-hub__invite-modal,
+    .module-hub__creds-modal,
+    .invoice-builder-modal {
         max-width: calc(100vw - 24px) !important;
         max-height: calc(100vh - 32px);
         overflow-y: auto;
+    }
+}
+
+/* ============================================
+   Admin module patterns — tabs, toolbars, grids
+   Targets the real class names used across every
+   module (Projects, Tasks, HR, Finance, Leads,
+   Clients, Meetings, Docs, Board).
+   ============================================ */
+@media (max-width: 768px) {
+
+    /* Horizontal tab bars scroll instead of overflowing the row */
+    .pm__tabs,
+    .brd__tabs,
+    .fin-tabs,
+    .fin-minimal-tabs,
+    .meetings-tabs,
+    .doc-tabs,
+    .cl__tabs,
+    .hr-tabs,
+    .task-tabs-group {
+        flex-wrap: nowrap;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .pm__tabs::-webkit-scrollbar,
+    .brd__tabs::-webkit-scrollbar,
+    .fin-tabs::-webkit-scrollbar,
+    .meetings-tabs::-webkit-scrollbar,
+    .doc-tabs::-webkit-scrollbar,
+    .cl__tabs::-webkit-scrollbar,
+    .task-tabs-group::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pm__tab,
+    .brd__tab,
+    .cl__tab,
+    .fin-tabs button,
+    .doc-tabs button {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Toolbars / section headers stack vertically */
+    .pm__toolbar,
+    .brd__toolbar,
+    .ld__toolbar,
+    .cl__toolbar,
+    .cl__filters-bar,
+    .meetings-toolbar,
+    .finance-dashboard__header,
+    .fin-section__header,
+    .cfr-page__header,
+    .doc-main__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    /* Action / filter clusters wrap and span full width */
+    .pm__actions,
+    .brd__actions,
+    .ld__actions,
+    .ld__views,
+    .cl__toolbar-right,
+    .cl__filters-left,
+    .meetings-header__actions,
+    .meetings-toolbar__filters,
+    .finance-dashboard__header-actions,
+    .task-header__actions,
+    .doc-detail__actions,
+    .cfr-page__header-right {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    /* Search inputs go full width */
+    .pm__search,
+    .brd__search,
+    .ld__search,
+    .cl__search,
+    .meetings-toolbar__search {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    /* Two-column detail / form grids (mostly inside CRUD modals)
+       collapse to a single column so fields stay readable. */
+    .fin-detail-grid,
+    .fin-invoice-info-grid,
+    .fin-expense-main-info,
+    .fin-budget-metrics,
+    .cl__detail-grid,
+    .cl__form-grid,
+    .hr-profile-info-grid {
+        grid-template-columns: 1fr !important;
     }
 }
 

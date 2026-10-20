@@ -566,3 +566,28 @@
     line-height: 1.6;
     margin-bottom: 24px;
 }
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+    .pm__overview-content { grid-template-columns: 1fr; }
+    .pm__stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .pm { padding: 0 0 24px; }
+    .pm__banner { height: auto; min-height: 150px; padding: 28px 22px; }
+    .pm__banner-content h1 { font-size: 24px; }
+    .pm__banner-content p { font-size: 13px; }
+    .pm__stats-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .pm__search,
+    .pm__filter-select { flex: 1 1 140px; min-width: 0; max-width: none; }
+    .pm__view-toggle { flex-shrink: 0; }
+}
+
+@media (max-width: 480px) {
+    .pm__stats-grid { grid-template-columns: 1fr; }
+    .pm__stat-value { font-size: 26px; }
+    .pm__stat-img { width: 52px; height: 52px; }
+    .pm__project-card-meta { grid-template-columns: 1fr 1fr; }
+    .pm__banner-content h1 { font-size: 21px; }
+}

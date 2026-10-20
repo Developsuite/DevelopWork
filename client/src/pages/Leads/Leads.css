@@ -576,3 +576,24 @@
 [data-theme="dark"] .ld__table th { background: rgba(255,255,255,0.03); }
 [data-theme="dark"] .ld__table tr:hover { background: rgba(255,255,255,0.03); }
 [data-theme="dark"] .ld__contact-card { background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.06); }
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+    .ld__stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .ld { padding: 0 0 24px; }
+    .ld__banner { height: auto; min-height: 150px; padding: 28px 22px; }
+    .ld__banner-content h1 { font-size: 24px; }
+    .ld__stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .ld__tool-group { flex-wrap: wrap; }
+    .ld__search { width: 100%; }
+    .ld__pipeline-column { flex: 0 0 min(80vw, 280px); }
+}
+
+@media (max-width: 480px) {
+    .ld__stats { grid-template-columns: 1fr; }
+    .ld__banner-content h1 { font-size: 21px; }
+    .ld__pipeline-column { flex: 0 0 85vw; }
+}
