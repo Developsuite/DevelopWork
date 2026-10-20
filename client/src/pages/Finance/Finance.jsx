@@ -790,11 +790,13 @@ const Finance = () => {
         const totalRev = filteredTxForStats.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
         const totalExp = filteredTxForStats.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
 
-        // Net profit = (Revenue − Expenses) minus the reserve set aside for next month.
-        // The reserve is money saved out of this period's profit, so it is not spendable profit.
-        const baseProfit = totalRev - totalExp;
-        const reserveSetAside = cashFlowReserve.enabled ? (cashFlowStats.reserveAmount || 0) : 0;
-        const netProfit = baseProfit - reserveSetAside;
+        // Expenses are paid from the cash flow reserve first. Only the expenses that
+        // exceed the reserve reduce net profit; expenses fully covered by the reserve
+        // don't subtract from revenue at all.
+        const reserveAmount = cashFlowReserve.enabled ? (cashFlowStats.reserveAmount || 0) : 0;
+        const reserveUsed = Math.min(Math.max(0, totalExp), reserveAmount);
+        const expFromMainFunds = Math.max(0, totalExp - reserveAmount);
+        const netProfit = totalRev - expFromMainFunds;
         
         // Calculate dynamic comparison metrics based on the chartData points
         let prevRev = 0;
@@ -847,8 +849,8 @@ const Finance = () => {
             {
                 label: 'Net Profit',
                 value: formatCurrency(netProfit),
-                change: cashFlowReserve.enabled && reserveSetAside > 0
-                    ? `${profitChange} · ${formatCurrency(reserveSetAside)} to reserve`
+                change: cashFlowReserve.enabled && reserveUsed > 0
+                    ? `${profitChange} · ${formatCurrency(reserveUsed)} from reserve`
                     : profitChange,
                 positive: profitChange.startsWith('+') || netProfit >= 0,
                 image: img3,
