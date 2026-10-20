@@ -160,7 +160,7 @@ Deno.serve(async (req: Request) => {
 
     // Admin check
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const { data: profile } = await adminClient.from("profiles").select("role").eq("id", user.id).single();
+    const { data: profile } = await adminClient.from("profiles").select("role, tenant_id").eq("id", user.id).single();
     if (profile?.role !== "admin") {
       return new Response(JSON.stringify({ error: "Admin only" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -168,6 +168,18 @@ Deno.serve(async (req: Request) => {
     }
 
     const payload: EmailPayload = await req.json();
+
+    // Tenant check: the recipient email must belong to someone in the admin's workspace.
+    const { data: recipient } = await adminClient
+      .from("profiles")
+      .select("tenant_id")
+      .ilike("email", payload.to)
+      .maybeSingle();
+    if (!recipient || recipient.tenant_id !== profile.tenant_id) {
+      return new Response(JSON.stringify({ error: "Recipient is not in your workspace" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Build HTML based on type
     let html: string;

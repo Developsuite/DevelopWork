@@ -54,7 +54,7 @@ Deno.serve(async (req: Request) => {
         });
       }
 
-      const { data: profile } = await adminClient.from("profiles").select("role").eq("id", user.id).single();
+      const { data: profile } = await adminClient.from("profiles").select("role, tenant_id").eq("id", user.id).single();
       if (profile?.role !== "admin") {
         return new Response(JSON.stringify({ error: "Admin only" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -62,6 +62,14 @@ Deno.serve(async (req: Request) => {
       }
 
       const { user_id, message } = await req.json();
+
+      // Tenant check: the recipient must belong to the same workspace as the admin.
+      const { data: recipient } = await adminClient.from("profiles").select("tenant_id").eq("id", user_id).single();
+      if (!recipient || recipient.tenant_id !== profile.tenant_id) {
+        return new Response(JSON.stringify({ error: "Recipient is not in your workspace" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       // Look up the employee's Telegram chat ID
       const { data: integration } = await adminClient
