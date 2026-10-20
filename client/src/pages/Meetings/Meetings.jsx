@@ -3,8 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { addToast } from '../../store/slices/uiSlice';
 import { meetingsService } from '../../services/meetingsService';
+import { googleCalendarService } from '../../services/googleCalendarService';
 import { clientsService } from '../../services/clientsService';
-import { projectService } from '../../services/projectService';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Button from '../../components/common/Button/Button';
 import Modal from '../../components/common/Modal/Modal';
@@ -42,7 +42,10 @@ import {
     List,
     TrendingUp,
     MoreVertical,
-    Send
+    Send,
+    CalendarCheck,
+    Unplug,
+    RefreshCw
 } from 'lucide-react';
 import './Meetings.css';
 
@@ -75,7 +78,6 @@ const Meetings = () => {
     // State
     const [meetings, setMeetings] = useState([]);
     const [clients, setClients] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState(meetingsService.getStats());
 
     // Filters & View
@@ -96,6 +98,9 @@ const Meetings = () => {
     const [newActionAssignee, setNewActionAssignee] = useState('');
     const [newActionDueDate, setNewActionDueDate] = useState('');
     const [copiedLink, setCopiedLink] = useState(false);
+    const [calendarStatus, setCalendarStatus] = useState({ connected: false, loading: true, can_connect: false });
+    const [calendarConnecting, setCalendarConnecting] = useState(false);
+    const [savingMeeting, setSavingMeeting] = useState(false);
 
     // Calendar state
     const [currentCalDate, setCurrentCalDate] = useState(new Date());
@@ -124,7 +129,6 @@ const Meetings = () => {
 
     // Load data
     const loadData = useCallback(async () => {
-        setLoading(true);
         try {
             const [meetingList, clientList] = await Promise.all([
                 meetingsService.getMeetings(),
@@ -136,8 +140,6 @@ const Meetings = () => {
         } catch (err) {
             console.error('Error loading meetings data:', err);
             dispatch(addToast({ title: 'Error', message: 'Failed to load meetings', type: 'error' }));
-        } finally {
-            setLoading(false);
         }
     }, [dispatch]);
 
@@ -145,16 +147,57 @@ const Meetings = () => {
         loadData();
     }, [loadData]);
 
-    // Handle deep-link parameters (e.g. ?client=cl-1&schedule=true)
+    const loadCalendarStatus = useCallback(async () => {
+        try {
+            const status = await googleCalendarService.getStatus();
+            setCalendarStatus({ ...status, loading: false });
+        } catch (error) {
+            console.warn('Google Calendar status unavailable:', error);
+            setCalendarStatus({ connected: false, loading: false, can_connect: user?.role === 'admin', error: error.message });
+        }
+    }, [user?.role]);
+
     useEffect(() => {
-        const clientParam = searchParams.get('client');
-        if (clientParam) {
-            setSelectedClientFilter(clientParam);
+        loadCalendarStatus();
+    }, [loadCalendarStatus]);
+
+    useEffect(() => {
+        const result = searchParams.get('google_calendar');
+        if (!result) return;
+        if (result === 'connected') {
+            dispatch(addToast({ title: 'Google Calendar connected', message: 'New Google Meet meetings will be added to this workspace calendar.', type: 'success' }));
+            loadCalendarStatus();
+        } else {
+            dispatch(addToast({ title: 'Connection failed', message: 'Google Calendar could not be connected. Please try again.', type: 'error' }));
         }
-        if (searchParams.get('schedule') === 'true') {
-            handleOpenCreateModal(clientParam);
+        setSearchParams((previous) => {
+            const next = new URLSearchParams(previous);
+            next.delete('google_calendar');
+            return next;
+        }, { replace: true });
+    }, [searchParams, setSearchParams, dispatch, loadCalendarStatus]);
+
+    const handleConnectCalendar = async () => {
+        setCalendarConnecting(true);
+        try {
+            const result = await googleCalendarService.connect('/meetings');
+            window.location.assign(result.auth_url);
+        } catch (error) {
+            dispatch(addToast({ title: 'Google Calendar', message: error.message || 'Could not start Google connection.', type: 'error' }));
+            setCalendarConnecting(false);
         }
-    }, [searchParams]);
+    };
+
+    const handleDisconnectCalendar = async () => {
+        if (!window.confirm('Disconnect Google Calendar for this workspace? Existing calendar events will remain in Google.')) return;
+        try {
+            await googleCalendarService.disconnect();
+            await loadCalendarStatus();
+            dispatch(addToast({ title: 'Google Calendar disconnected', message: 'New meetings will no longer sync until an administrator reconnects.', type: 'info' }));
+        } catch (error) {
+            dispatch(addToast({ title: 'Disconnect failed', message: error.message, type: 'error' }));
+        }
+    };
 
     const handleTabChange = (tab) => {
         setSearchParams(prev => {
@@ -165,7 +208,7 @@ const Meetings = () => {
     };
 
     // Open create modal with prefilled client if applicable
-    const handleOpenCreateModal = (prefillClientId = null) => {
+    const handleOpenCreateModal = useCallback((prefillClientId = null) => {
         setIsEditMode(false);
         const targetClient = clients.find(c => c.id === prefillClientId || c.name === prefillClientId);
 
@@ -183,7 +226,7 @@ const Meetings = () => {
             time: '14:00',
             duration: 45,
             platform: 'Google Meet',
-            meeting_link: `https://meet.google.com/dw-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`,
+            meeting_link: '',
             location: 'Online Video Call',
             notes: '',
             agendaItems: [
@@ -197,7 +240,18 @@ const Meetings = () => {
             ]
         });
         setIsCreateModalOpen(true);
-    };
+    }, [clients, user?.email, user?.name]);
+
+    // Handle deep-link parameters (e.g. ?client=cl-1&schedule=true)
+    useEffect(() => {
+        const clientParam = searchParams.get('client');
+        if (clientParam) {
+            setSelectedClientFilter(clientParam);
+        }
+        if (searchParams.get('schedule') === 'true') {
+            handleOpenCreateModal(clientParam);
+        }
+    }, [searchParams, handleOpenCreateModal]);
 
     const handleOpenEditModal = (meeting, e) => {
         if (e) e.stopPropagation();
@@ -261,6 +315,15 @@ const Meetings = () => {
             return;
         }
 
+        if (formData.platform === 'Google Meet' && !calendarStatus.connected) {
+            dispatch(addToast({
+                title: 'Connect Google Calendar',
+                message: calendarStatus.can_connect ? 'Connect this workspace to Google Calendar before scheduling a Google Meet.' : 'Ask the workspace administrator to connect Google Calendar first.',
+                type: 'warning'
+            }));
+            return;
+        }
+
         const validAgenda = (formData.agendaItems || [])
             .filter(item => item.text && item.text.trim())
             .map((item, idx) => ({
@@ -273,24 +336,38 @@ const Meetings = () => {
         const payload = {
             ...formData,
             agenda: validAgenda,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Karachi',
+            sync_google_calendar: formData.platform === 'Google Meet',
         };
 
+        setSavingMeeting(true);
         try {
+            let savedMeeting;
             if (isEditMode && selectedMeeting) {
-                const updated = await meetingsService.updateMeeting(selectedMeeting.id, payload);
-                dispatch(addToast({ title: 'Meeting Updated', message: 'Meeting details have been saved', type: 'success' }));
-                if (selectedMeeting && selectedMeeting.id === updated.id) {
-                    setSelectedMeeting(updated);
+                savedMeeting = await meetingsService.updateMeeting(selectedMeeting.id, payload);
+                dispatch(addToast({ title: 'Meeting Updated', message: formData.platform === 'Google Meet' ? 'Meeting and Google Calendar event have been updated.' : 'Meeting details have been saved.', type: 'success' }));
+                if (selectedMeeting && selectedMeeting.id === savedMeeting.id) {
+                    setSelectedMeeting(savedMeeting);
                 }
             } else {
-                await meetingsService.createMeeting(payload);
-                dispatch(addToast({ title: 'Meeting Scheduled', message: 'New meeting scheduled successfully', type: 'success' }));
+                savedMeeting = await meetingsService.createMeeting(payload);
+                dispatch(addToast({
+                    title: 'Meeting Scheduled',
+                    message: formData.platform === 'Google Meet'
+                        ? savedMeeting.meeting_link
+                            ? 'Added to Google Calendar and a Google Meet link was created.'
+                            : 'Added to Google Calendar. Google is still preparing the Meet link; refresh Meetings shortly.'
+                        : 'New meeting scheduled successfully.',
+                    type: 'success'
+                }));
             }
             await loadData();
             setIsCreateModalOpen(false);
         } catch (err) {
             console.error('Save meeting error:', err);
-            dispatch(addToast({ title: 'Error', message: 'Failed to save meeting', type: 'error' }));
+            dispatch(addToast({ title: 'Unable to schedule meeting', message: err.message || 'Failed to save meeting', type: 'error' }));
+        } finally {
+            setSavingMeeting(false);
         }
     };
 
@@ -446,6 +523,16 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                 </div>
 
                 <div className="meetings-header__actions">
+                    {calendarStatus.connected ? (
+                        <button className="google-calendar-button connected" type="button" title={`Connected as ${calendarStatus.google_email}`} onClick={() => handleTabChange('calendar')}>
+                            <CalendarCheck size={16} /><span><strong>Google Calendar</strong><small>{calendarStatus.google_email}</small></span>
+                        </button>
+                    ) : calendarStatus.can_connect ? (
+                        <button className="google-calendar-button" type="button" onClick={handleConnectCalendar} disabled={calendarConnecting || calendarStatus.loading}>
+                            {calendarConnecting ? <RefreshCw size={16} className="google-calendar-spin" /> : <Calendar size={16} />}
+                            <span><strong>{calendarConnecting ? 'Connecting...' : 'Connect Google Calendar'}</strong><small>Auto-create Meet links</small></span>
+                        </button>
+                    ) : null}
                     <Button
                         variant="secondary"
                         icon={Calendar}
@@ -463,6 +550,14 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                     </Button>
                 </div>
             </div>
+
+            {calendarStatus.connected && (
+                <div className="meetings-calendar-integration">
+                    <span className="meetings-calendar-integration__icon"><CalendarCheck size={18} /></span>
+                    <div><strong>Calendar sync is active</strong><span>Google Meet events and attendee invitations use {calendarStatus.google_email}.</span></div>
+                    {calendarStatus.can_connect && <button type="button" onClick={handleDisconnectCalendar}><Unplug size={14} /> Disconnect</button>}
+                </div>
+            )}
 
             {/* Quick Metrics Bar */}
             <div className="meetings-stats-grid">
@@ -913,8 +1008,6 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                         {clients.map(client => {
                             const clientMeetings = meetings.filter(m => m.client_id === client.id || m.client_name === client.name);
                             const nextMeeting = clientMeetings.find(m => m.status === 'Scheduled');
-                            const pastMeetings = clientMeetings.filter(m => m.status === 'Completed');
-
                             return (
                                 <div key={client.id} className="client-hub-card">
                                     <div className="client-hub-card__top">
@@ -1226,8 +1319,8 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                         <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)}>
                             Cancel
                         </Button>
-                        <Button variant="primary" onClick={handleSaveMeeting}>
-                            {isEditMode ? 'Save Changes' : 'Schedule Meeting'}
+                        <Button variant="primary" onClick={handleSaveMeeting} disabled={savingMeeting}>
+                            {savingMeeting ? 'Syncing...' : isEditMode ? 'Save Changes' : 'Schedule Meeting'}
                         </Button>
                     </>
                 }
@@ -1340,28 +1433,23 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                         </div>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label">Meeting URL / Room Link</label>
-                        <div className="url-input-wrap">
-                            <input
-                                type="url"
-                                className="form-input"
-                                placeholder="https://meet.google.com/..."
-                                value={formData.meeting_link}
-                                onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })}
-                            />
-                            <button
-                                type="button"
-                                className="auto-gen-btn"
-                                onClick={() => setFormData({
-                                    ...formData,
-                                    meeting_link: `https://meet.google.com/dw-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`
-                                })}
-                            >
-                                Generate Meet URL
-                            </button>
+                    {formData.platform === 'Google Meet' ? (
+                        <div className={`google-meet-form-state ${calendarStatus.connected ? 'connected' : ''}`}>
+                            <span className="google-meet-form-state__icon">{calendarStatus.connected ? <CalendarCheck size={20} /> : <Unplug size={20} />}</span>
+                            <div>
+                                <strong>{calendarStatus.connected ? 'Google Meet will be created automatically' : 'Google Calendar is not connected'}</strong>
+                                <p>{calendarStatus.connected ? `The event, attendee invitations, and unique Meet link will be created on ${calendarStatus.google_email}.` : 'A workspace administrator must connect Google Calendar to generate a real Meet link.'}</p>
+                            </div>
+                            {!calendarStatus.connected && calendarStatus.can_connect && <button type="button" onClick={handleConnectCalendar} disabled={calendarConnecting}>{calendarConnecting ? 'Connecting...' : 'Connect'}</button>}
                         </div>
-                    </div>
+                    ) : (
+                        <div className="form-group">
+                            <label className="form-label">Meeting URL / Room Link</label>
+                            <div className="url-input-wrap">
+                                <input type="url" className="form-input" placeholder="Paste the Zoom or Teams URL" value={formData.meeting_link} onChange={(e) => setFormData({ ...formData, meeting_link: e.target.value })} />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Agenda Builder */}
                     <div className="form-group">

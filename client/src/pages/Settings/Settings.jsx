@@ -6,10 +6,10 @@ import { updateUser } from '../../store/slices/authSlice';
 import Button from '../../components/common/Button/Button';
 import Avatar from '../../components/common/Avatar/Avatar';
 import Modal from '../../components/common/Modal/Modal';
-import { mockUser } from '../../utils/mockData';
 import { authService } from '../../services/authService';
 import { managerService } from '../../services/managerService';
 import { integrationsService } from '../../services/integrationsService';
+import { googleCalendarService } from '../../services/googleCalendarService';
 import { permissionsService, SYSTEM_MODULES } from '../../services/permissionsService';
 import { isValidEmail, isEmpty, isValidPassword } from '../../utils/validation';
 import { DEPARTMENT_MODULES } from '../../utils/constants';
@@ -40,6 +40,9 @@ import {
     Video,
     Send,
     CheckCircle2,
+    Plug,
+    CalendarCheck,
+    Unplug,
 } from 'lucide-react';
 import './Settings.css';
 
@@ -54,7 +57,7 @@ const moduleIconMap = {
 };
 
 const Settings = () => {
-    const [activeTab, setActiveTab] = useState('profile');
+    const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get('tab') || 'profile');
     const [showPassword, setShowPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -65,6 +68,8 @@ const Settings = () => {
     const [resetingUserId, setResetingUserId] = useState(null);
     const [telegramStatus, setTelegramStatus] = useState({ connected: false, loading: true });
     const [telegramConnecting, setTelegramConnecting] = useState(false);
+    const [googleCalendarStatus, setGoogleCalendarStatus] = useState({ connected: false, loading: true });
+    const [googleCalendarConnecting, setGoogleCalendarConnecting] = useState(false);
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
     const activeModules = useSelector((state) => state.access.activeModules);
@@ -88,6 +93,33 @@ const Settings = () => {
         return () => { cancelled = true; };
     }, [activeTab]);
 
+    useEffect(() => {
+        if (activeTab !== 'integrations') return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const status = await googleCalendarService.getStatus();
+                if (!cancelled) setGoogleCalendarStatus({ ...status, loading: false });
+            } catch (error) {
+                if (!cancelled) setGoogleCalendarStatus({ connected: false, loading: false, error: error.message });
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [activeTab]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const result = params.get('google_calendar');
+        if (!result) return;
+        setActiveTab('integrations');
+        dispatch(addToast(result === 'connected'
+            ? { title: 'Google Calendar connected', message: 'New Google Meet meetings will now be created in this workspace calendar.', type: 'success' }
+            : { title: 'Connection failed', message: 'Google Calendar could not be connected. Please try again.', type: 'error' }));
+        params.delete('google_calendar');
+        params.set('tab', 'integrations');
+        window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+    }, [dispatch]);
+
     const handleConnectTelegram = async () => {
         setTelegramConnecting(true);
         try {
@@ -102,6 +134,31 @@ const Settings = () => {
             dispatch(addToast({ title: 'Error', message: err.message || 'Could not start Telegram connection.', type: 'error' }));
         } finally {
             setTelegramConnecting(false);
+        }
+    };
+
+    const handleConnectGoogleCalendar = async () => {
+        setGoogleCalendarConnecting(true);
+        try {
+            const { auth_url: authUrl } = await googleCalendarService.connect('/settings?tab=integrations');
+            window.location.assign(authUrl);
+        } catch (error) {
+            dispatch(addToast({ title: 'Connection failed', message: error.message || 'Could not connect Google Calendar.', type: 'error' }));
+            setGoogleCalendarConnecting(false);
+        }
+    };
+
+    const handleDisconnectGoogleCalendar = async () => {
+        if (!window.confirm('Disconnect Google Calendar for this workspace? Existing calendar events will remain in Google.')) return;
+        setGoogleCalendarConnecting(true);
+        try {
+            await googleCalendarService.disconnect();
+            setGoogleCalendarStatus({ connected: false, loading: false });
+            dispatch(addToast({ title: 'Google Calendar disconnected', message: 'New meetings will no longer sync until an admin reconnects it.', type: 'success' }));
+        } catch (error) {
+            dispatch(addToast({ title: 'Disconnect failed', message: error.message || 'Could not disconnect Google Calendar.', type: 'error' }));
+        } finally {
+            setGoogleCalendarConnecting(false);
         }
     };
 
@@ -211,7 +268,7 @@ const Settings = () => {
             window.dispatchEvent(new Event('workspaceUpdate'));
             
             dispatch(addToast({ title: 'Success', message: 'Workspace settings updated successfully.', type: 'success' }));
-        } catch (err) {
+        } catch {
             dispatch(addToast({ title: 'Error', message: 'Failed to update workspace settings.', type: 'error' }));
         }
     };
@@ -516,6 +573,7 @@ const Settings = () => {
         { id: 'workspace', label: 'Workspace', icon: Building2, adminOnly: true },
         { id: 'team', label: 'Team & Managers', icon: Users, adminOnly: true },
         { id: 'modules', label: 'Modules', icon: LayoutGrid, adminOnly: true },
+        { id: 'integrations', label: 'Integrations', icon: Plug, adminOnly: true },
         { id: 'notifications', label: 'Notifications', icon: Bell },
         { id: 'security', label: 'Security', icon: Shield },
         { id: 'billing', label: 'Billing', icon: CreditCard, adminOnly: true },
@@ -860,6 +918,53 @@ const Settings = () => {
                                 <li>Tap <strong>START</strong> (or send <code>/start</code>) in the bot chat.</li>
                                 <li>You're linked — notifications will arrive in that chat. To stop, send <code>/disconnect</code>.</li>
                             </ol>
+                        </div>
+                    )}
+
+                    {activeTab === 'integrations' && user?.role === 'admin' && (
+                        <div className="settings-section">
+                            <h2 className="settings-section-title">Workspace Integrations</h2>
+                            <p className="settings-section-hint">Connect shared services for this workspace. Only workspace admins can change these connections.</p>
+
+                            <div className="integration-connect-card integration-connect-card--google">
+                                <div className="integration-connect-card__icon"><CalendarCheck size={22} /></div>
+                                <div className="integration-connect-card__body">
+                                    <div className="integration-connect-card__heading">
+                                        <strong>Google Calendar &amp; Meet</strong>
+                                        {!googleCalendarStatus.loading && (
+                                            <span className={`integration-status-pill ${googleCalendarStatus.connected ? 'is-connected' : ''}`}>
+                                                <span className="integration-status-pill__dot" />
+                                                {googleCalendarStatus.connected ? 'Connected' : 'Not connected'}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {googleCalendarStatus.loading ? (
+                                        <span className="integration-connect-card__status">Checking workspace connection...</span>
+                                    ) : googleCalendarStatus.connected ? (
+                                        <span className="integration-connect-card__status">
+                                            Using <strong>{googleCalendarStatus.google_email}</strong>. New meetings create calendar events, invitations, and real Google Meet links.
+                                        </span>
+                                    ) : (
+                                        <span className="integration-connect-card__status">Connect the Google account whose calendar should own this workspace's meetings.</span>
+                                    )}
+                                </div>
+                                <div className="integration-connect-card__actions">
+                                    {googleCalendarStatus.connected ? (
+                                        <Button variant="outline" icon={Unplug} loading={googleCalendarConnecting} onClick={handleDisconnectGoogleCalendar}>
+                                            Disconnect
+                                        </Button>
+                                    ) : (
+                                        <Button variant="primary" icon={CalendarCheck} loading={googleCalendarConnecting} onClick={handleConnectGoogleCalendar}>
+                                            Connect Google
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="integration-note">
+                                <ShieldCheck size={17} />
+                                <span>The connection is isolated to this workspace. DevelopWork stores the refresh token encrypted and requests calendar-event access only.</span>
+                            </div>
                         </div>
                     )}
 

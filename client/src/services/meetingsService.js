@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { googleCalendarService } from './googleCalendarService';
 
 const STORAGE_KEY = 'dw-meetings-data';
 
@@ -7,6 +8,70 @@ const getRelativeDate = (offsetDays = 0) => {
     const d = new Date();
     d.setDate(d.getDate() + offsetDays);
     return d.toISOString().split('T')[0];
+};
+
+const getBrowserTimezone = () => {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Karachi';
+    } catch {
+        return 'Asia/Karachi';
+    }
+};
+
+const buildCalendarDescription = (meeting) => {
+    const agenda = (meeting.agenda || [])
+        .map((item) => typeof item === 'string' ? item : item?.text)
+        .filter(Boolean)
+        .map((item, index) => `${index + 1}. ${item}`)
+        .join('\n');
+    return [
+        meeting.notes || '',
+        agenda ? `Agenda:\n${agenda}` : '',
+        'Scheduled through DevelopWork.',
+    ].filter(Boolean).join('\n\n');
+};
+
+const toGoogleEvent = (meeting) => ({
+    meeting_id: meeting.id,
+    event_id: meeting.google_event_id || undefined,
+    calendar_id: meeting.google_calendar_id || 'primary',
+    title: meeting.title,
+    description: buildCalendarDescription(meeting),
+    date: meeting.date,
+    time: meeting.time,
+    duration: meeting.duration,
+    timezone: meeting.timezone || getBrowserTimezone(),
+    location: meeting.location,
+    attendees: meeting.attendees || [],
+    create_meet: meeting.platform === 'Google Meet',
+});
+
+const resolvePendingConference = async (meeting) => {
+    if (meeting.platform !== 'Google Meet' || !meeting.google_event_id || (meeting.meeting_link && meeting.google_sync_status !== 'pending')) {
+        return meeting;
+    }
+    try {
+        const googleEvent = await googleCalendarService.getEvent(meeting.google_event_id, meeting.id);
+        if (!googleEvent.meeting_link) return meeting;
+        const resolved = {
+            ...meeting,
+            meeting_link: googleEvent.meeting_link,
+            google_event_url: googleEvent.event_url || meeting.google_event_url,
+            google_sync_status: 'synced',
+            google_sync_error: null,
+        };
+        await supabase.from('meetings').update({
+            meeting_link: resolved.meeting_link,
+            google_event_url: resolved.google_event_url,
+            google_sync_status: 'synced',
+            google_sync_error: null,
+            updated_at: new Date().toISOString(),
+        }).eq('id', meeting.id);
+        return resolved;
+    } catch (error) {
+        console.warn('[MeetingsService] Google Meet link is still unavailable:', error);
+        return meeting;
+    }
 };
 
 const INITIAL_MEETINGS = [
@@ -198,7 +263,7 @@ export const meetingsService = {
             const { data, error } = await supabase.from('meetings').select('*').order('date', { ascending: true });
             if (!error && data && data.length > 0) {
                 // If Supabase has data, sync it into local cache
-                meetings = data;
+                meetings = await Promise.all(data.map(resolvePendingConference));
                 this.saveLocalMeetings(meetings);
             }
         } catch {
@@ -233,6 +298,7 @@ export const meetingsService = {
     },
 
     async createMeeting(meetingData) {
+        const { data: { session } } = await supabase.auth.getSession();
         const newMeeting = {
             id: `mtg-${Date.now()}`,
             title: meetingData.title || 'Untitled Meeting',
@@ -248,17 +314,34 @@ export const meetingsService = {
             date: meetingData.date || getRelativeDate(0),
             time: meetingData.time || '10:00',
             duration: Number(meetingData.duration) || 30,
+            timezone: meetingData.timezone || getBrowserTimezone(),
             platform: meetingData.platform || 'Google Meet',
-            meeting_link: meetingData.meeting_link || `https://meet.google.com/dw-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`,
+            meeting_link: meetingData.meeting_link || '',
             location: meetingData.location || (meetingData.platform === 'In-Person' ? 'Headquarters' : 'Online Video Call'),
             host: meetingData.host || { name: 'Abbas Afzal', email: 'abbas@developwork.com', role: 'Host' },
             attendees: meetingData.attendees || [],
             agenda: meetingData.agenda || [],
             notes: meetingData.notes || '',
             action_items: meetingData.action_items || [],
+            google_event_id: null,
+            google_calendar_id: null,
+            google_event_url: null,
+            google_sync_status: 'not_synced',
+            google_sync_error: null,
+            created_by: session?.user?.id || null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         };
+
+        // Google Meet links must come from Google Calendar. Never fabricate one.
+        if (newMeeting.platform === 'Google Meet' && meetingData.sync_google_calendar !== false) {
+            const googleEvent = await googleCalendarService.createEvent(toGoogleEvent(newMeeting));
+            newMeeting.meeting_link = googleEvent.meeting_link || '';
+            newMeeting.google_event_id = googleEvent.event_id;
+            newMeeting.google_calendar_id = googleEvent.calendar_id || 'primary';
+            newMeeting.google_event_url = googleEvent.event_url || null;
+            newMeeting.google_sync_status = googleEvent.meeting_link ? 'synced' : 'pending';
+        }
 
         // Try Supabase insert
         try {
@@ -279,10 +362,33 @@ export const meetingsService = {
     },
 
     async updateMeeting(id, updates) {
+        const existing = await this.getMeetingById(id);
+        const payload = { ...updates };
+        delete payload.sync_google_calendar;
+        const merged = { ...existing, ...payload, id, updated_at: new Date().toISOString() };
+
+        if (merged.platform === 'Google Meet' && updates.sync_google_calendar !== false) {
+            const googleEvent = merged.google_event_id
+                ? await googleCalendarService.updateEvent(toGoogleEvent(merged))
+                : await googleCalendarService.createEvent(toGoogleEvent(merged));
+            payload.meeting_link = googleEvent.meeting_link || merged.meeting_link || '';
+            payload.google_event_id = googleEvent.event_id;
+            payload.google_calendar_id = googleEvent.calendar_id || merged.google_calendar_id || 'primary';
+            payload.google_event_url = googleEvent.event_url || merged.google_event_url || null;
+            payload.google_sync_status = googleEvent.meeting_link ? 'synced' : 'pending';
+            payload.google_sync_error = null;
+        } else if (existing?.google_event_id && merged.platform !== 'Google Meet') {
+            await googleCalendarService.deleteEvent(existing.google_event_id, id);
+            payload.google_event_id = null;
+            payload.google_calendar_id = null;
+            payload.google_event_url = null;
+            payload.google_sync_status = 'cancelled';
+        }
+
         // Try Supabase update
         try {
             const { data, error } = await supabase.from('meetings').update({
-                ...updates,
+                ...payload,
                 updated_at: new Date().toISOString()
             }).eq('id', id).select().single();
             if (!error && data) {
@@ -299,7 +405,7 @@ export const meetingsService = {
             if (m.id === id) {
                 return {
                     ...m,
-                    ...updates,
+                    ...payload,
                     updated_at: new Date().toISOString()
                 };
             }
@@ -310,6 +416,10 @@ export const meetingsService = {
     },
 
     async deleteMeeting(id) {
+        const existing = await this.getMeetingById(id);
+        if (existing?.google_event_id) {
+            await googleCalendarService.deleteEvent(existing.google_event_id, id);
+        }
         try {
             await supabase.from('meetings').delete().eq('id', id);
         } catch {

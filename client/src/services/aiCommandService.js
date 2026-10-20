@@ -6,6 +6,7 @@ import { hrService } from './hrService';
 import { leadsService } from './leadsService';
 import { docsService } from './docsService';
 import { meetingsService } from './meetingsService';
+import { googleCalendarService } from './googleCalendarService';
 import { notificationService } from './notificationService';
 import { supabase } from '../lib/supabase';
 
@@ -198,6 +199,12 @@ const READ_TOOLS = [
         parameters: { type: 'object', properties: {} },
         risk: RISK.READ,
     },
+    {
+        name: 'get_google_calendar_status',
+        description: 'Check whether Google Calendar is connected for this admin workspace and which Google account is connected.',
+        parameters: { type: 'object', properties: {} },
+        risk: RISK.READ,
+    },
 ];
 
 const WRITE_TOOLS = [
@@ -362,7 +369,7 @@ const WRITE_TOOLS = [
     },
     {
         name: 'schedule_meeting',
-        description: 'Schedule a new meeting. Resolves relative dates (e.g. "tomorrow", "next Monday").',
+        description: 'Schedule a new meeting. When platform is Google Meet, creates a real Google Calendar event, sends attendee invitations, and generates a unique Google Meet link. Google Calendar must already be connected for the workspace.',
         parameters: {
             type: 'object',
             properties: {
@@ -388,6 +395,42 @@ const WRITE_TOOLS = [
         },
         risk: RISK.LOW,
         confirmFields: ['title', 'date', 'time', 'platform', 'attendees'],
+    },
+    {
+        name: 'update_meeting',
+        description: 'Update an existing DevelopWork meeting and its linked Google Calendar event. Use get_meetings first to find the meeting ID.',
+        parameters: {
+            type: 'object',
+            properties: {
+                meeting_id: { type: 'string', description: 'DevelopWork meeting ID (required)' },
+                title: { type: 'string' },
+                date: { type: 'string', description: 'YYYY-MM-DD' },
+                time: { type: 'string', description: 'HH:MM in 24-hour format' },
+                duration: { type: 'number' },
+                type: { type: 'string' },
+                platform: { type: 'string' },
+                attendees: { type: 'array', items: { type: 'object', properties: { name: { type: 'string' }, email: { type: 'string' } } } },
+                agenda: { type: 'array', items: { type: 'string' } },
+                notes: { type: 'string' },
+            },
+            required: ['meeting_id'],
+        },
+        risk: RISK.LOW,
+        confirmFields: ['meeting_id', 'title', 'date', 'time', 'attendees'],
+    },
+    {
+        name: 'cancel_meeting',
+        description: 'Cancel and permanently remove a meeting from DevelopWork and its linked Google Calendar, notifying Google attendees of the cancellation.',
+        parameters: {
+            type: 'object',
+            properties: {
+                meeting_id: { type: 'string', description: 'DevelopWork meeting ID (required)' },
+                title: { type: 'string', description: 'Meeting title shown for confirmation' },
+            },
+            required: ['meeting_id'],
+        },
+        risk: RISK.DESTRUCTIVE,
+        confirmFields: ['meeting_id', 'title'],
     },
     {
         name: 'create_invoice_draft',
@@ -513,7 +556,7 @@ async function resolveUserId(value) {
 
 // ── Tool executors ──
 
-const executeReadTool = async (name, args, user) => {
+const executeReadTool = async (name, args) => {
     switch (name) {
         case 'search_employees': {
             const users = await managerService.getAllUsers();
@@ -562,6 +605,8 @@ const executeReadTool = async (name, args, user) => {
             return await docsService.getFolders();
         case 'get_meetings':
             return await meetingsService.getMeetings();
+        case 'get_google_calendar_status':
+            return await googleCalendarService.getStatus();
         default:
             return { error: `Unknown read tool: ${name}` };
     }
@@ -701,8 +746,21 @@ const executeWriteTool = async (name, args) => {
                 attendees: args.attendees || [],
                 agenda: (args.agenda || []).map(item => (typeof item === 'string' ? { text: item } : item)),
                 notes: args.notes || '',
+                sync_google_calendar: (args.platform || 'Google Meet') === 'Google Meet',
             });
-            return { success: true, message: `Meeting "${result.title}" scheduled for ${args.date}.`, data: result };
+            return { success: true, message: `Meeting "${result.title}" scheduled for ${args.date}.${result.meeting_link ? ` Google Meet: ${result.meeting_link}` : ''}`, data: result };
+        }
+        case 'update_meeting': {
+            const { meeting_id, agenda, ...updates } = args;
+            if (agenda) updates.agenda = agenda.map(item => (typeof item === 'string' ? { text: item, completed: false } : item));
+            updates.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Karachi';
+            updates.sync_google_calendar = true;
+            const result = await meetingsService.updateMeeting(meeting_id, updates);
+            return { success: true, message: `Meeting "${result.title}" and its calendar event were updated.`, data: result };
+        }
+        case 'cancel_meeting': {
+            await meetingsService.deleteMeeting(args.meeting_id);
+            return { success: true, message: `Meeting "${args.title || args.meeting_id}" was removed from DevelopWork and Google Calendar.` };
         }
         case 'create_invoice_draft': {
             const invoiceId = `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
@@ -848,7 +906,7 @@ export const aiCommandService = {
         return risk !== RISK.READ;
     },
 
-    async sendMessage(messages, user, { onToolCall, onConfirmNeeded, confirmedActions = {} } = {}) {
+    async sendMessage(messages, user, { onToolCall, confirmedActions = {} } = {}) {
         if (!USE_EDGE_FUNCTION && !OPENROUTER_API_KEY) {
             throw new Error('AI is not configured. Set up the Edge Function or provide an OpenRouter API key.');
         }
@@ -909,7 +967,7 @@ export const aiCommandService = {
 
                 if (toolDef.risk === RISK.READ) {
                     try {
-                        const result = await executeReadTool(toolName, args, user);
+                        const result = await executeReadTool(toolName, args);
                         conversation.push({
                             tool_call_id: toolCall.id,
                             role: 'tool',

@@ -641,3 +641,126 @@
         flex-wrap: wrap;
     }
 }
+
+/* Workspace integrations */
+.integration-connect-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    margin-top: 22px;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    background: var(--bg-secondary);
+}
+
+.integration-connect-card__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    color: #2563eb;
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+}
+
+.integration-connect-card__body {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.integration-connect-card__heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.integration-connect-card__heading strong {
+    color: var(--text-primary);
+    font-size: 15px;
+}
+
+.integration-connect-card__status {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.integration-connect-card__status strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.integration-connect-card__actions {
+    flex-shrink: 0;
+}
+
+.integration-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border: 1px solid var(--border-default);
+    border-radius: 999px;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    font-size: 11px;
+    font-weight: 650;
+}
+
+.integration-status-pill__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+}
+
+.integration-status-pill.is-connected {
+    color: #047857;
+    border-color: #a7f3d0;
+}
+
+.integration-status-pill.is-connected .integration-status-pill__dot {
+    background: #10b981;
+}
+
+.integration-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.integration-note svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: #2563eb;
+}
+
+@media (max-width: 680px) {
+    .integration-connect-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .integration-connect-card__body {
+        min-width: calc(100% - 64px);
+    }
+
+    .integration-connect-card__actions {
+        width: 100%;
+        padding-left: 62px;
+    }
+}

@@ -81,6 +81,49 @@
     gap: 12px;
 }
 
+.google-calendar-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 40px;
+    padding: 6px 11px;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .16s ease, background .16s ease, color .16s ease;
+}
+
+.google-calendar-button:hover { color: var(--primary-600); border-color: rgba(37, 99, 235, .35); }
+.google-calendar-button.connected { color: #047857; border-color: rgba(5, 150, 105, .28); }
+.google-calendar-button:disabled { opacity: .6; cursor: wait; }
+.google-calendar-button > span { display: flex; max-width: 180px; min-width: 0; flex-direction: column; align-items: flex-start; }
+.google-calendar-button strong, .google-calendar-button small { overflow: hidden; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
+.google-calendar-button strong { color: inherit; font-size: 11px; }
+.google-calendar-button small { margin-top: 1px; color: var(--text-muted); font-size: 9px; }
+.google-calendar-spin { animation: spin .8s linear infinite; }
+
+.meetings-calendar-integration {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: -10px;
+    padding: 10px 13px;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid rgba(5, 150, 105, .24);
+    border-radius: 10px;
+}
+
+.meetings-calendar-integration__icon { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; color: #059669; background: rgba(5, 150, 105, .08); border-radius: 8px; }
+.meetings-calendar-integration > div { display: flex; min-width: 0; flex: 1; flex-direction: column; }
+.meetings-calendar-integration strong { color: var(--text-primary); font-size: 11px; }
+.meetings-calendar-integration span { margin-top: 2px; color: var(--text-muted); font-size: 9px; }
+.meetings-calendar-integration > button { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; color: var(--text-muted); background: transparent; border: 0; font-family: inherit; font-size: 9px; font-weight: 650; cursor: pointer; }
+.meetings-calendar-integration > button:hover { color: #dc2626; }
+
 .meetings-primary-btn {
     background: var(--primary-500, #0055FE) !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
@@ -1350,6 +1393,26 @@
 .auto-gen-btn:hover {
     background: rgba(139, 92, 246, 0.2);
 }
+
+.google-meet-form-state {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 13px;
+    color: var(--text-secondary);
+    background: var(--bg-body);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+.google-meet-form-state.connected { border-color: rgba(5, 150, 105, .28); }
+.google-meet-form-state__icon { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; color: var(--text-muted); background: var(--bg-surface); border-radius: 9px; }
+.google-meet-form-state.connected .google-meet-form-state__icon { color: #059669; background: rgba(5, 150, 105, .08); }
+.google-meet-form-state > div { min-width: 0; flex: 1; }
+.google-meet-form-state strong { display: block; color: var(--text-primary); font-size: 11px; }
+.google-meet-form-state p { margin: 3px 0 0; color: var(--text-muted); font-size: 9px; line-height: 1.45; }
+.google-meet-form-state > button { padding: 6px 10px; color: #fff; background: #2563eb; border: 0; border-radius: 7px; font-family: inherit; font-size: 10px; font-weight: 650; cursor: pointer; }
+.google-meet-form-state > button:disabled { opacity: .6; }
 
 .agenda-builder-label {
     display: flex;

@@ -424,3 +424,11 @@ entrypoint = "./functions/ai-agent/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/ai-agent/*.html" ]
+
+[functions.google-calendar]
+enabled = true
+# OAuth callback requests come from Google without a Supabase JWT. The function
+# validates callback state itself and authenticates every application action.
+verify_jwt = false
+import_map = "./functions/google-calendar/deno.json"
+entrypoint = "./functions/google-calendar/index.ts"
