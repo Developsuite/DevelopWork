@@ -793,7 +793,10 @@ const Finance = () => {
         // Expenses are paid from the cash flow reserve first. Only the expenses that
         // exceed the reserve reduce net profit; expenses fully covered by the reserve
         // don't subtract from revenue at all.
-        const reserveAmount = cashFlowReserve.enabled ? (cashFlowStats.reserveAmount || 0) : 0;
+        // The reserve in cashFlowStats is the CURRENT month's value, so it only applies
+        // when the viewed period is the current month — not past months or aggregates.
+        const reserveAppliesToPeriod = cashFlowReserve.enabled && dateFilter === 'this_month';
+        const reserveAmount = reserveAppliesToPeriod ? (cashFlowStats.reserveAmount || 0) : 0;
         const reserveUsed = Math.min(Math.max(0, totalExp), reserveAmount);
         const expFromMainFunds = Math.max(0, totalExp - reserveAmount);
         const netProfit = totalRev - expFromMainFunds;
