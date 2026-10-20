@@ -1,0 +1,45 @@
+name: Keep Supabase Active
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6,14,22 * * *"
+      timezone: "Asia/Karachi"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Query Supabase database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --retry 2 \
+            --retry-delay 10 \
+            --connect-timeout 15 \
+            --max-time 45 \
+            --output /dev/null \
+            --get "${SUPABASE_URL%/}/rest/v1/profiles" \
+            --data-urlencode "select=id" \
+            --data-urlencode "limit=1" \
+            --header "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
+            --header "Accept: application/json"
+
+          echo "Supabase database responded successfully."
