@@ -110,6 +110,71 @@ html {
   flex-shrink: 0;
 }
 
+/* Mobile hamburger + dropdown (hidden on desktop) */
+.landing-nav__burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  flex-shrink: 0;
+}
+
+.landing-nav__mobile {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 10px auto 0;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  animation: landingFadeInUp 0.2s ease;
+}
+
+.landing-nav__mobile a {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  transition: background 0.15s;
+}
+
+.landing-nav__mobile a:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.landing-nav__mobile-signup,
+.landing-nav__mobile-signin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.landing-nav__mobile-signup {
+  margin-top: 6px;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.landing-nav__mobile-signin {
+  color: #ffffff;
+  background: #2563eb;
+}
+
 /* Navbar Sign Up Button — blue filled */
 .landing-nav__signup {
   padding: 10px 24px;
@@ -1089,6 +1154,14 @@ html {
   .landing-nav__links,
   .landing-nav__actions {
     display: none;
+  }
+
+  .landing-nav__burger {
+    display: flex;
+  }
+
+  .landing-nav__mobile {
+    display: flex;
   }
 
   .landing-hero__container {

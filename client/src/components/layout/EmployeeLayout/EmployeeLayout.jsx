@@ -19,7 +19,9 @@ import {
     Handshake,
     FileText,
     ExternalLink,
-    Video
+    Video,
+    Menu,
+    X
 } from 'lucide-react';
 import { permissionsService } from '../../../services/permissionsService';
 import { supabase } from '../../../lib/supabase';
@@ -50,6 +52,12 @@ const EmployeeLayout = () => {
 
     const [wsName, setWsName] = useState(() => localStorage.getItem('dw-workspace-name') || 'DevelopWork');
     const [permittedModules, setPermittedModules] = useState(() => permissionsService.getAccessibleModules(user));
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+    // Close the mobile drawer whenever the route changes
+    useEffect(() => {
+        setMobileNavOpen(false);
+    }, [location.pathname, location.search]);
 
     useEffect(() => {
         let isMounted = true;
@@ -132,8 +140,14 @@ const EmployeeLayout = () => {
 
     return (
         <div className="employee-layout">
+            {/* Mobile drawer backdrop */}
+            <div
+                className={`employee-layout__overlay ${mobileNavOpen ? 'show' : ''}`}
+                onClick={() => setMobileNavOpen(false)}
+            />
+
             {/* Employee Sidebar */}
-            <aside className="employee-sidebar">
+            <aside className={`employee-sidebar ${mobileNavOpen ? 'open' : ''}`}>
                 <div className="employee-sidebar__header">
                     <div className="employee-sidebar__logo">
                         <img src="/images/logo.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
@@ -142,6 +156,13 @@ const EmployeeLayout = () => {
                         <div className="employee-sidebar__brand-name">{wsName}</div>
                         <div className="employee-sidebar__brand-role">Employee Portal</div>
                     </div>
+                    <button
+                        className="employee-sidebar__close"
+                        onClick={() => setMobileNavOpen(false)}
+                        aria-label="Close menu"
+                    >
+                        <X size={18} />
+                    </button>
                 </div>
 
                 <nav className="employee-sidebar__nav">
@@ -230,6 +251,13 @@ const EmployeeLayout = () => {
             <div className="employee-layout__main">
                 <header className="employee-topbar">
                     <div className="employee-topbar__left">
+                        <button
+                            className="employee-topbar__menu-btn"
+                            onClick={() => setMobileNavOpen(true)}
+                            aria-label="Open menu"
+                        >
+                            <Menu size={20} />
+                        </button>
                         <div className="employee-topbar__breadcrumb">
                             <span className="employee-topbar__breadcrumb-root">Portal</span>
                             <span className="employee-topbar__breadcrumb-sep">/</span>

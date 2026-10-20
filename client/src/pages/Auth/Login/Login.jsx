@@ -94,6 +94,10 @@ const Login = () => {
                     <ThemeToggle />
                 </div>
                 <div className="login-page__form-container">
+                    <div className="login-page__mobile-brand">
+                        <img src="/images/logo.png" alt="DevelopWork" />
+                        <span>DevelopWork</span>
+                    </div>
                     <h1 className="login-page__form-title">Welcome back</h1>
                     <p className="login-page__form-subtitle">Sign in to your DevelopWork account</p>
 

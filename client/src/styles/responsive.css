@@ -1,0 +1,114 @@
+/* ============================================
+   DevelopWork — Global Responsive Safety Net
+   Applies sensible mobile behaviour across every
+   page without overriding page-specific layouts.
+   Everything here lives inside max-width queries,
+   so desktop rendering is untouched.
+   ============================================ */
+
+/* ---- Never allow the page itself to scroll sideways ---- */
+html,
+body,
+#root {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Media should always shrink to its container */
+img,
+video,
+canvas,
+svg,
+iframe {
+    max-width: 100%;
+}
+
+/* ============================================
+   Tablet / phone  (≤ 768px)
+   ============================================ */
+@media (max-width: 768px) {
+
+    /* Standard clean page header → stack + full-width actions */
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 16px 0 4px;
+        margin-bottom: 18px;
+    }
+
+    .page-header__info h1 {
+        font-size: 22px;
+    }
+
+    .page-header__info p {
+        font-size: 13px;
+    }
+
+    .page-header__actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .page-header__actions > * {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    /* Data tables become horizontally scrollable instead of
+       pushing the whole page wider than the screen. Calendar-style
+       tables are excluded so their grid layout stays intact. */
+    .responsive-scroll,
+    .table-wrap,
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table:not([class*="calendar"]):not([class*="Calendar"]):not([class*="grid"]) {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Keep forms within the viewport */
+    .dw-form,
+    .dw-form-input,
+    .dw-form-textarea {
+        max-width: 100%;
+    }
+
+    /* Generic modal panels should never exceed the screen */
+    [class*="modal__panel"],
+    [class*="modal-content"],
+    [class*="Modal__panel"] {
+        max-width: calc(100vw - 24px) !important;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+    }
+}
+
+/* ============================================
+   Small phones  (≤ 480px)
+   ============================================ */
+@media (max-width: 480px) {
+
+    .page-header__info h1 {
+        font-size: 20px;
+    }
+
+    /* Two- and three-column utility grids collapse to one column.
+       Scoped to the common "stats / cards" wrappers so page layouts
+       that intentionally keep columns are not affected. */
+    .stats-grid,
+    .stat-grid,
+    .cards-grid,
+    .summary-grid,
+    .metrics-grid,
+    .kpi-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

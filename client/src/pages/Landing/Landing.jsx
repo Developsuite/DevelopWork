@@ -6,7 +6,9 @@ import {
   FiCheck, 
   FiChevronDown,
   FiZap,
-  FiStar
+  FiStar,
+  FiMenu,
+  FiX
 } from 'react-icons/fi';
 import './Landing.css';
 
@@ -15,6 +17,7 @@ const Landing = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [activeModuleTab, setActiveModuleTab] = useState('client');
   const [activePricePlan, setActivePricePlan] = useState('starter');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const currency = useSelector((state) => state.ui?.currency) || 'PKR';
 
@@ -57,7 +60,37 @@ const Landing = () => {
               </span>
             </button>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="landing-nav__burger"
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+          >
+            {mobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+          </button>
         </nav>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="landing-nav__mobile">
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>About</a>
+            <a href="#performance" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            <button
+              className="landing-nav__mobile-signup"
+              onClick={() => { setMobileMenuOpen(false); navigate('/onboarding'); }}
+            >
+              Sign up
+            </button>
+            <button
+              className="landing-nav__mobile-signin"
+              onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
+            >
+              Sign in <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Hero Section */}

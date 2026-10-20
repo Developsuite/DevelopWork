@@ -35,6 +35,7 @@ import {
     Settings,
     Inbox,
     Menu,
+    X,
     ChevronLeft,
     ChevronRight,
     TrendingUp,
@@ -115,6 +116,12 @@ const ManagerLayout = () => {
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+    // Close the mobile drawer whenever the route changes
+    useEffect(() => {
+        setMobileNavOpen(false);
+    }, [location.pathname, location.search]);
 
     // Live sync permissions state
     const [permittedModules, setPermittedModules] = useState(() => permissionsService.getAccessibleModules(user));
@@ -224,14 +231,27 @@ const ManagerLayout = () => {
 
     return (
         <div className="manager-layout">
+            {/* Mobile drawer backdrop */}
+            <div
+                className={`manager-layout__overlay ${mobileNavOpen ? 'show' : ''}`}
+                onClick={() => setMobileNavOpen(false)}
+            />
+
             {/* Manager Sidebar */}
-            <aside className={`manager-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+            <aside className={`manager-sidebar ${isCollapsed ? 'collapsed' : ''} ${mobileNavOpen ? 'open' : ''}`}>
                 <div className="manager-sidebar__header">
-                    <button 
+                    <button
                         className="manager-sidebar__toggle"
                         onClick={() => setIsCollapsed(!isCollapsed)}
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                    </button>
+                    <button
+                        className="manager-sidebar__close"
+                        onClick={() => setMobileNavOpen(false)}
+                        aria-label="Close menu"
+                    >
+                        <X size={18} />
                     </button>
                     {!isCollapsed && (
                         <>
@@ -365,6 +385,13 @@ const ManagerLayout = () => {
                 {/* Top Bar */}
                 <header className="manager-topbar">
                     <div className="manager-topbar__left">
+                        <button
+                            className="manager-topbar__menu-btn"
+                            onClick={() => setMobileNavOpen(true)}
+                            aria-label="Open menu"
+                        >
+                            <Menu size={20} />
+                        </button>
                         <div className="manager-topbar__breadcrumb">
                             <span className="manager-topbar__breadcrumb-module" style={{ color: moduleInfo?.color }}>
                                 {moduleInfo?.label}

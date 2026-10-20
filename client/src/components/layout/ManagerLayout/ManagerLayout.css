@@ -58,6 +58,57 @@
     color: var(--primary-600);
 }
 
+/* Close button + hamburger — only on mobile */
+.manager-sidebar__close {
+    display: none;
+    margin-left: auto;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.manager-sidebar__close:hover {
+    color: var(--text-primary);
+    background: var(--bg-active);
+}
+
+.manager-topbar__menu-btn {
+    display: none;
+    width: 38px;
+    height: 38px;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.manager-topbar__menu-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+}
+
+/* Mobile drawer backdrop */
+.manager-layout__overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+}
+
 .manager-sidebar__module-badge.mini {
     width: 32px;
     height: 32px;
@@ -380,21 +431,64 @@
 
 /* ------- Responsive ------- */
 @media (max-width: 768px) {
-    .manager-sidebar {
+    /* The drawer always opens at full width on mobile, even if the desktop
+       rail was left in its collapsed (72px) state. */
+    .manager-sidebar,
+    .manager-sidebar.collapsed {
         transform: translateX(-100%);
-        width: 280px;
+        width: min(84vw, 300px);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.18);
     }
 
     .manager-sidebar.open {
         transform: translateX(0);
     }
 
-    .manager-layout__main {
+    /* Hide the desktop collapse toggle, show the close button inside the drawer */
+    .manager-sidebar__toggle {
+        display: none;
+    }
+
+    .manager-sidebar__close {
+        display: flex;
+    }
+
+    .manager-topbar__menu-btn {
+        display: flex;
+    }
+
+    .manager-layout__overlay.show {
+        display: block;
+    }
+
+    /* Collapsed state must not shift the content on mobile */
+    .manager-layout__main,
+    .manager-layout__main.expanded {
         margin-left: 0;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .manager-topbar {
+        padding: 0 16px;
+    }
+
+    .manager-topbar__module-pill span {
+        display: none;
     }
 
     .manager-layout__content {
         padding: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .manager-topbar__user span {
+        display: none;
+    }
+
+    .manager-layout__content {
+        padding: 14px 12px;
     }
 }
 

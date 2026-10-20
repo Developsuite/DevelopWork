@@ -614,12 +614,60 @@
     gap: 8px;
 }
 
+/* Compact brand lockup shown only when the side panel is hidden (mobile) */
+.login-page__mobile-brand {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+}
+
+.login-page__mobile-brand img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
 @media (max-width: 768px) {
+    .login-page {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: auto;
+    }
+
     .login-page__brand {
         display: none;
     }
 
     .login-page__form-section {
-        padding: 24px;
+        padding: 72px 22px 40px;
+        justify-content: center;
+    }
+
+    .login-page__mobile-brand {
+        display: flex;
+    }
+
+    .login-page__form-title {
+        font-size: var(--font-2xl);
+    }
+
+    .login-page__form-subtitle {
+        margin-bottom: 26px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-page__form-section {
+        padding: 64px 18px 32px;
+    }
+
+    .login-page__social {
+        flex-direction: column;
     }
 }

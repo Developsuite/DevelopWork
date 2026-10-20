@@ -6,6 +6,7 @@ import App from './App';
 import './styles/index.css';
 import './styles/glassmorphism.css';
 import './styles/darkmode.css';
+import './styles/responsive.css';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

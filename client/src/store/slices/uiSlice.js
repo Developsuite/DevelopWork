@@ -18,10 +18,20 @@ const getSavedCurrency = () => {
     }
 };
 
+// On phones/tablets the sidebar is an overlay drawer, so it must start closed
+// (otherwise it covers the whole screen on first load). On desktop it starts open.
+const getInitialSidebarOpen = () => {
+    try {
+        return window.innerWidth > 768;
+    } catch {
+        return true;
+    }
+};
+
 const initialState = {
     theme: getSavedTheme(),
     currency: getSavedCurrency(),
-    sidebarOpen: true,
+    sidebarOpen: getInitialSidebarOpen(),
     itemDrawerOpen: false,
     activeItemId: null,
     searchOpen: false,
