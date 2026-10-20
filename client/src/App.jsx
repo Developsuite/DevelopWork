@@ -33,6 +33,8 @@ import Meetings from './pages/Meetings/Meetings';
 import ManagerDashboard from './pages/ManagerDashboard/ManagerDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard/EmployeeDashboard';
 import Settings from './pages/Settings/Settings';
+import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
+import TermsOfService from './pages/Legal/TermsOfService';
 import NotFound from './pages/NotFound/NotFound';
 import { Loader2 } from 'lucide-react';
 
@@ -239,6 +241,8 @@ function App() {
         <Route path="/register" element={<Navigate to="/login" replace />} />
         <Route path="/onboarding" element={<Navigate to="/login" replace />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
 
         {/* Super Admin Console */}
         <Route path="/super-admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>} />
