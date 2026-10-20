@@ -187,6 +187,12 @@ const READ_TOOLS = [
         risk: RISK.READ,
     },
     {
+        name: 'get_folders',
+        description: 'List all document folders in the docs module.',
+        parameters: { type: 'object', properties: {} },
+        risk: RISK.READ,
+    },
+    {
         name: 'get_meetings',
         description: 'List all scheduled meetings with dates, attendees, platform, and status.',
         parameters: { type: 'object', properties: {} },
@@ -328,18 +334,31 @@ const WRITE_TOOLS = [
     },
     {
         name: 'create_document',
-        description: 'Create a new document in the docs module.',
+        description: 'Create a new document in the docs module. Optionally place it in a folder (category).',
         parameters: {
             type: 'object',
             properties: {
                 title: { type: 'string', description: 'Document title (required)' },
-                content: { type: 'string', description: 'Document content / body text' },
-                type: { type: 'string', description: 'Document type: file, note, template' },
+                content: { type: 'string', description: 'Document content / body text (HTML or plain text)' },
+                folder: { type: 'string', description: 'Folder name to place the document in (e.g. Strategy, Technical, Design, HR, General). Default: General' },
             },
             required: ['title'],
         },
         risk: RISK.LOW,
-        confirmFields: ['title', 'type'],
+        confirmFields: ['title', 'folder'],
+    },
+    {
+        name: 'create_folder',
+        description: 'Create a new folder in the docs module to organize documents.',
+        parameters: {
+            type: 'object',
+            properties: {
+                name: { type: 'string', description: 'Folder name (required)' },
+            },
+            required: ['name'],
+        },
+        risk: RISK.LOW,
+        confirmFields: ['name'],
     },
     {
         name: 'schedule_meeting',
@@ -539,6 +558,8 @@ const executeReadTool = async (name, args, user) => {
             return await hrService.getLeaveRequests();
         case 'get_documents':
             return await docsService.getDocuments();
+        case 'get_folders':
+            return await docsService.getFolders();
         case 'get_meetings':
             return await meetingsService.getMeetings();
         default:
@@ -652,12 +673,22 @@ const executeWriteTool = async (name, args) => {
             return { success: true, message: `Contact "${result.name}" created.`, data: result };
         }
         case 'create_document': {
+            const { data: { session } } = await supabase.auth.getSession();
             const result = await docsService.createDocument({
                 title: args.title,
                 content: args.content || '',
-                type: args.type || 'note',
+                category: args.folder || 'General',
+                type: 'document',
+                owner_id: session?.user?.id || null,
+                owner_name: session?.user?.user_metadata?.name || 'Admin',
+                shared: false,
+                views: 0,
             });
-            return { success: true, message: `Document "${result.title}" created.`, data: result };
+            return { success: true, message: `Document "${result.title}" created in ${args.folder || 'General'}.`, data: result };
+        }
+        case 'create_folder': {
+            const result = await docsService.createFolder(args.name);
+            return { success: true, message: `Folder "${args.name}" created.`, data: result };
         }
         case 'schedule_meeting': {
             const result = await meetingsService.createMeeting({
@@ -760,7 +791,7 @@ Language: The admin may speak in English, Urdu (Roman script), or mixed. AUTO-DE
 CAPABILITIES:
 - Search and summarize any workspace data (projects, tasks, employees, leads, clients, finance, HR, docs, meetings)
 - Create tasks and assign them to employees
-- Create projects, leads, clients, contacts, documents
+- Create projects, leads, clients, contacts, documents, and document folders
 - Schedule meetings
 - Draft invoices and expense records
 - Send in-app notifications to employees
