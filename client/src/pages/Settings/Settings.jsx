@@ -9,6 +9,7 @@ import Modal from '../../components/common/Modal/Modal';
 import { mockUser } from '../../utils/mockData';
 import { authService } from '../../services/authService';
 import { managerService } from '../../services/managerService';
+import { integrationsService } from '../../services/integrationsService';
 import { permissionsService, SYSTEM_MODULES } from '../../services/permissionsService';
 import { isValidEmail, isEmpty, isValidPassword } from '../../utils/validation';
 import { DEPARTMENT_MODULES } from '../../utils/constants';
@@ -37,6 +38,8 @@ import {
     UserMinus,
     ShieldAlert,
     Video,
+    Send,
+    CheckCircle2,
 } from 'lucide-react';
 import './Settings.css';
 
@@ -60,6 +63,8 @@ const Settings = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [securityLoading, setSecurityLoading] = useState(false);
     const [resetingUserId, setResetingUserId] = useState(null);
+    const [telegramStatus, setTelegramStatus] = useState({ connected: false, loading: true });
+    const [telegramConnecting, setTelegramConnecting] = useState(false);
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
     const activeModules = useSelector((state) => state.access.activeModules);
@@ -67,6 +72,37 @@ const Settings = () => {
 
     const handleToggleModule = (moduleKey) => {
         dispatch(toggleModule(moduleKey));
+    };
+
+    useEffect(() => {
+        if (activeTab !== 'notifications') return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const status = await integrationsService.getTelegramStatus();
+                if (!cancelled) setTelegramStatus({ connected: status.connected, connected_at: status.connected_at, loading: false });
+            } catch {
+                if (!cancelled) setTelegramStatus({ connected: false, loading: false });
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [activeTab]);
+
+    const handleConnectTelegram = async () => {
+        setTelegramConnecting(true);
+        try {
+            const res = await integrationsService.connectTelegram();
+            if (res.deep_link) {
+                window.open(res.deep_link, '_blank', 'noopener');
+                dispatch(addToast({ title: 'Opening Telegram', message: 'Tap START in the bot chat to finish connecting, then come back.', type: 'info' }));
+            } else {
+                dispatch(addToast({ title: 'Connection link ready', message: `Open your bot and send: /start ${res.token}`, type: 'info' }));
+            }
+        } catch (err) {
+            dispatch(addToast({ title: 'Error', message: err.message || 'Could not start Telegram connection.', type: 'error' }));
+        } finally {
+            setTelegramConnecting(false);
+        }
     };
 
     const handleUpdateSecurity = async () => {
@@ -791,8 +827,39 @@ const Settings = () => {
                     )}
 
                     {activeTab === 'notifications' && (
-                        <div className="empty-settings">
-                            <p>This setting section is coming soon.</p>
+                        <div className="settings-section">
+                            <h2 className="settings-section-title">Notifications</h2>
+                            <p className="settings-section-hint">Connect your Telegram to receive task assignments, meeting reminders, and updates directly on your phone.</p>
+
+                            <div className="tg-connect-card">
+                                <div className="tg-connect-card__icon"><Send size={22} /></div>
+                                <div className="tg-connect-card__body">
+                                    <strong>Telegram Notifications</strong>
+                                    {telegramStatus.loading ? (
+                                        <span className="tg-connect-card__status">Checking connection…</span>
+                                    ) : telegramStatus.connected ? (
+                                        <span className="tg-connect-card__status tg-connect-card__status--on">
+                                            <CheckCircle2 size={14} /> Connected — you'll receive notifications here
+                                        </span>
+                                    ) : (
+                                        <span className="tg-connect-card__status">Not connected yet</span>
+                                    )}
+                                </div>
+                                <Button
+                                    variant={telegramStatus.connected ? 'outline' : 'primary'}
+                                    icon={Send}
+                                    loading={telegramConnecting}
+                                    onClick={handleConnectTelegram}
+                                >
+                                    {telegramStatus.connected ? 'Reconnect' : 'Connect Telegram'}
+                                </Button>
+                            </div>
+
+                            <ol className="tg-connect-steps">
+                                <li>Click <strong>Connect Telegram</strong> — it opens your DevelopWork bot in Telegram.</li>
+                                <li>Tap <strong>START</strong> (or send <code>/start</code>) in the bot chat.</li>
+                                <li>You're linked — notifications will arrive in that chat. To stop, send <code>/disconnect</code>.</li>
+                            </ol>
                         </div>
                     )}
 

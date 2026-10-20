@@ -85,6 +85,70 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // ── INTERNAL: Generate a one-time connection link for the logged-in user ──
+    if (action === "connect" || action === "status") {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await userClient.auth.getUser();
+      if (!user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Current connection state
+      const { data: existing } = await adminClient
+        .from("user_integrations")
+        .select("external_chat_id, connected_at")
+        .eq("user_id", user.id)
+        .eq("provider", "telegram")
+        .is("disabled_at", null)
+        .maybeSingle();
+
+      const connected = !!existing?.external_chat_id;
+
+      if (action === "status") {
+        return new Response(JSON.stringify({ connected, connected_at: existing?.connected_at || null }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // action === "connect": generate a fresh one-time token
+      const { data: profile } = await adminClient.from("profiles").select("tenant_id").eq("id", user.id).single();
+      const token = crypto.randomUUID().replace(/-/g, "");
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 min
+
+      await adminClient.from("integration_connection_tokens").insert({
+        user_id: user.id,
+        tenant_id: profile?.tenant_id || null,
+        provider: "telegram",
+        token_hash: token,
+        expires_at: expiresAt,
+      });
+
+      // Fetch the bot username so the deep link is always correct
+      let botUsername = "";
+      try {
+        const me = await fetch(`${TELEGRAM_API}/getMe`).then((r) => r.json());
+        botUsername = me?.result?.username || "";
+      } catch (_) { /* ignore */ }
+
+      const deepLink = botUsername
+        ? `https://t.me/${botUsername}?start=${token}`
+        : null;
+
+      return new Response(JSON.stringify({ deep_link: deepLink, bot_username: botUsername, token, expires_at: expiresAt, connected }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ── TELEGRAM WEBHOOK: Handle incoming bot messages ──
     const update = await req.json();
     const msg = update.message;
