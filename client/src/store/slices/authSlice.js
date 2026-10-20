@@ -180,6 +180,7 @@ const authSlice = createSlice({
         user: null,
         isAuthenticated: false,
         isLoading: true, // true initially while restoring session
+        isResettingPassword: false,
         error: null,
         signUpSuccess: false,
         resetSuccess: false,
@@ -284,17 +285,17 @@ const authSlice = createSlice({
             })
             // Reset Password
             .addCase(resetPassword.pending, (state) => {
-                state.isLoading = true;
+                state.isResettingPassword = true;
                 state.error = null;
                 state.resetSuccess = false;
             })
             .addCase(resetPassword.fulfilled, (state) => {
                 state.resetSuccess = true;
-                state.isLoading = false;
+                state.isResettingPassword = false;
             })
             .addCase(resetPassword.rejected, (state, action) => {
                 state.error = action.payload;
-                state.isLoading = false;
+                state.isResettingPassword = false;
             });
     },
 });
