@@ -125,7 +125,7 @@ const READ_TOOLS = [
         parameters: {
             type: 'object',
             properties: {
-                status: { type: 'string', description: 'Filter by status: To Do, In Progress, Review, Done' },
+                status: { type: 'string', description: 'Filter by status: Not Started, In Progress, In Review, Done' },
                 assignee: { type: 'string', description: 'Filter by assignee name (partial match)' },
                 priority: { type: 'string', description: 'Filter: Critical, High, Medium, Low' },
             },
@@ -203,7 +203,7 @@ const WRITE_TOOLS = [
             properties: {
                 title: { type: 'string', description: 'Task title (required)' },
                 description: { type: 'string', description: 'Task description' },
-                status: { type: 'string', enum: ['To Do', 'In Progress', 'Review', 'Done'], description: 'Initial status (default: To Do)' },
+                status: { type: 'string', enum: ['Not Started', 'In Progress', 'In Review', 'Done'], description: 'Initial status (default: Not Started)' },
                 priority: { type: 'string', enum: ['Critical', 'High', 'Medium', 'Low'], description: 'Priority level (default: Medium)' },
                 assignee_id: { type: 'string', description: 'User UUID to assign to. Use search_employees first.' },
                 assignee_name: { type: 'string', description: 'Display name of the assignee' },
@@ -224,7 +224,7 @@ const WRITE_TOOLS = [
                 task_id: { type: 'string', description: 'Task UUID (required)' },
                 title: { type: 'string' },
                 description: { type: 'string' },
-                status: { type: 'string', enum: ['To Do', 'In Progress', 'Review', 'Done'] },
+                status: { type: 'string', enum: ['Not Started', 'In Progress', 'In Review', 'Done'] },
                 priority: { type: 'string', enum: ['Critical', 'High', 'Medium', 'Low'] },
                 assignee_id: { type: 'string' },
                 assignee_name: { type: 'string' },
@@ -469,6 +469,18 @@ const OPENROUTER_TOOLS = ALL_TOOL_DEFS.map(t => ({
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const TASK_STATUSES = ['Not Started', 'In Progress', 'In Review', 'Done'];
+function normalizeStatus(value) {
+    if (!value) return null;
+    const v = value.toLowerCase().trim();
+    if (['to do', 'todo', 'not started', 'notstarted', 'new', 'pending', 'backlog'].includes(v)) return 'Not Started';
+    if (['in progress', 'inprogress', 'progress', 'doing', 'active', 'started'].includes(v)) return 'In Progress';
+    if (['review', 'in review', 'inreview', 'reviewing', 'qa'].includes(v)) return 'In Review';
+    if (['done', 'complete', 'completed', 'finished', 'closed'].includes(v)) return 'Done';
+    const exact = TASK_STATUSES.find(s => s.toLowerCase() === v);
+    return exact || value;
+}
+
 async function resolveUserId(value) {
     if (!value) return null;
     if (UUID_RE.test(value)) return value;
@@ -539,7 +551,7 @@ const executeWriteTool = async (name, args) => {
             const payload = {
                 title: args.title,
                 description: args.description || '',
-                status: args.status || 'To Do',
+                status: normalizeStatus(args.status) || 'Not Started',
                 priority: args.priority || 'Medium',
                 deadline: args.deadline || null,
             };
@@ -566,6 +578,7 @@ const executeWriteTool = async (name, args) => {
         }
         case 'update_task': {
             const { task_id, ...updates } = args;
+            if (updates.status) updates.status = normalizeStatus(updates.status);
             if (updates.assignee_id || updates.assignee_name) {
                 const lookupValue = updates.assignee_id || updates.assignee_name;
                 const users = await managerService.getAllUsers();
