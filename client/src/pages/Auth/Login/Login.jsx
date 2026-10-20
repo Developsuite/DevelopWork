@@ -20,7 +20,9 @@ const Login = () => {
     // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated && user) {
-            if (user.role === 'manager' && user.assignedModule) {
+            if (user.role === 'super_admin') {
+                navigate('/super-admin');
+            } else if (user.role === 'manager' && user.assignedModule) {
                 navigate(`/manager/${user.assignedModule}`);
             } else if (user.role === 'employee') {
                 navigate('/employee/dashboard');
