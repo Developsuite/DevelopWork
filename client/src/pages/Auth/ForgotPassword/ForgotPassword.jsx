@@ -112,7 +112,7 @@ const ForgotPassword = () => {
                                 </p>
                             </div>
                             <ol className="password-reset-sent__steps">
-                                <li><span>1</span><p>Open the email titled <strong>Reset your DevelopWork password</strong>.</p></li>
+                                <li><span>1</span><p>Open the newest <strong>password-reset email</strong> in your inbox.</p></li>
                                 <li><span>2</span><p>Click <strong>Choose a new password</strong>.</p></li>
                                 <li><span>3</span><p>Create your new password, then return to sign in.</p></li>
                             </ol>
