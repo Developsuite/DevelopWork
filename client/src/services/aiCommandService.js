@@ -244,9 +244,8 @@ const WRITE_TOOLS = [
                 name: { type: 'string', description: 'Project name (required)' },
                 description: { type: 'string' },
                 status: { type: 'string', enum: ['Planning', 'Active', 'On Hold', 'Completed'], description: 'Default: Planning' },
-                budget: { type: 'number', description: 'Budget amount' },
-                start_date: { type: 'string', description: 'YYYY-MM-DD' },
-                end_date: { type: 'string', description: 'YYYY-MM-DD' },
+                budget: { type: 'number', description: 'Budget amount in PKR' },
+                end_date: { type: 'string', description: 'Due date YYYY-MM-DD' },
             },
             required: ['name'],
         },
@@ -263,10 +262,8 @@ const WRITE_TOOLS = [
                 company: { type: 'string', description: 'Company name' },
                 email: { type: 'string' },
                 phone: { type: 'string' },
-                source: { type: 'string', description: 'Lead source: Website, Referral, LinkedIn, Cold Call, Email, Other' },
                 stage: { type: 'string', enum: ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'], description: 'Default: New' },
-                value: { type: 'number', description: 'Estimated deal value' },
-                notes: { type: 'string' },
+                value: { type: 'number', description: 'Estimated deal value in PKR' },
             },
             required: ['name'],
         },
@@ -303,7 +300,6 @@ const WRITE_TOOLS = [
                 company: { type: 'string' },
                 email: { type: 'string' },
                 phone: { type: 'string' },
-                industry: { type: 'string' },
                 address: { type: 'string' },
                 notes: { type: 'string' },
             },
@@ -322,8 +318,7 @@ const WRITE_TOOLS = [
                 email: { type: 'string' },
                 phone: { type: 'string' },
                 company: { type: 'string' },
-                position: { type: 'string' },
-                notes: { type: 'string' },
+                position: { type: 'string', description: 'Role/position at the company' },
             },
             required: ['name'],
         },
@@ -339,7 +334,6 @@ const WRITE_TOOLS = [
                 title: { type: 'string', description: 'Document title (required)' },
                 content: { type: 'string', description: 'Document content / body text' },
                 type: { type: 'string', description: 'Document type: file, note, template' },
-                folder_id: { type: 'string' },
             },
             required: ['title'],
         },
@@ -596,9 +590,8 @@ const executeWriteTool = async (name, args) => {
                 name: args.name,
                 description: args.description || '',
                 status: args.status || 'Planning',
-                budget: args.budget || 0,
-                start_date: args.start_date || null,
-                end_date: args.end_date || null,
+                amount: args.budget || 0,
+                due_date: args.end_date || null,
             });
             return { success: true, message: `Project "${result.name}" created.`, data: result };
         }
@@ -606,12 +599,11 @@ const executeWriteTool = async (name, args) => {
             const result = await leadsService.createLead({
                 name: args.name,
                 company: args.company || '',
+                contact_person: args.name,
                 email: args.email || '',
                 phone: args.phone || '',
-                source: args.source || 'Other',
                 stage: args.stage || 'New',
                 value: args.value || 0,
-                notes: args.notes || '',
             });
             return { success: true, message: `Lead "${result.name}" created.`, data: result };
         }
@@ -626,7 +618,6 @@ const executeWriteTool = async (name, args) => {
                 company: args.company || args.name,
                 email: args.email || '',
                 phone: args.phone || '',
-                industry: args.industry || '',
                 address: args.address || '',
                 notes: args.notes || '',
             });
@@ -638,8 +629,7 @@ const executeWriteTool = async (name, args) => {
                 email: args.email || '',
                 phone: args.phone || '',
                 company: args.company || '',
-                position: args.position || '',
-                notes: args.notes || '',
+                role: args.position || '',
             });
             return { success: true, message: `Contact "${result.name}" created.`, data: result };
         }
@@ -648,7 +638,6 @@ const executeWriteTool = async (name, args) => {
                 title: args.title,
                 content: args.content || '',
                 type: args.type || 'note',
-                folder_id: args.folder_id || null,
             });
             return { success: true, message: `Document "${result.title}" created.`, data: result };
         }
@@ -667,10 +656,13 @@ const executeWriteTool = async (name, args) => {
             return { success: true, message: `Meeting "${result.title}" scheduled for ${args.date}.`, data: result };
         }
         case 'create_invoice_draft': {
+            const items = args.description
+                ? [{ description: args.description, amount: args.amount }]
+                : [{ description: 'Services rendered', amount: args.amount }];
             const result = await financeService.createInvoice({
                 client_name: args.client_name,
                 amount: args.amount,
-                description: args.description || '',
+                items,
                 due_date: args.due_date || null,
                 status: args.status || 'Draft',
             });
@@ -678,10 +670,12 @@ const executeWriteTool = async (name, args) => {
         }
         case 'create_expense_request': {
             const result = await financeService.createExpense({
-                description: args.description,
+                reason: args.description,
                 amount: args.amount,
                 category: args.category || 'Other',
+                type: 'expense',
                 date: args.date || new Date().toISOString().split('T')[0],
+                status: 'pending',
             });
             return { success: true, message: `Expense "${args.description}" recorded: Rs. ${args.amount.toLocaleString()}`, data: result };
         }
@@ -691,8 +685,11 @@ const executeWriteTool = async (name, args) => {
                 recipientId = await resolveUserId(recipientId);
                 if (!recipientId) return { success: false, message: `Could not find employee "${args.user_id}".` };
             }
+            const { data: { session } } = await supabase.auth.getSession();
             const result = await notificationService.create({
                 recipient_id: recipientId,
+                sender_id: session?.user?.id || null,
+                sender_name: session?.user?.user_metadata?.name || 'Admin',
                 title: args.title,
                 message: args.message,
                 type: args.type || 'info',
