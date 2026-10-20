@@ -656,26 +656,30 @@ const executeWriteTool = async (name, args) => {
             return { success: true, message: `Meeting "${result.title}" scheduled for ${args.date}.`, data: result };
         }
         case 'create_invoice_draft': {
-            const items = args.description
-                ? [{ description: args.description, amount: args.amount }]
-                : [{ description: 'Services rendered', amount: args.amount }];
+            const invoiceId = `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+            const dueDate = args.due_date || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
             const result = await financeService.createInvoice({
+                id: invoiceId,
                 client_name: args.client_name,
                 amount: args.amount,
-                items,
-                due_date: args.due_date || null,
+                due_date: dueDate,
                 status: args.status || 'Draft',
+                items: JSON.stringify({
+                    items: [{ description: args.description || 'Services rendered', quantity: 1, price: args.amount }],
+                    notes: args.description || '',
+                }),
             });
-            return { success: true, message: `Invoice draft created for ${args.client_name}: Rs. ${args.amount.toLocaleString()}`, data: result };
+            return { success: true, message: `Invoice ${invoiceId} created for ${args.client_name}: Rs. ${args.amount.toLocaleString()}`, data: result };
         }
         case 'create_expense_request': {
             const result = await financeService.createExpense({
                 reason: args.description,
-                amount: args.amount,
+                amount: Math.round(args.amount),
                 category: args.category || 'Other',
-                type: 'expense',
+                type: 'company',
+                requester_name: 'Company',
                 date: args.date || new Date().toISOString().split('T')[0],
-                status: 'pending',
+                status: 'Pending',
             });
             return { success: true, message: `Expense "${args.description}" recorded: Rs. ${args.amount.toLocaleString()}`, data: result };
         }
