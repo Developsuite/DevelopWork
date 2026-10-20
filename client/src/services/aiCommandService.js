@@ -243,7 +243,8 @@ const WRITE_TOOLS = [
             properties: {
                 name: { type: 'string', description: 'Project name (required)' },
                 description: { type: 'string' },
-                status: { type: 'string', enum: ['Planning', 'Active', 'On Hold', 'Completed'], description: 'Default: Planning' },
+                status: { type: 'string', enum: ['Planning', 'In Progress', 'On Hold', 'Completed'], description: 'Default: Planning' },
+                priority: { type: 'string', enum: ['Critical', 'High', 'Medium', 'Low'], description: 'Default: Medium' },
                 budget: { type: 'number', description: 'Budget amount in PKR' },
                 end_date: { type: 'string', description: 'Due date YYYY-MM-DD' },
             },
@@ -262,7 +263,8 @@ const WRITE_TOOLS = [
                 company: { type: 'string', description: 'Company name' },
                 email: { type: 'string' },
                 phone: { type: 'string' },
-                stage: { type: 'string', enum: ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'], description: 'Default: New' },
+                stage: { type: 'string', enum: ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Closed'], description: 'Default: New' },
+                priority: { type: 'string', enum: ['Critical', 'High', 'Medium', 'Low'], description: 'Default: Medium' },
                 value: { type: 'number', description: 'Estimated deal value in PKR' },
             },
             required: ['name'],
@@ -281,9 +283,8 @@ const WRITE_TOOLS = [
                 company: { type: 'string' },
                 email: { type: 'string' },
                 phone: { type: 'string' },
-                stage: { type: 'string', enum: ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'] },
+                stage: { type: 'string', enum: ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Closed'] },
                 value: { type: 'number' },
-                notes: { type: 'string' },
             },
             required: ['lead_id'],
         },
@@ -350,7 +351,7 @@ const WRITE_TOOLS = [
                 date: { type: 'string', description: 'Date in YYYY-MM-DD format (required)' },
                 time: { type: 'string', description: 'Time in HH:MM 24h format (default: 10:00)' },
                 duration: { type: 'number', description: 'Duration in minutes (default: 30)' },
-                type: { type: 'string', description: 'Meeting type: Client Discovery, Internal Sync, Sprint Review, Design Review, 1-on-1, Other' },
+                type: { type: 'string', description: 'Meeting type: Client Discovery, Project Review, Sprint Sync, Contract Negotiation, Milestone Check-in, QBR' },
                 platform: { type: 'string', description: 'Platform: Google Meet, Zoom, Teams, In-Person' },
                 attendees: {
                     type: 'array',
@@ -603,6 +604,7 @@ const executeWriteTool = async (name, args) => {
                 name: args.name,
                 description: args.description || '',
                 status: args.status || 'Planning',
+                priority: args.priority || 'Medium',
                 amount: args.budget || 0,
                 due_date: args.end_date || null,
             });
@@ -616,6 +618,7 @@ const executeWriteTool = async (name, args) => {
                 email: args.email || '',
                 phone: args.phone || '',
                 stage: args.stage || 'New',
+                priority: args.priority || 'Medium',
                 value: args.value || 0,
             });
             return { success: true, message: `Lead "${result.name}" created.`, data: result };
@@ -633,6 +636,8 @@ const executeWriteTool = async (name, args) => {
                 phone: args.phone || '',
                 address: args.address || '',
                 notes: args.notes || '',
+                status: 'Not Started',
+                payment_status: 'Unpaid',
             });
             return { success: true, message: `Client "${result.name}" created.`, data: result };
         }
@@ -660,7 +665,7 @@ const executeWriteTool = async (name, args) => {
                 date: args.date,
                 time: args.time || '10:00',
                 duration: args.duration || 30,
-                type: args.type || 'Internal Sync',
+                type: args.type || 'Client Discovery',
                 platform: args.platform || 'Google Meet',
                 attendees: args.attendees || [],
                 agenda: (args.agenda || []).map(item => (typeof item === 'string' ? { text: item } : item)),
@@ -774,6 +779,15 @@ RULES:
 9. When creating a task for someone, also offer to send them a notification (in-app, email, or Telegram).
 10. For email notifications, use send_email_notification with the employee's email. Use email_type "task_assigned" for tasks, "meeting_scheduled" for meetings.
 11. For Telegram, the employee must have connected their account first. If Telegram fails with "not connected", tell the admin.
+
+EXACT VALUES (use these exactly, never invent variants):
+- Task status: "Not Started", "In Progress", "In Review", "Done"
+- Task/Lead/Project priority: "Critical", "High", "Medium", "Low"
+- Project status: "Planning", "In Progress", "On Hold", "Completed"
+- Lead stage: "New", "Contacted", "Qualified", "Proposal", "Negotiation", "Closed"
+- Invoice status: "Draft", "Sent", "Paid", "Overdue"
+- Meeting type: "Client Discovery", "Project Review", "Sprint Sync", "Contract Negotiation", "Milestone Check-in", "QBR"
+- Meeting platform: "Google Meet", "Zoom", "Teams", "In-Person"
 
 FORMATTING:
 - Use **bold** for names and important values
