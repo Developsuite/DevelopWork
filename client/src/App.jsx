@@ -23,6 +23,7 @@ import Board from './pages/Board/Board';
 import HR from './pages/HR/HR';
 import Finance from './pages/Finance/Finance';
 import ModuleHub from './pages/ModuleHub/ModuleHub';
+import Dashboard from './pages/Dashboard/Dashboard';
 import Onboarding from './pages/Onboarding/Onboarding';
 import Landing from './pages/Landing/Landing';
 import ProjectManagement from './pages/ProjectManagement/ProjectManagement';
@@ -270,6 +271,7 @@ function App() {
         {/* Admin / Full App Routes (with Layout) */}
         <Route element={<AdminRoute><AppLayout /></AdminRoute>}>
           <Route path="/modules" element={<ModuleHub />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/board/:boardId" element={<Board />} />
           <Route path="/hr" element={<HR />} />
           <Route path="/finance" element={<Finance />} />

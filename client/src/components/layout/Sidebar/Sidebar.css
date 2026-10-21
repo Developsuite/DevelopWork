@@ -292,12 +292,13 @@
     color: var(--primary-500);
 }
 
-.sidebar__hub-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 3px;
-    flex-shrink: 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.sidebar__hub-option--dashboard {
+    color: var(--primary-500);
+    font-weight: 600;
+}
+
+.sidebar__hub-option--dashboard:hover {
+    background: rgba(0, 85, 254, 0.08);
 }
 
 .sidebar__hub-divider {
@@ -333,13 +334,6 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: var(--text-muted);
-}
-
-.sidebar__active-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 3px;
-    flex-shrink: 0;
 }
 
 .sidebar__subpages {

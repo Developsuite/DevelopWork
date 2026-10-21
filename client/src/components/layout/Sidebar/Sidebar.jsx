@@ -452,6 +452,18 @@ const Sidebar = () => {
                     {/* Dropdown — all active modules */}
                     {dropdownOpen && (
                         <div className="sidebar__hub-dropdown">
+                            {user?.role === 'admin' && (
+                                <>
+                                    <button
+                                        className={`sidebar__hub-option sidebar__hub-option--dashboard ${location.pathname === '/dashboard' ? 'active' : ''}`}
+                                        onClick={() => { setDropdownOpen(false); setSelectedModule(null); navigate('/dashboard'); }}
+                                    >
+                                        <BarChart3 size={15} />
+                                        <span>Dashboard</span>
+                                    </button>
+                                    <div className="sidebar__hub-divider" />
+                                </>
+                            )}
                             {visibleModules.map((mod) => {
                                 const Icon = moduleIconMap[mod.icon] || FileText;
                                 const isSelected = selectedModule === mod.key;
@@ -461,10 +473,6 @@ const Sidebar = () => {
                                         className={`sidebar__hub-option ${isSelected ? 'active' : ''}`}
                                         onClick={() => handleSelectModule(mod)}
                                     >
-                                        <span
-                                            className="sidebar__hub-dot"
-                                            style={{ background: mod.color }}
-                                        />
                                         <Icon size={15} />
                                         <span>{mod.label}</span>
                                     </button>
@@ -490,10 +498,6 @@ const Sidebar = () => {
                 {selectedModuleInfo && (
                     <div className="sidebar__active-module">
                         <div className="sidebar__active-label">
-                            <span
-                                className="sidebar__active-dot"
-                                style={{ background: selectedModuleInfo.color }}
-                            />
                             {SelectedIcon && <SelectedIcon size={15} />}
                             <span>{selectedModuleInfo.label}</span>
                         </div>
