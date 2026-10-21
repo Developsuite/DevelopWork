@@ -64,11 +64,17 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const data = payload.data || {};
+    const adminName = String(user.user_metadata?.name || user.email || "Your admin");
+    // Only "Jarvis" or the signed-in admin's own name may appear as the sender.
+    const asJarvis = String(data.sender_name || "").trim().toLowerCase() === "jarvis";
     const ctx = {
       appUrl: APP_URL,
-      senderName: String(user.user_metadata?.name || user.email || "Your admin"),
+      senderName: asJarvis ? "Jarvis" : adminName,
+      senderTitle: asJarvis ? "AI assistant, DevelopWork" : "DevelopWork",
     };
-    const data = payload.data || {};
+    const fromAddress = FROM_EMAIL.match(/<([^>]+)>/)?.[1] || FROM_EMAIL.trim();
+    const fromName = (asJarvis ? "Jarvis from DevelopWork" : `${adminName} via DevelopWork`).replace(/["<>]/g, "");
     let email: BuiltEmail;
     switch (payload.type) {
       case "task_assigned":
@@ -89,7 +95,7 @@ Deno.serve(async (req: Request) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: FROM_EMAIL,
+        from: `${fromName} <${fromAddress}>`,
         to: [payload.to],
         subject: payload.subject,
         html: email.html,
