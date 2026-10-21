@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "../_shared/cors.ts";
+import { buildMeeting, buildMessage, buildTaskAssigned, type BuiltEmail } from "./templates.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -7,131 +8,13 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "DevelopWork <onboarding@resend.dev>";
-const APP_URL = Deno.env.get("APP_URL") || "https://develop-work.vercel.app";
+const APP_URL = (Deno.env.get("APP_URL") || "https://develop-work.vercel.app").replace(/\/+$/, "");
 
 interface EmailPayload {
   to: string;
   subject: string;
   type: "task_assigned" | "meeting_scheduled" | "notification" | "custom";
   data: Record<string, unknown>;
-}
-
-function buildTaskAssignedHTML(data: Record<string, unknown>): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-
-        <!-- Header -->
-        <tr><td style="background:#0055FE;padding:28px 32px;">
-          <img src="${APP_URL}/images/white_logo.png" alt="DevelopWork" height="30" style="height:30px;display:inline-block;vertical-align:middle;border:0;" />
-        </td></tr>
-
-        <!-- Body -->
-        <tr><td style="padding:32px;">
-          <p style="margin:0 0 8px;font-size:13px;color:#5A6270;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">New Task Assigned</p>
-          <h2 style="margin:0 0 24px;font-size:22px;color:#1A1F2E;font-weight:700;">${data.task_title || "Untitled Task"}</h2>
-
-          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-            ${data.description ? `<tr><td style="padding:8px 0;font-size:14px;color:#5A6270;line-height:1.6;">${data.description}</td></tr>` : ""}
-          </table>
-
-          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fc;border-radius:8px;padding:4px;">
-            <tr>
-              <td style="padding:12px 16px;font-size:12px;color:#5A6270;font-weight:600;border-bottom:1px solid #e4e7ec;">Priority</td>
-              <td style="padding:12px 16px;font-size:14px;color:#1A1F2E;font-weight:600;border-bottom:1px solid #e4e7ec;">${data.priority || "Medium"}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 16px;font-size:12px;color:#5A6270;font-weight:600;border-bottom:1px solid #e4e7ec;">Deadline</td>
-              <td style="padding:12px 16px;font-size:14px;color:#1A1F2E;font-weight:600;border-bottom:1px solid #e4e7ec;">${data.deadline || "No deadline"}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 16px;font-size:12px;color:#5A6270;font-weight:600;border-bottom:1px solid #e4e7ec;">Project</td>
-              <td style="padding:12px 16px;font-size:14px;color:#1A1F2E;font-weight:600;border-bottom:1px solid #e4e7ec;">${data.project || "General"}</td>
-            </tr>
-            <tr>
-              <td style="padding:12px 16px;font-size:12px;color:#5A6270;font-weight:600;">Assigned by</td>
-              <td style="padding:12px 16px;font-size:14px;color:#1A1F2E;font-weight:600;">${data.assigned_by || "Admin"}</td>
-            </tr>
-          </table>
-
-          <div style="margin-top:28px;text-align:center;">
-            <a href="${APP_URL}" style="display:inline-block;background:#0055FE;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open DevelopWork</a>
-          </div>
-        </td></tr>
-
-        <!-- Footer -->
-        <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;">
-          <p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">This email was sent by DevelopWork. You received it because a task was assigned to you.</p>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-function buildMeetingHTML(data: Record<string, unknown>): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <tr><td style="background:#0055FE;padding:28px 32px;">
-          <img src="${APP_URL}/images/white_logo.png" alt="DevelopWork" height="30" style="height:30px;display:inline-block;vertical-align:middle;border:0;" />
-        </td></tr>
-        <tr><td style="padding:32px;">
-          <p style="margin:0 0 8px;font-size:13px;color:#5A6270;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;">Meeting Scheduled</p>
-          <h2 style="margin:0 0 24px;font-size:22px;color:#1A1F2E;font-weight:700;">${data.title || "Meeting"}</h2>
-          <table width="100%" style="background:#f8f9fc;border-radius:8px;">
-            <tr><td style="padding:12px 16px;font-size:12px;color:#5A6270;font-weight:600;border-bottom:1px solid #e4e7ec;">Date</td><td style="padding:12px 16px;font-size:14px;color:#1A1F2E;font-weight:600;border-bottom:1px solid #e4e7ec;">${data.date || ""}</td></tr>
-            <tr><td style="padding:12px 16px;font-size:12px;color:#5A6270;font-weight:600;border-bottom:1px solid #e4e7ec;">Time</td><td style="padding:12px 16px;font-size:14px;color:#1A1F2E;font-weight:600;border-bottom:1px solid #e4e7ec;">${data.time || ""}</td></tr>
-            <tr><td style="padding:12px 16px;font-size:12px;color:#5A6270;font-weight:600;">Platform</td><td style="padding:12px 16px;font-size:14px;color:#1A1F2E;font-weight:600;">${data.platform || "Google Meet"}</td></tr>
-          </table>
-          <div style="margin-top:28px;text-align:center;">
-            <a href="${APP_URL}" style="display:inline-block;background:#0055FE;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open DevelopWork</a>
-          </div>
-        </td></tr>
-        <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;"><p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">Sent by DevelopWork.</p></td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-function buildGenericHTML(data: Record<string, unknown>): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:40px 20px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-        <tr><td style="background:#0055FE;padding:28px 32px;"><h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">DevelopWork</h1></td></tr>
-        <tr><td style="padding:32px;">
-          <h2 style="margin:0 0 16px;font-size:20px;color:#1A1F2E;font-weight:700;">${data.title || "Notification"}</h2>
-          <p style="margin:0 0 24px;font-size:14px;color:#5A6270;line-height:1.6;">${data.message || ""}</p>
-          <div style="text-align:center;"><a href="${APP_URL}" style="display:inline-block;background:#0055FE;color:#ffffff;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Open DevelopWork</a></div>
-        </td></tr>
-        <tr><td style="padding:20px 32px;background:#f8f9fc;border-top:1px solid #e4e7ec;"><p style="margin:0;font-size:11px;color:#9BA3B0;text-align:center;">Sent by DevelopWork.</p></td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
 }
 
 Deno.serve(async (req: Request) => {
@@ -181,17 +64,21 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Build HTML based on type
-    let html: string;
+    const ctx = {
+      appUrl: APP_URL,
+      senderName: String(user.user_metadata?.name || user.email || "Your admin"),
+    };
+    const data = payload.data || {};
+    let email: BuiltEmail;
     switch (payload.type) {
       case "task_assigned":
-        html = buildTaskAssignedHTML(payload.data);
+        email = buildTaskAssigned(ctx, data);
         break;
       case "meeting_scheduled":
-        html = buildMeetingHTML(payload.data);
+        email = buildMeeting(ctx, data);
         break;
       default:
-        html = buildGenericHTML(payload.data);
+        email = buildMessage(ctx, data, payload.subject);
     }
 
     // Send via Resend
@@ -205,7 +92,9 @@ Deno.serve(async (req: Request) => {
         from: FROM_EMAIL,
         to: [payload.to],
         subject: payload.subject,
-        html,
+        html: email.html,
+        text: email.text,
+        ...(user.email ? { reply_to: user.email } : {}),
       }),
     });
 

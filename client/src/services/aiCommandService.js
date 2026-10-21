@@ -490,7 +490,7 @@ const WRITE_TOOLS = [
                 to_email: { type: 'string', description: 'Recipient email address (required)' },
                 subject: { type: 'string', description: 'Email subject line (required)' },
                 email_type: { type: 'string', enum: ['task_assigned', 'meeting_scheduled', 'notification', 'custom'], description: 'Email template type' },
-                body: { type: 'string', description: 'Email body text (for notification/custom type)' },
+                body: { type: 'string', description: 'The full email text exactly as the recipient should read it: greeting, paragraphs separated by blank lines, and sign-off with the admin\'s real name. Required for notification/custom emails; optional extra note for task/meeting emails.' },
                 data: { type: 'object', description: 'Structured data for the email template (task_title, priority, deadline, assigned_by, etc.)' },
             },
             required: ['to_email', 'subject'],
@@ -811,12 +811,16 @@ const executeWriteTool = async (name, args) => {
             return { success: true, message: `In-app notification sent.`, data: result };
         }
         case 'send_email_notification': {
-            const result = await callSendEmail(
-                args.to_email,
-                args.subject,
-                args.email_type || 'notification',
-                args.data || { title: args.subject, message: args.body || '' },
-            );
+            const { data: { session: emailSession } } = await supabase.auth.getSession();
+            const senderName = emailSession?.user?.user_metadata?.name || 'Admin';
+            const emailType = args.email_type || 'notification';
+            const emailData = { ...(args.data || {}) };
+            const body = String(args.body || emailData.message || emailData.body || '')
+                .replace(/\[(your|my|sender'?s?)\s+name\]/gi, senderName);
+            if (!emailData.title) emailData.title = args.subject;
+            if (body) emailData.message = body;
+            if (emailType === 'task_assigned' && !emailData.assigned_by) emailData.assigned_by = senderName;
+            const result = await callSendEmail(args.to_email, args.subject, emailType, emailData);
             if (result.error) return { success: false, message: `Email failed: ${result.error}` };
             return { success: true, message: `Email sent to ${args.to_email}.`, data: result };
         }
@@ -869,7 +873,7 @@ RULES:
 7. NEVER attempt to delete records, modify permissions, change passwords, or access payroll.
 8. For financial operations (invoices, expenses), explicitly note they are DRAFTS requiring manual review.
 9. When creating a task for someone, also offer to send them a notification (in-app, email, or Telegram).
-10. For email notifications, use send_email_notification with the employee's email. Use email_type "task_assigned" for tasks, "meeting_scheduled" for meetings.
+10. For email notifications, use send_email_notification with the employee's email. Use email_type "task_assigned" for tasks, "meeting_scheduled" for meetings, and "notification" for any other message. ALWAYS put the complete email text (greeting, paragraphs separated by blank lines, sign-off) in the "body" field — the recipient only sees what is in "body". Sign emails as ${user.name}; never write placeholders like [Your Name] or [Company].
 11. For Telegram, the employee must have connected their account first. If Telegram fails with "not connected", tell the admin.
 
 EXACT VALUES (use these exactly, never invent variants):
