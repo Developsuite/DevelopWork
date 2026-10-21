@@ -81,6 +81,74 @@ export const notificationService = {
         return (data || []).map(p => p.id);
     },
 
+    // Send an email to one recipient via the send-email Edge Function.
+    async sendEmail({ toEmail, subject, title, message }) {
+        const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+        if (!SUPABASE_URL) return { error: 'Email not configured' };
+        if (!toEmail) return { error: 'No recipient email' };
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) return { error: 'No active session' };
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    to: toEmail,
+                    subject,
+                    type: 'notification',
+                    data: { title, message },
+                }),
+            });
+            return await res.json().catch(() => ({ error: 'Invalid email response' }));
+        } catch (err) {
+            return { error: err.message || 'Email failed' };
+        }
+    },
+
+    // Notify an assignee that a task was assigned to them: in-app always,
+    // email only when requested. Never throws — failures are returned.
+    async notifyTaskAssigned({ task, assignee, sendEmail, senderId, senderName }) {
+        const result = { inApp: false, email: false, emailError: null };
+        if (!assignee?.id) return result;
+
+        const due = task?.deadline ? ` (due ${task.deadline})` : '';
+        const message = `${senderName || 'Your admin'} assigned you a new task: "${task?.title}"${due}.`;
+
+        // In-app notification
+        try {
+            await this.create({
+                recipient_id: assignee.id,
+                sender_id: senderId || null,
+                sender_name: senderName || 'Admin',
+                type: 'task_assigned',
+                title: 'New Task Assigned',
+                message,
+                task_id: task?.id || null,
+                task_title: task?.title || null,
+                read: false,
+            });
+            result.inApp = true;
+        } catch (err) {
+            console.warn('[notificationService] notifyTaskAssigned in-app error:', err.message);
+        }
+
+        // Email notification (optional)
+        if (sendEmail && assignee?.email) {
+            const emailRes = await this.sendEmail({
+                toEmail: assignee.email,
+                subject: `New Task Assigned: ${task?.title}`,
+                title: 'New Task Assigned',
+                message: `Hi ${assignee.name || ''},\n\n${message}${task?.priority ? `\nPriority: ${task.priority}` : ''}\n\nPlease log in to DevelopWork to view the details.`,
+            });
+            result.email = !emailRes?.error;
+            result.emailError = emailRes?.error || null;
+        }
+        return result;
+    },
+
     // Fire task-completed notifications: notify the employee + all admins
     async notifyTaskCompleted({ taskId, taskTitle, senderId, senderName }) {
         try {

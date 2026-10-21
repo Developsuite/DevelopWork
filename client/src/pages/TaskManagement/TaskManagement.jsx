@@ -26,7 +26,8 @@ import {
     TrendingUp,
     Shield,
     Loader2,
-    ClipboardList
+    ClipboardList,
+    Mail
 } from 'lucide-react';
 import { projectService } from '../../services/projectService';
 import { managerService } from '../../services/managerService';
@@ -80,6 +81,8 @@ const TaskManagement = () => {
         status: 'Not Started',
         deadline: ''
     });
+    // Whether to email the assignee(s) when a new task is created
+    const [notifyByEmail, setNotifyByEmail] = useState(true);
 
     const loadData = async () => {
         setLoading(true);
@@ -183,6 +186,7 @@ const TaskManagement = () => {
     const handleOpenCreateModal = (prefillAssignee = null) => {
         setEditingTask(null);
         setIsMultiAssign(false);
+        setNotifyByEmail(true);
         setSelectedAssigneeIds(prefillAssignee ? [prefillAssignee.id] : []);
         setTaskForm({
             title: '',
@@ -244,12 +248,20 @@ const TaskManagement = () => {
                         status: taskForm.status,
                         deadline: taskForm.deadline || null
                     };
-                    await projectService.createTask(payload);
+                    const created = await projectService.createTask(payload);
+                    // Notify the assignee (in-app always, email when requested)
+                    await notificationService.notifyTaskAssigned({
+                        task: { id: created?.id, title: payload.title, deadline: payload.deadline, priority: payload.priority },
+                        assignee: member,
+                        sendEmail: notifyByEmail,
+                        senderId: user?.id,
+                        senderName: user?.name || 'Admin',
+                    });
                 }
 
                 dispatch(addToast({
                     title: 'Tasks Assigned',
-                    message: `Task successfully assigned to ${selectedAssigneeIds.length} team members.`,
+                    message: `Task assigned to ${selectedAssigneeIds.length} team member${selectedAssigneeIds.length > 1 ? 's' : ''}${notifyByEmail ? ' — notified by email.' : '.'}`,
                     type: 'success'
                 }));
 
@@ -280,8 +292,24 @@ const TaskManagement = () => {
                 await projectService.updateTask(editingTask.id, payload);
                 dispatch(addToast({ title: 'Task Updated', message: 'Task changes saved successfully.', type: 'success' }));
             } else {
-                await projectService.createTask(payload);
-                dispatch(addToast({ title: 'Task Delegated', message: `Task assigned to ${payload.assignee_name || 'team member'}.`, type: 'success' }));
+                const created = await projectService.createTask(payload);
+                // Notify the assignee (in-app always, email when requested)
+                let emailed = false;
+                if (taskForm.assignee_id && selectedMember) {
+                    const res = await notificationService.notifyTaskAssigned({
+                        task: { id: created?.id, title: payload.title, deadline: payload.deadline, priority: payload.priority },
+                        assignee: selectedMember,
+                        sendEmail: notifyByEmail,
+                        senderId: user?.id,
+                        senderName: user?.name || 'Admin',
+                    });
+                    emailed = res.email;
+                }
+                dispatch(addToast({
+                    title: 'Task Delegated',
+                    message: `Task assigned to ${payload.assignee_name || 'team member'}${emailed ? ' — notified by email.' : '.'}`,
+                    type: 'success',
+                }));
             }
 
             setIsModalOpen(false);
@@ -1034,6 +1062,34 @@ const TaskManagement = () => {
                             />
                         </div>
                     </div>
+
+                    {!editingTask && (
+                        <label
+                            className="task-notify-toggle"
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: '12px', marginTop: '20px',
+                                padding: '14px 16px', borderRadius: '12px', cursor: 'pointer',
+                                border: '1px solid var(--border-default)',
+                                background: notifyByEmail ? 'var(--primary-50)' : 'var(--bg-secondary)',
+                                borderColor: notifyByEmail ? 'var(--primary-300)' : 'var(--border-default)',
+                                transition: 'all 0.15s ease', userSelect: 'none',
+                            }}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={notifyByEmail}
+                                onChange={(e) => setNotifyByEmail(e.target.checked)}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary-600, #2563eb)', flexShrink: 0 }}
+                            />
+                            <span style={{ display: 'grid', placeItems: 'center', width: '34px', height: '34px', borderRadius: '9px', flexShrink: 0, color: 'var(--primary-600)', background: 'rgba(0, 85, 254, 0.1)' }}>
+                                <Mail size={17} />
+                            </span>
+                            <span style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Notify assignee by email</span>
+                                <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Send the assigned employee an email about this task.</span>
+                            </span>
+                        </label>
+                    )}
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                         <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Cancel</Button>
