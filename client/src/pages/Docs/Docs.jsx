@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToast } from '../../store/slices/uiSlice';
 import { docsService } from '../../services/docsService';
 import { isEmpty } from '../../utils/validation';
@@ -27,6 +27,9 @@ const Docs = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
+    const isAdmin = user?.role === 'admin';
+    const authorName = user?.name || user?.email || 'Unknown';
     const [activeTab, setActiveTab] = useState('all');
     const [activeFolder, setActiveFolder] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -204,7 +207,7 @@ const Docs = () => {
             await docsService.createVersion({
                 document_id: selectedDoc.id,
                 version: `${(selectedDoc.versions?.length || 0) + 1}.0`,
-                author_name: 'Current User' // Replace with actual user
+                author_name: authorName,
             });
             await loadDocs();
             setIsDirty(false);
@@ -370,7 +373,7 @@ const Docs = () => {
                     title: formData.title,
                     category: formData.category,
                     type: 'document',
-                    owner_name: 'Current User', // Replace with actual user when available
+                    owner_name: authorName,
                     content: '',
                     shared: false,
                     views: 0
@@ -1135,12 +1138,18 @@ const Docs = () => {
                                             <Button variant="ghost" size="sm" icon={Trash2} onClick={() => handleDeleteDoc(selectedDoc.id)} style={{ color: 'var(--danger)' }}>Delete</Button>
                                         </div>
                                     </div>
-                                    <div className="doc-detail__versions">
-                                        <h4><Clock size={12} /> Version History</h4>
-                                        {selectedDoc.versions.map((v, i) => (
-                                            <div key={i} className="doc-version"><span className="doc-version__tag">v{v.v}</span><span>{v.date}</span><span>{v.author}</span>{i === 0 && <Badge variant="status" color="var(--success)">Current</Badge>}</div>
-                                        ))}
-                                    </div>
+                                    {isAdmin && selectedDoc.versions?.length > 0 && (
+                                        <div className="doc-detail__versions">
+                                            <h4><Clock size={12} /> Version History</h4>
+                                            {selectedDoc.versions.map((v, i) => {
+                                                const d = v.date ? new Date(v.date) : null;
+                                                const when = d && !isNaN(d) ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : v.date;
+                                                return (
+                                                    <div key={i} className="doc-version"><span className="doc-version__tag">v{v.v}</span><span>{when}</span><span>{v.author || 'Unknown'}</span>{i === 0 && <Badge variant="status" color="var(--success)">Current</Badge>}</div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
 
                                     {/* Document Content Preview */}
                                     <div className="doc-preview-body" style={{ 
@@ -1486,7 +1495,7 @@ const Docs = () => {
                                     type: 'document',
                                     category: templateFolder,
                                     content: selectedTemplate.content,
-                                    owner_name: 'Current User'
+                                    owner_name: authorName
                                 });
                                 await loadDocs();
                                 dispatch(addToast({ title: 'Template Created', message: `"${selectedTemplate.name}" has been created in ${templateFolder}.`, type: 'success' }));
