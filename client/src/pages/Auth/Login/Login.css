@@ -295,6 +295,18 @@
     font-weight: 700;
 }
 
+.login-page__footer-contact {
+    display: block;
+    margin-top: 6px;
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+}
+
+.login-page__footer-contact a {
+    color: var(--primary-500);
+    font-weight: 700;
+}
+
 /* Demo Credentials */
 .login-page__demo-creds {
     margin-top: 40px;
