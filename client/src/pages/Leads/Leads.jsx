@@ -33,6 +33,7 @@ const Leads = () => {
     const [editMode, setEditMode] = useState(false);
     const theme = useSelector((state) => state.ui.theme);
     const currency = useSelector((state) => state.ui.currency) || 'PKR';
+    const { user } = useSelector((state) => state.auth);
 
     // Initial Data
     const [leads, setLeads] = useState([]);
@@ -140,6 +141,8 @@ const Leads = () => {
                 await leadsService.createLead({
                     ...payload,
                     last_contact: 'Just now',
+                    created_by: user?.id || null,
+                    created_by_name: user?.name || null,
                 });
                 dispatch(addToast({ title: editMode ? 'Lead Saved' : 'Lead Added', message: editMode ? 'Lead saved to database.' : 'New lead has been created.', type: 'success' }));
             }
@@ -316,6 +319,8 @@ const Leads = () => {
                         priority: cols[7] || 'Medium',
                         location: cols[8] || '',
                         last_contact: 'Just now',
+                        created_by: user?.id || null,
+                        created_by_name: user?.name || null,
                     };
                 });
 
@@ -783,6 +788,19 @@ const Leads = () => {
                             <div className="ld__detail-item"><label>Location</label><div>{selectedLead.location || 'Not specified'}</div></div>
                             <div className="ld__detail-item"><label>Priority</label><div>{renderTag(selectedLead.priority || 'Medium')}</div></div>
                             <div className="ld__detail-item"><label>Value</label><div className="highlight">{formatCurrency(selectedLead.value || 0, currency)}</div></div>
+                            <div className="ld__detail-item">
+                                <label>Added by</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {selectedLead.created_by_name ? (
+                                        <>
+                                            <Avatar name={selectedLead.created_by_name} size="xs" />
+                                            <span>{selectedLead.created_by_name}</span>
+                                        </>
+                                    ) : (
+                                        <span style={{ color: 'var(--text-muted)' }}>Not recorded</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                         <div className="ld__detail-actions">
                             <Button variant="ghost" icon={Mail} fullWidth>Send Email</Button>

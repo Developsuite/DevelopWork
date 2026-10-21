@@ -677,6 +677,7 @@ const executeWriteTool = async (name, args) => {
             return { success: true, message: `Project "${result.name}" created.`, data: result };
         }
         case 'create_lead': {
+            const { data: { session: leadSession } } = await supabase.auth.getSession();
             const result = await leadsService.createLead({
                 name: args.name,
                 company: args.company || '',
@@ -686,6 +687,8 @@ const executeWriteTool = async (name, args) => {
                 stage: args.stage || 'New',
                 priority: args.priority || 'Medium',
                 value: args.value || 0,
+                created_by: leadSession?.user?.id || null,
+                created_by_name: leadSession?.user?.user_metadata?.name || null,
             });
             return { success: true, message: `Lead "${result.name}" created.`, data: result };
         }
