@@ -418,9 +418,7 @@
     background: var(--dsh-soft);
     border: 1px solid var(--dsh-line);
     color: var(--dsh-ink-2);
-    transition: color 0.15s ease;
 }
-.dsh-mod__main:hover .dsh-mod__icon { color: var(--dsh-accent); }
 
 .dsh-mod__info { display: flex; flex-direction: column; min-width: 0; }
 .dsh-mod__name { font-size: 14px; font-weight: 600; color: var(--dsh-ink); }

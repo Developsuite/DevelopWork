@@ -14,9 +14,11 @@ import { hrService } from '../../services/hrService';
 import { meetingsService } from '../../services/meetingsService';
 import { docsService } from '../../services/docsService';
 import { formatCurrency } from '../../utils/helpers';
+import { DEPARTMENT_MODULES } from '../../utils/constants';
 import './Dashboard.css';
 
 const isDone = (s) => s === 'Done' || s === 'Completed';
+const MODULE_COLOR = Object.fromEntries(DEPARTMENT_MODULES.map((mod) => [mod.key, mod.color]));
 const shortDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 const meetingDate = (mt) => (/^\d{4}-\d{2}-\d{2}$/.test(mt.date) ? new Date(`${mt.date}T${mt.time || '00:00'}`) : new Date(mt.date));
 const clockTime = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -403,7 +405,7 @@ const Dashboard = () => {
                             return (
                                 <div key={row.key} className="dsh-mod">
                                     <button className="dsh-mod__main" onClick={() => navigate(row.to)}>
-                                        <span className="dsh-mod__icon"><Icon size={17} /></span>
+                                        <span className="dsh-mod__icon" style={{ color: MODULE_COLOR[row.key] }}><Icon size={17} /></span>
                                         <span className="dsh-mod__info">
                                             <span className="dsh-mod__name">{row.label}</span>
                                             <span className={`dsh-mod__note ${row.warn ? 'is-warn' : ''}`}>{row.note}</span>
