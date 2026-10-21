@@ -490,14 +490,14 @@ const WRITE_TOOLS = [
                 to_email: { type: 'string', description: 'Recipient email address (required)' },
                 subject: { type: 'string', description: 'Email subject line (required)' },
                 email_type: { type: 'string', enum: ['task_assigned', 'meeting_scheduled', 'notification', 'custom'], description: 'Email template type' },
-                body: { type: 'string', description: 'The full email text exactly as the recipient should read it: greeting, paragraphs separated by blank lines, and sign-off ("Jarvis" by default, or the admin\'s name when send_as is "admin"). Required for notification/custom emails; optional extra note for task/meeting emails.' },
-                send_as: { type: 'string', enum: ['jarvis', 'admin'], description: 'Who the email is from. Default "jarvis". Use "admin" only when the admin explicitly asks to send it in their own name.' },
+                body: { type: 'string', description: 'The full email text exactly as the recipient should read it: greeting, paragraphs separated by blank lines, and sign-off ("DevelopWork" by default, or the sender_name if one is set). Required for notification/custom emails; optional extra note for task/meeting emails.' },
+                sender_name: { type: 'string', description: 'Optional custom sender name, only when the admin asks for one (e.g. "from me" = the admin\'s name, or "from HR Team"). Leave empty to send as DevelopWork.' },
                 data: { type: 'object', description: 'Structured data for the email template (task_title, priority, deadline, assigned_by, etc.)' },
             },
             required: ['to_email', 'subject'],
         },
         risk: RISK.EXTERNAL,
-        confirmFields: ['to_email', 'subject', 'email_type', 'send_as'],
+        confirmFields: ['to_email', 'subject', 'email_type', 'sender_name'],
     },
     {
         name: 'send_telegram_notification',
@@ -814,14 +814,15 @@ const executeWriteTool = async (name, args) => {
         case 'send_email_notification': {
             const { data: { session: emailSession } } = await supabase.auth.getSession();
             const adminName = emailSession?.user?.user_metadata?.name || 'Admin';
-            const senderName = args.send_as === 'admin' ? adminName : 'Jarvis';
             const emailType = args.email_type || 'notification';
             const emailData = { ...(args.data || {}) };
+            const customName = String(args.sender_name || emailData.sender_name || '').trim();
+            const senderName = customName && customName.toLowerCase() !== 'developwork' ? customName : 'DevelopWork';
             const body = String(args.body || emailData.message || emailData.body || '')
                 .replace(/\[(your|my|sender'?s?)\s+name\]/gi, senderName);
             if (!emailData.title) emailData.title = args.subject;
             if (body) emailData.message = body;
-            emailData.sender_name = senderName;
+            emailData.sender_name = senderName === 'DevelopWork' ? '' : senderName;
             if (emailType === 'task_assigned' && !emailData.assigned_by) emailData.assigned_by = adminName;
             const result = await callSendEmail(args.to_email, args.subject, emailType, emailData);
             if (result.error) return { success: false, message: `Email failed: ${result.error}` };
@@ -876,7 +877,7 @@ RULES:
 7. NEVER attempt to delete records, modify permissions, change passwords, or access payroll.
 8. For financial operations (invoices, expenses), explicitly note they are DRAFTS requiring manual review.
 9. When creating a task for someone, also offer to send them a notification (in-app, email, or Telegram).
-10. For email notifications, use send_email_notification with the employee's email. Use email_type "task_assigned" for tasks, "meeting_scheduled" for meetings, and "notification" for any other message. ALWAYS put the complete email text (greeting, paragraphs separated by blank lines, sign-off) in the "body" field — the recipient only sees what is in "body". By default emails are sent from Jarvis: leave send_as as "jarvis" and sign the email "Jarvis". Only if the admin explicitly asks to send it in their own name, set send_as to "admin" and sign it "${user.name}". Never write placeholders like [Your Name] or [Company].
+10. For email notifications, use send_email_notification with the employee's email. Use email_type "task_assigned" for tasks, "meeting_scheduled" for meetings, and "notification" for any other message. ALWAYS put the complete email text (greeting, paragraphs separated by blank lines, sign-off) in the "body" field — the recipient only sees what is in "body". By default emails are sent from DevelopWork: leave sender_name empty and sign the email "DevelopWork". Only if the admin asks for a specific sender, set sender_name to it and sign with that name ("from me" means "${user.name}"). Never write placeholders like [Your Name] or [Company].
 11. For Telegram, the employee must have connected their account first. If Telegram fails with "not connected", tell the admin.
 
 EXACT VALUES (use these exactly, never invent variants):

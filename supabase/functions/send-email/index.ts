@@ -65,16 +65,17 @@ Deno.serve(async (req: Request) => {
     }
 
     const data = payload.data || {};
-    const adminName = String(user.user_metadata?.name || user.email || "Your admin");
-    // Only "Jarvis" or the signed-in admin's own name may appear as the sender.
-    const asJarvis = String(data.sender_name || "").trim().toLowerCase() === "jarvis";
+    // Sender defaults to DevelopWork; an admin may set a custom display name, which is
+    // always shown "via DevelopWork" so recipients can see where it came from.
+    const customName = String(data.sender_name || "").replace(/[\r\n\t"<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    const isCustom = customName !== "" && customName.toLowerCase() !== "developwork";
     const ctx = {
       appUrl: APP_URL,
-      senderName: asJarvis ? "Jarvis" : adminName,
-      senderTitle: asJarvis ? "AI assistant, DevelopWork" : "DevelopWork",
+      senderName: isCustom ? customName : "DevelopWork",
+      senderTitle: isCustom ? "Sent via DevelopWork" : "Workspace notifications",
     };
     const fromAddress = FROM_EMAIL.match(/<([^>]+)>/)?.[1] || FROM_EMAIL.trim();
-    const fromName = (asJarvis ? "Jarvis from DevelopWork" : `${adminName} via DevelopWork`).replace(/["<>]/g, "");
+    const fromName = isCustom ? `${customName} via DevelopWork` : "DevelopWork";
     let email: BuiltEmail;
     switch (payload.type) {
       case "task_assigned":
