@@ -87,6 +87,8 @@ const TopBar = () => {
             if (board) parts.push({ label: board.name, path, current: true });
         } else if (path === '/modules') {
             parts.push({ label: 'Module Hub', path: '/modules', current: true });
+        } else if (path === '/dashboard') {
+            parts.push({ label: 'Dashboard', path: '/dashboard', current: true });
         } else if (path === '/projects') {
             parts.push({ label: 'Project Management', path: '/projects', current: true });
         } else if (path === '/hr') {
