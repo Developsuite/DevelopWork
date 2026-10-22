@@ -15,13 +15,14 @@ export const signInWithEmail = createAsyncThunk(
                 profile = await authService.getProfile(data.user.id);
             } catch (err) {
                 console.warn('[Auth] Failed to get profile during sign in, using fallback:', err.message);
-                // Return fallback if profile doesn't exist
+                // Return fallback if profile doesn't exist. Default to 'employee' (the least
+                // privileged role) so a cold-start blip never silently promotes someone to admin.
                 return {
                     id: data.user.id,
                     _id: data.user.id,
                     name: data.user.user_metadata?.name || email.split('@')[0],
                     email: email,
-                    role: data.user.user_metadata?.role || 'admin',
+                    role: data.user.user_metadata?.role || 'employee',
                 };
             }
             
@@ -78,7 +79,7 @@ export const signUpWithEmail = createAsyncThunk(
                         _id: data.user.id,
                         name: name,
                         email: email,
-                        role: data.user.user_metadata?.role || 'admin',
+                        role: data.user.user_metadata?.role || 'employee',
                         autoLoggedIn: true,
                     };
                 }
@@ -139,7 +140,7 @@ export const restoreSession = createAsyncThunk(
                     _id: session.user.id,
                     name: session.user.user_metadata?.name || session.user.email.split('@')[0],
                     email: session.user.email,
-                    role: session.user.user_metadata?.role || 'admin',
+                    role: session.user.user_metadata?.role || 'employee',
                 };
             }
         } catch {

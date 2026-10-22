@@ -45,11 +45,18 @@ function App() {
   const theme = useSelector((state) => state.ui.theme);
   const { user, isAuthenticated, isLoading } = useSelector((state) => state.auth);
   const lastVisibleTime = useRef(Date.now());
+  const existingUserId = useRef(null);
 
   // Apply theme attribute to <html> element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Mirror the current user id in a ref so the auth-state handler (set up once) can tell
+  // whether Redux already holds a usable user without listing `user` as a hook dep.
+  useEffect(() => {
+    existingUserId.current = user?.id || user?._id || null;
+  }, [user]);
 
   // Keep Supabase session alive across tab switches and idle periods.
   // Instead of unconditionally force-refreshing (which burns refresh tokens and causes
@@ -187,14 +194,17 @@ function App() {
               }));
             }
           } catch (err) {
-            console.error('[Auth] Failed to load profile for session user, using metadata fallback:', err);
-            if (isMounted && revision === authRevision) {
+            console.error('[Auth] Failed to re-load profile for session user:', err);
+            // If Redux already has the correct user (same id), KEEP it. A cold-start or
+            // transient blip must never silently change the signed-in user's role.
+            const alreadyLoaded = existingUserId.current === session.user.id;
+            if (isMounted && revision === authRevision && !alreadyLoaded) {
               dispatch(setUser({
                 id: session.user.id,
                 _id: session.user.id,
                 name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
                 email: session.user.email,
-                role: session.user.user_metadata?.role || 'admin',
+                role: session.user.user_metadata?.role || 'employee',
               }));
             }
           }

@@ -68,13 +68,15 @@ export const authService = {
         return session;
     },
 
-    // Get user profile from profiles table
+    // Get user profile from profiles table. Retries once with a short delay to tolerate
+    // cold-start blips and the race where the signup trigger hasn't materialised the row yet.
     async getProfile(userId) {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
+        const fetchOnce = async () => supabase.from('profiles').select('*').eq('id', userId).single();
+        let { data, error } = await fetchOnce();
+        if (error) {
+            await new Promise((r) => setTimeout(r, 600));
+            ({ data, error } = await fetchOnce());
+        }
         if (error) throw error;
         return data;
     },
