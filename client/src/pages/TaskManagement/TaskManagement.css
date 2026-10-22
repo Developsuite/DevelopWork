@@ -188,13 +188,13 @@
     display: none;
 }
 
-/* Tagline Pill Button Design (Matching User Reference Image) */
+/* Tab Button Design — subtly rounded, not fully pill-shaped */
 .task-tab-btn {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 7px 16px;
-    border-radius: 9999px;
+    padding: 8px 14px;
+    border-radius: 10px;
     font-size: 12.5px;
     font-weight: 600;
     background: var(--bg-surface, #ffffff);
@@ -233,7 +233,7 @@
     font-size: 11px;
     font-weight: 600;
     padding: 1px 7px;
-    border-radius: 9999px;
+    border-radius: 6px;
     background: var(--bg-hover, #f1f5f9);
     color: var(--text-secondary, #64748b);
     border: 1px solid var(--border-light, #e2e8f0);
@@ -484,7 +484,7 @@
     font-weight: 600;
 }
 
-/* Priority Pills — Clean Matte Badges (Non-Glowing) */
+/* Priority Pills — Matches deadline-pill: soft tint, no border, matching color */
 .task-priority-pill {
     display: inline-flex;
     align-items: center;
@@ -496,6 +496,7 @@
     text-transform: uppercase;
     letter-spacing: 0.4px;
     box-shadow: none;
+    border: none;
 }
 
 .task-priority-dot {
@@ -504,24 +505,24 @@
     border-radius: 50%;
 }
 
-.task-priority--urgent { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+.task-priority--urgent { background: rgba(220, 38, 38, 0.12); color: #DC2626; }
 .task-priority--urgent .task-priority-dot { background: #DC2626; }
 
-.task-priority--high { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+.task-priority--high { background: rgba(217, 119, 6, 0.12); color: #D97706; }
 .task-priority--high .task-priority-dot { background: #D97706; }
 
-.task-priority--medium { background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; }
+.task-priority--medium { background: rgba(37, 99, 235, 0.12); color: #2563EB; }
 .task-priority--medium .task-priority-dot { background: #3B82F6; }
 
-.task-priority--low { background: #F8FAFC; color: #64748B; border: 1px solid #E2E8F0; }
+.task-priority--low { background: rgba(100, 116, 139, 0.12); color: #64748B; }
 .task-priority--low .task-priority-dot { background: #94A3B8; }
 
-[data-theme='dark'] .task-priority--urgent { background: rgba(220, 38, 38, 0.2); color: #FCA5A5; border-color: rgba(220, 38, 38, 0.4); }
-[data-theme='dark'] .task-priority--high { background: rgba(217, 119, 6, 0.2); color: #FCD34D; border-color: rgba(217, 119, 6, 0.4); }
-[data-theme='dark'] .task-priority--medium { background: rgba(37, 99, 235, 0.15); color: #93C5FD; border-color: rgba(37, 99, 235, 0.35); }
-[data-theme='dark'] .task-priority--low { background: rgba(71, 85, 105, 0.2); color: #94A3B8; border-color: rgba(71, 85, 105, 0.4); }
+[data-theme='dark'] .task-priority--urgent { background: rgba(220, 38, 38, 0.2); color: #FCA5A5; }
+[data-theme='dark'] .task-priority--high { background: rgba(217, 119, 6, 0.2); color: #FCD34D; }
+[data-theme='dark'] .task-priority--medium { background: rgba(37, 99, 235, 0.18); color: #93C5FD; }
+[data-theme='dark'] .task-priority--low { background: rgba(148, 163, 184, 0.18); color: #CBD5E1; }
 
-/* Deadline Pills */
+/* Deadline Pills — reference style: soft tint, no border, matching color */
 .task-deadline-pill {
     display: inline-block;
     padding: 3px 8px;
@@ -529,14 +530,22 @@
     font-size: 11px;
     font-weight: 600;
     box-shadow: none;
+    border: none;
 }
 
-.task-deadline--overdue { background: rgba(226, 68, 92, 0.12); color: #E2445C; border: 1px solid rgba(226, 68, 92, 0.2); }
-.task-deadline--today { background: rgba(253, 171, 61, 0.12); color: #FDAB3D; border: 1px solid rgba(253, 171, 61, 0.2); }
-.task-deadline--soon { background: rgba(0, 85, 254, 0.1); color: var(--primary-500, #0055FE); }
-.task-deadline--normal { background: var(--bg-body); color: var(--text-muted); }
-.task-deadline--done { background: rgba(0, 200, 117, 0.1); color: #00C875; }
-.task-deadline--none { background: var(--bg-body); color: var(--text-muted); }
+.task-deadline--overdue { background: rgba(226, 68, 92, 0.12); color: #E2445C; }
+.task-deadline--today { background: rgba(253, 171, 61, 0.12); color: #D97706; }
+.task-deadline--soon { background: rgba(253, 171, 61, 0.12); color: #D97706; }
+.task-deadline--normal { background: rgba(100, 116, 139, 0.1); color: #64748B; }
+.task-deadline--done { background: rgba(0, 200, 117, 0.12); color: #059669; }
+.task-deadline--none { background: rgba(100, 116, 139, 0.1); color: var(--text-muted); }
+
+[data-theme='dark'] .task-deadline--overdue { background: rgba(226, 68, 92, 0.2); color: #FCA5A5; }
+[data-theme='dark'] .task-deadline--today { background: rgba(253, 171, 61, 0.2); color: #FCD34D; }
+[data-theme='dark'] .task-deadline--soon { background: rgba(253, 171, 61, 0.2); color: #FCD34D; }
+[data-theme='dark'] .task-deadline--normal { background: rgba(148, 163, 184, 0.15); color: #CBD5E1; }
+[data-theme='dark'] .task-deadline--done { background: rgba(0, 200, 117, 0.2); color: #6EE7B7; }
+[data-theme='dark'] .task-deadline--none { background: rgba(148, 163, 184, 0.15); color: #94A3B8; }
 
 /* Interactive Status Selector */
 .task-status-selector {
@@ -1089,20 +1098,22 @@
     transition: all 0.2s ease;
 }
 
+.task-scope-pill {
+    border: none;
+}
+
 .task-scope-pill.scope--operational {
-    background: #F0FDFA;
+    background: rgba(20, 184, 166, 0.12);
     color: #0F766E;
-    border: 1px solid #99F6E4;
 }
 
 .task-scope-pill.scope--operational svg {
-    color: #14B8A6;
+    color: #0F766E;
 }
 
 .task-scope-pill.scope--project {
-    background: #F8FAFC;
-    color: #1E293B;
-    border: 1px solid #CBD5E1;
+    background: rgba(100, 116, 139, 0.12);
+    color: #334155;
 }
 
 .task-scope-pill.scope--project svg {
@@ -1111,9 +1122,8 @@
 
 /* Dark mode fine-tuning */
 [data-theme='dark'] .task-scope-pill.scope--operational {
-    background: rgba(20, 184, 166, 0.15);
+    background: rgba(20, 184, 166, 0.2);
     color: #5EEAD4;
-    border-color: rgba(20, 184, 166, 0.35);
 }
 
 [data-theme='dark'] .task-scope-pill.scope--operational svg {
@@ -1121,9 +1131,8 @@
 }
 
 [data-theme='dark'] .task-scope-pill.scope--project {
-    background: #0F172A;
-    color: #E2E8F0;
-    border-color: #334155;
+    background: rgba(148, 163, 184, 0.18);
+    color: #CBD5E1;
 }
 
 [data-theme='dark'] .task-scope-pill.scope--project svg {
