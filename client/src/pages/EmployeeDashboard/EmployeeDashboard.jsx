@@ -122,7 +122,10 @@ const EmployeeDashboard = () => {
                 supabase.removeChannel(channel);
             }
         };
-    }, [user]);
+        // Depend on id only. Keying on the entire user object made this effect
+        // unmount + resubscribe to realtime on every tiny profile re-dispatch,
+        // which was spamming the profiles endpoint for that employee.
+    }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const loadTasks = async () => {
         if (!user) return;

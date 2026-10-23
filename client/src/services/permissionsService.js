@@ -264,7 +264,7 @@ export const permissionsService = {
                 .from('profiles')
                 .select('id, email, assigned_module, permissions')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
             if (error || !data) return this.getUserPermissions(userId);
 
             let perms = [];
