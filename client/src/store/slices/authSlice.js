@@ -10,13 +10,13 @@ export const signInWithEmail = createAsyncThunk(
     async ({ email, password }, { rejectWithValue }) => {
         try {
             const data = await authService.signInWithEmail(email, password);
-            let profile;
+            let profile = null;
             try {
                 profile = await authService.getProfile(data.user.id);
             } catch (err) {
                 console.warn('[Auth] Failed to get profile during sign in, using fallback:', err.message);
-                // Return fallback if profile doesn't exist. Default to 'employee' (the least
-                // privileged role) so a cold-start blip never silently promotes someone to admin.
+            }
+            if (!profile) {
                 return {
                     id: data.user.id,
                     _id: data.user.id,
@@ -25,7 +25,6 @@ export const signInWithEmail = createAsyncThunk(
                     role: data.user.user_metadata?.role || 'employee',
                 };
             }
-            
             return {
                 id: profile.id,
                 _id: profile.id,
@@ -55,25 +54,9 @@ export const signUpWithEmail = createAsyncThunk(
             if (data.session && data.user) {
                 // Wait a moment for the database trigger to create the profile
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                try {
-                    const profile = await authService.getProfile(data.user.id);
-                    return {
-                        id: profile.id,
-                        _id: profile.id,
-                        name: profile.name,
-                        email: profile.email,
-                        role: profile.role,
-                        assignedModule: profile.assigned_module,
-                        department: profile.department,
-                        avatar: profile.avatar_url,
-                        phone: profile.phone,
-                        location: profile.location,
-                        jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
-                        bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
-                        autoLoggedIn: true,
-                    };
-                } catch {
-                    // Profile trigger might be slow — return basic info from auth
+                let profile = null;
+                try { profile = await authService.getProfile(data.user.id); } catch { /* ignore */ }
+                if (!profile) {
                     return {
                         id: data.user.id,
                         _id: data.user.id,
@@ -83,6 +66,21 @@ export const signUpWithEmail = createAsyncThunk(
                         autoLoggedIn: true,
                     };
                 }
+                return {
+                    id: profile.id,
+                    _id: profile.id,
+                    name: profile.name,
+                    email: profile.email,
+                    role: profile.role,
+                    assignedModule: profile.assigned_module,
+                    department: profile.department,
+                    avatar: profile.avatar_url,
+                    phone: profile.phone,
+                    location: profile.location,
+                    jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
+                    bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
+                    autoLoggedIn: true,
+                };
             }
             // If email confirmation is required, just return success
             return { email, name, autoLoggedIn: false };
@@ -117,24 +115,13 @@ export const restoreSession = createAsyncThunk(
                 return null;
             }
             
+            let profile = null;
             try {
-                const profile = await authService.getProfile(session.user.id);
-                return {
-                    id: profile.id,
-                    _id: profile.id,
-                    name: profile.name,
-                    email: profile.email,
-                    role: profile.role,
-                    assignedModule: profile.assigned_module,
-                    department: profile.department,
-                    avatar: profile.avatar_url,
-                    phone: profile.phone,
-                    location: profile.location,
-                    jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
-                    bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
-                };
+                profile = await authService.getProfile(session.user.id);
             } catch (err) {
                 console.warn('[Auth] Failed to get profile during session restore, using fallback:', err.message);
+            }
+            if (!profile) {
                 return {
                     id: session.user.id,
                     _id: session.user.id,
@@ -143,6 +130,20 @@ export const restoreSession = createAsyncThunk(
                     role: session.user.user_metadata?.role || 'employee',
                 };
             }
+            return {
+                id: profile.id,
+                _id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                role: profile.role,
+                assignedModule: profile.assigned_module,
+                department: profile.department,
+                avatar: profile.avatar_url,
+                phone: profile.phone,
+                location: profile.location,
+                jobTitle: profile.job_title || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-job-title-${profile.id}`) : '') || 'Product Lead',
+                bio: profile.bio || (typeof window !== 'undefined' ? localStorage.getItem(`dw-profile-bio-${profile.id}`) : '') || 'Building the future of work management.',
+            };
         } catch {
             return null;
         }

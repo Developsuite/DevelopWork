@@ -169,7 +169,10 @@ const EmployeeDashboard = () => {
                 supabase.removeChannel(taskChannel);
             }
         };
-    }, [user?.id, user?.name, user?.email]);
+        // Only the id matters here — depending on name/email causes the whole task loader
+        // and realtime subscription to restart on every tiny profile re-dispatch, which
+        // the user sees as "tasks loading continuously".
+    }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleStatusChange = async (taskId, newStatus) => {
         try {

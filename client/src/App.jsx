@@ -174,39 +174,48 @@ function App() {
         }
 
         if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+          // Supabase fires SIGNED_IN on EVERY session touch, including background token
+          // refreshes. Re-fetching the profile each time causes a thundering herd (429 on
+          // the refresh_token endpoint + a 406/profile loop) and makes dependent effects
+          // like EmployeeDashboard's task-loader restart continuously. If the user is
+          // already loaded for this exact session user id, trust the data we have and
+          // skip the fetch. We still fetch for USER_UPDATED, since that signals an
+          // intentional change the UI should pick up.
+          if (event === 'SIGNED_IN' && existingUserId.current === session.user.id) {
+            return;
+          }
           const revision = ++authRevision;
+          let profile = null;
           try {
-            const profile = await authService.getProfile(session.user.id);
-            if (isMounted && revision === authRevision) {
-              dispatch(setUser({
-                id: profile.id,
-                _id: profile.id,
-                name: profile.name,
-                email: profile.email,
-                role: profile.role,
-                assignedModule: profile.assigned_module,
-                department: profile.department,
-                avatar: profile.avatar_url,
-                phone: profile.phone,
-                location: profile.location,
-                jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
-                bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
-              }));
-            }
+            profile = await authService.getProfile(session.user.id);
           } catch (err) {
             console.error('[Auth] Failed to re-load profile for session user:', err);
-            // If Redux already has the correct user (same id), KEEP it. A cold-start or
-            // transient blip must never silently change the signed-in user's role.
-            const alreadyLoaded = existingUserId.current === session.user.id;
-            if (isMounted && revision === authRevision && !alreadyLoaded) {
-              dispatch(setUser({
-                id: session.user.id,
-                _id: session.user.id,
-                name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-                email: session.user.email,
-                role: session.user.user_metadata?.role || 'employee',
-              }));
-            }
+          }
+          if (!isMounted || revision !== authRevision) return;
+          if (profile) {
+            dispatch(setUser({
+              id: profile.id,
+              _id: profile.id,
+              name: profile.name,
+              email: profile.email,
+              role: profile.role,
+              assignedModule: profile.assigned_module,
+              department: profile.department,
+              avatar: profile.avatar_url,
+              phone: profile.phone,
+              location: profile.location,
+              jobTitle: profile.job_title || localStorage.getItem(`dw-profile-job-title-${profile.id}`) || 'Product Lead',
+              bio: profile.bio || localStorage.getItem(`dw-profile-bio-${profile.id}`) || 'Building the future of work management.',
+            }));
+          } else if (existingUserId.current !== session.user.id) {
+            // No profile row yet AND no good user in Redux — minimal fallback with safe role.
+            dispatch(setUser({
+              id: session.user.id,
+              _id: session.user.id,
+              name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+              email: session.user.email,
+              role: session.user.user_metadata?.role || 'employee',
+            }));
           }
         }
       });

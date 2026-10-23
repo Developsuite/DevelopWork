@@ -68,17 +68,22 @@ export const authService = {
         return session;
     },
 
-    // Get user profile from profiles table. Retries once with a short delay to tolerate
-    // cold-start blips and the race where the signup trigger hasn't materialised the row yet.
+    // Get user profile from profiles table.
+    // Uses maybeSingle() so a missing row returns null instead of a 406 error — essential
+    // during the signup-trigger race and when RLS has not yet seen the fresh JWT. Retries
+    // once after a short delay to tolerate cold-start blips, but never spams the API.
     async getProfile(userId) {
-        const fetchOnce = async () => supabase.from('profiles').select('*').eq('id', userId).single();
+        const fetchOnce = async () => supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
         let { data, error } = await fetchOnce();
-        if (error) {
+        if (!data && !error) {
+            await new Promise((r) => setTimeout(r, 600));
+            ({ data, error } = await fetchOnce());
+        } else if (error) {
             await new Promise((r) => setTimeout(r, 600));
             ({ data, error } = await fetchOnce());
         }
         if (error) throw error;
-        return data;
+        return data; // may be null — caller must handle that
     },
 
     // Update user profile
