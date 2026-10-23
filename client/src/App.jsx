@@ -44,7 +44,6 @@ function App() {
   const dispatch = useDispatch();
   const theme = useSelector((state) => state.ui.theme);
   const { user, isAuthenticated, isLoading } = useSelector((state) => state.auth);
-  const lastVisibleTime = useRef(Date.now());
   const existingUserId = useRef(null);
 
   // Apply theme attribute to <html> element
@@ -58,71 +57,13 @@ function App() {
     existingUserId.current = user?.id || user?._id || null;
   }, [user]);
 
-  // Keep Supabase session alive across tab switches and idle periods.
-  // Instead of unconditionally force-refreshing (which burns refresh tokens and causes
-  // Supabase token reuse errors and dashboard freezes), we only refresh if the access
-  // token is expired or within 2 minutes of expiration.
-  useEffect(() => {
-    const ensureValidSession = async () => {
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        if (error || !data?.session) return;
-
-        const session = data.session;
-        const expiresAtMs = (session.expires_at || 0) * 1000;
-        const timeUntilExpiry = expiresAtMs - Date.now();
-
-        // Only refresh if expiring in less than 2 minutes (120,000ms) or already expired
-        if (timeUntilExpiry < 120_000) {
-          console.log('[Auth] Token expiring soon or expired, refreshing session...');
-          const { error: refreshError } = await supabase.auth.refreshSession();
-          if (refreshError) {
-            console.warn('[Auth] Token refresh failed:', refreshError.message);
-          } else {
-            console.log('[Auth] Session refreshed successfully');
-          }
-        }
-      } catch (err) {
-        console.warn('[Auth] Session check error:', err);
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const elapsed = Date.now() - lastVisibleTime.current;
-        lastVisibleTime.current = Date.now();
-        if (elapsed > 60_000) {
-          ensureValidSession();
-        }
-      } else {
-        lastVisibleTime.current = Date.now();
-      }
-    };
-
-    const handleWindowFocus = () => {
-      const elapsed = Date.now() - lastVisibleTime.current;
-      lastVisibleTime.current = Date.now();
-      if (elapsed > 60_000) {
-        ensureValidSession();
-      }
-    };
-
-    // Keepalive: check every 5 minutes safely
-    const keepaliveInterval = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        ensureValidSession();
-      }
-    }, 5 * 60 * 1000);
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleWindowFocus);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleWindowFocus);
-      clearInterval(keepaliveInterval);
-    };
-  }, []);
+  // We rely on Supabase JS's built-in autoRefreshToken timer to keep the access token
+  // fresh. Our previous custom keepalive (visibility + focus + 5-min interval) added
+  // many extra getSession() + refreshSession() calls on top of that, which for some
+  // employees snowballed into /auth/v1/token being rate-limited (429) and then auto
+  // logging them out. The autoRefreshToken timer alone is enough and is already gated
+  // internally by Supabase. The retry-fetch wrapper in lib/supabase.js is the only
+  // on-demand refresh path we need.
 
   // Restore Supabase session on app load and listen for auth state changes
   useEffect(() => {
