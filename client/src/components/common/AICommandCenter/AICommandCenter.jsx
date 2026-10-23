@@ -12,6 +12,8 @@ import {
     Shield,
     ChevronDown,
     ChevronUp,
+    Maximize2,
+    Minimize2,
     Zap,
     Clock,
     RotateCcw,
@@ -54,6 +56,7 @@ const AICommandCenter = () => {
 
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isMinimized, setIsMinimized] = useState(false);
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -270,7 +273,7 @@ const AICommandCenter = () => {
 
             {/* Command Center Window */}
             {isOpen && (
-                <div className={`aicc-window ${isExpanded ? 'aicc-window--expanded' : ''}`}>
+                <div className={`aicc-window ${isExpanded ? 'aicc-window--expanded' : ''} ${isMinimized ? 'aicc-window--minimized' : ''}`}>
                     {/* Header */}
                     <div className="aicc-header">
                         <div className="aicc-header__left">
@@ -283,13 +286,24 @@ const AICommandCenter = () => {
                             </div>
                         </div>
                         <div className="aicc-header__right">
-                            <button className="aicc-header__btn" onClick={() => setShowHistory(!showHistory)} title="Action history">
-                                <Clock size={16} />
+                            {!isMinimized && (
+                                <button className="aicc-header__btn" onClick={() => setShowHistory(!showHistory)} title="Action history">
+                                    <Clock size={16} />
+                                </button>
+                            )}
+                            {!isMinimized && (
+                                <button className="aicc-header__btn" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? 'Shrink window' : 'Expand window'}>
+                                    {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                                </button>
+                            )}
+                            <button
+                                className="aicc-header__btn"
+                                onClick={() => setIsMinimized((v) => !v)}
+                                title={isMinimized ? 'Open chat' : 'Minimize chat'}
+                            >
+                                {isMinimized ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </button>
-                            <button className="aicc-header__btn" onClick={() => setIsExpanded(!isExpanded)} title={isExpanded ? 'Collapse' : 'Expand'}>
-                                {isExpanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-                            </button>
-                            <button className="aicc-header__btn" onClick={() => { setIsOpen(false); setIsExpanded(false); }}>
+                            <button className="aicc-header__btn" onClick={() => { setIsOpen(false); setIsExpanded(false); setIsMinimized(false); }} title="Close">
                                 <X size={16} />
                             </button>
                         </div>
