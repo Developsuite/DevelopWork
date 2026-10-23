@@ -1,6 +1,23 @@
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-
 import { permissionsService } from './permissionsService';
+
+// Build an ephemeral Supabase client used for the signUp call ONLY.
+// signUp on the main client would swap the admin's active session over to the
+// newly created user, firing SIGNED_IN in App.jsx and flashing the admin into
+// the employee dashboard. This client never persists its session.
+const makeSignupClient = () => createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    import.meta.env.VITE_SUPABASE_ANON_KEY,
+    {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+            storageKey: 'dw-signup-ephemeral',
+        },
+    },
+);
 
 // ========================
 // MANAGER SERVICE
@@ -40,55 +57,43 @@ export const managerService = {
         return data;
     },
 
-    // Invite a new manager:
-    // 1. Save admin's current session
-    // 2. Create auth user via signUp
-    // 3. Update their profile to role=manager with assigned_module
-    // 4. Restore admin session
+    // Invite a new manager — signs up on the ephemeral client so the admin's
+    // active session isn't swapped out.
     async inviteManager({ name, email, password, assignedModule }) {
-        // Step 1: Save current admin session and get tenant_id
-        const { data: { session: adminSession } } = await supabase.auth.getSession();
         let tenantId = null;
-        if (adminSession) {
-            const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).single();
-            tenantId = profile?.tenant_id;
+        try {
+            const { data: { session: adminSession } } = await supabase.auth.getSession();
+            if (adminSession) {
+                const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).maybeSingle();
+                tenantId = profile?.tenant_id || null;
+            }
+        } catch (err) {
+            console.warn('[RBAC] Could not fetch tenant_id for manager invite:', err);
         }
 
-        // Step 2: Create auth user via Supabase signUp
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const signupClient = makeSignupClient();
+        const { data: authData, error: authError } = await signupClient.auth.signUp({
             email,
             password,
-            options: {
-                data: { name, tenant_id: tenantId, role: 'manager' },
-            },
+            options: { data: { name, tenant_id: tenantId, role: 'manager' } },
         });
         if (authError) throw authError;
 
         const userId = authData.user?.id;
         if (!userId) throw new Error('Failed to create user account.');
 
-        // Step 3: Wait for the profile trigger to fire (Supabase triggers can take a moment)
-        await new Promise(resolve => setTimeout(resolve, 2500));
+        await new Promise(resolve => setTimeout(resolve, 1200));
 
-        // Step 4: Update profile to manager role with assigned module
         const { error: profileError } = await supabase
             .from('profiles')
             .update({
                 role: 'manager',
                 assigned_module: assignedModule,
-                name: name,
+                name,
                 updated_at: new Date().toISOString(),
             })
             .eq('id', userId);
         if (profileError) throw profileError;
-
-        // Step 5: Restore admin session
-        if (adminSession) {
-            await supabase.auth.setSession({
-                access_token: adminSession.access_token,
-                refresh_token: adminSession.refresh_token,
-            });
-        }
 
         return { userId, email, name, assignedModule };
     },
@@ -98,20 +103,28 @@ export const managerService = {
         return this.createEmployeeAccount({ name, email, password, role: 'employee', permissions });
     },
 
-    // Create a new employee or manager user account with login credentials & permissions
+    // Create a new employee or manager user account with login credentials & permissions.
+    //
+    // We signUp through a SEPARATE, ephemeral Supabase client with NO persistence. Using
+    // the main `supabase` client swaps its session over to the newly created user — this
+    // fires SIGNED_IN in App.jsx, which briefly flashes the admin into the employee
+    // dashboard before setSession() restores them. The dedicated client keeps the admin's
+    // session completely untouched.
     async createEmployeeAccount({ name, email, password, role = 'employee', permissions = [] }) {
-        const { data: { session: adminSession } } = await supabase.auth.getSession();
+        // Admin's tenant for the new row
         let tenantId = null;
-        if (adminSession) {
-            try {
-                const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).single();
-                tenantId = profile?.tenant_id;
-            } catch (err) {
-                console.warn('[RBAC] Could not fetch tenant_id, continuing:', err);
+        try {
+            const { data: { session: adminSession } } = await supabase.auth.getSession();
+            if (adminSession) {
+                const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', adminSession.user.id).maybeSingle();
+                tenantId = profile?.tenant_id || null;
             }
+        } catch (err) {
+            console.warn('[RBAC] Could not fetch tenant_id, continuing:', err);
         }
 
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const signupClient = makeSignupClient();
+        const { data: authData, error: authError } = await signupClient.auth.signUp({
             email,
             password,
             options: { data: { name, tenant_id: tenantId, role } },
@@ -121,33 +134,26 @@ export const managerService = {
         const userId = authData.user?.id;
         if (!userId) throw new Error('Failed to create user account.');
 
-        // Wait a moment for the profile trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Give the handle_new_user trigger a moment to insert the profile row.
+        await new Promise(resolve => setTimeout(resolve, 1200));
 
+        // Patch the role/name on the profile row — the trigger forces role='employee',
+        // so for a 'manager' role invite we need to override it here. Use the admin
+        // client (the main `supabase`) since the admin's RLS permissions cover this.
         try {
             await supabase
                 .from('profiles')
-                .update({
-                    role: role,
-                    name: name,
-                    updated_at: new Date().toISOString(),
-                })
+                .update({ role, name, updated_at: new Date().toISOString() })
                 .eq('id', userId);
         } catch (err) {
-            console.warn('[RBAC] Profile update warning (trigger may have set role already):', err);
+            console.warn('[RBAC] Profile update warning:', err);
         }
 
-        // Save granular permissions for this user
+        // Save permissions ONLY when the caller explicitly provided some. For a bare
+        // invite with no permissions, we must leave the user with zero module access
+        // so the admin can grant modules manually afterwards.
         if (permissions && permissions.length > 0) {
             await permissionsService.saveUserPermissions(userId, permissions, { email, name });
-        }
-
-        // Restore admin session so admin stays logged in seamlessly
-        if (adminSession) {
-            await supabase.auth.setSession({
-                access_token: adminSession.access_token,
-                refresh_token: adminSession.refresh_token,
-            });
         }
 
         return { userId, email, name, role, permissions };
