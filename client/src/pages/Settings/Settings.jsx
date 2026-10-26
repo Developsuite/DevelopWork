@@ -286,6 +286,45 @@ const Settings = () => {
     const [isInviteEmployeeModalOpen, setIsInviteEmployeeModalOpen] = useState(false);
     const [isEditModuleModalOpen, setIsEditModuleModalOpen] = useState(false);
     const [editingManager, setEditingManager] = useState(null);
+    const [emailEditTarget, setEmailEditTarget] = useState(null);
+    const [emailEditValue, setEmailEditValue] = useState('');
+    const [emailEditSaving, setEmailEditSaving] = useState(false);
+
+    const openEmailEdit = (target) => {
+        setEmailEditTarget(target);
+        setEmailEditValue(target.email || '');
+    };
+    const closeEmailEdit = () => {
+        setEmailEditTarget(null);
+        setEmailEditValue('');
+        setEmailEditSaving(false);
+    };
+    const handleSaveEmail = async () => {
+        if (!emailEditTarget) return;
+        const next = emailEditValue.trim().toLowerCase();
+        if (!isValidEmail(next)) {
+            dispatch(addToast({ title: 'Invalid email', message: 'Please enter a valid email address.', type: 'warning' }));
+            return;
+        }
+        if (next === (emailEditTarget.email || '').toLowerCase()) {
+            closeEmailEdit();
+            return;
+        }
+        setEmailEditSaving(true);
+        try {
+            await managerService.updateUserEmail(emailEditTarget.id, next);
+            dispatch(addToast({
+                title: 'Email updated',
+                message: `${emailEditTarget.name} will now log in with ${next}.`,
+                type: 'success',
+            }));
+            closeEmailEdit();
+            loadData();
+        } catch (err) {
+            dispatch(addToast({ title: 'Error', message: err.message || 'Failed to update email.', type: 'error' }));
+            setEmailEditSaving(false);
+        }
+    };
     const [inviteForm, setInviteForm] = useState({ name: '', email: '', password: 'Manager@123', assignedModule: 'projects' });
     const [inviteEmployeeForm, setInviteEmployeeForm] = useState({ name: '', email: '', password: 'Employee@123' });
     const [inviteLoading, setInviteLoading] = useState(false);
@@ -1124,6 +1163,14 @@ const Settings = () => {
                                                 <button className="brd__icon-btn team-directory__icon-btn--access" onClick={() => handleOpenPermissionsModal(e)} title="Manage access" aria-label={`Manage ${e.name}'s access`}><Shield size={14}/></button>
                                                 <button
                                                     className="brd__icon-btn"
+                                                    onClick={() => openEmailEdit(e)}
+                                                    title="Change login email"
+                                                    aria-label={`Change ${e.name}'s login email`}
+                                                >
+                                                    <Mail size={14}/>
+                                                </button>
+                                                <button
+                                                    className="brd__icon-btn"
                                                     onClick={() => handleAdminResetPassword(e)}
                                                     title="Send password reset email"
                                                     aria-label={`Reset ${e.name}'s password`}
@@ -1319,6 +1366,48 @@ const Settings = () => {
                         </div>
                     )}
                 </div>
+            </Modal>
+
+            {/* Change login email */}
+            <Modal
+                isOpen={!!emailEditTarget}
+                onClose={closeEmailEdit}
+                title="Change login email"
+                footer={
+                    <>
+                        <Button variant="ghost" onClick={closeEmailEdit} disabled={emailEditSaving}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSaveEmail} disabled={emailEditSaving}>
+                            {emailEditSaving ? 'Saving…' : 'Save email'}
+                        </Button>
+                    </>
+                }
+            >
+                {emailEditTarget && (
+                    <div className="dw-form">
+                        <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'20px', padding:'16px', background:'var(--bg-secondary)', borderRadius:'12px'}}>
+                            <Avatar name={emailEditTarget.name} size="sm" />
+                            <div>
+                                <div style={{fontWeight:700, fontSize:'14px'}}>{emailEditTarget.name}</div>
+                                <div style={{fontSize:'12px', color:'var(--text-muted)'}}>Current: {emailEditTarget.email}</div>
+                            </div>
+                        </div>
+                        <label className="dw-form-label" htmlFor="new-login-email">New login email</label>
+                        <input
+                            id="new-login-email"
+                            type="email"
+                            className="dw-form-input"
+                            value={emailEditValue}
+                            onChange={(e) => setEmailEditValue(e.target.value)}
+                            placeholder="person@company.com"
+                            autoFocus
+                            disabled={emailEditSaving}
+                        />
+                        <p style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'10px', lineHeight:1.5}}>
+                            This changes the address they use to sign in. Their password stays the same.
+                            Tell them the new address so they can log in next time.
+                        </p>
+                    </div>
+                )}
             </Modal>
 
             {/* Edit Module Modal */}

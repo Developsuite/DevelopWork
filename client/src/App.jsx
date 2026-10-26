@@ -141,6 +141,7 @@ function App() {
               email: profile.email,
               role: profile.role,
               assignedModule: profile.assigned_module,
+              permissions: profile.permissions || [],
               department: profile.department,
               avatar: profile.avatar_url,
               phone: profile.phone,

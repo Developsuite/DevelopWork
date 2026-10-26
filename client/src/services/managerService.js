@@ -205,6 +205,16 @@ export const managerService = {
         return data;
     },
 
+    // Change a user's login email. Updates auth.users + profiles + employees
+    // via the admin_update_user_email RPC so the login mailbox actually changes.
+    async updateUserEmail(userId, newEmail) {
+        const { error } = await supabase.rpc('admin_update_user_email', {
+            target_user_id: userId,
+            new_email: String(newEmail || '').trim(),
+        });
+        if (error) throw error;
+    },
+
     // Delete a user entirely from the system (requires Admin)
     async removeUser(userId) {
         try {
