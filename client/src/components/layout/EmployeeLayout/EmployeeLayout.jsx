@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { signOutUser } from '../../../store/slices/authSlice';
+import { signOutUser, updateUser } from '../../../store/slices/authSlice';
 import { toggleTheme } from '../../../store/slices/uiSlice';
 import Avatar from '../../common/Avatar/Avatar';
 import {
@@ -69,15 +69,34 @@ const EmployeeLayout = () => {
             if (isMounted) {
                 setPermittedModules(permissionsService.getAccessibleModules(user));
             }
-            if (user.id) {
-                try {
-                    await permissionsService.fetchUserPermissions(user.id);
-                    if (isMounted) {
-                        setPermittedModules(permissionsService.getAccessibleModules(user));
-                    }
-                } catch (e) {
-                    console.warn('[EmployeeLayout] Permissions sync warning:', e);
+            if (!user.id) return;
+            try {
+                // Pull the authoritative profile row and push its permissions AND
+                // assigned_module into Redux. Without this, a laptop that logged in
+                // before permissions were granted keeps a stale user object even
+                // after fetchUserPermissions updates localStorage, so the sidebar
+                // never recovers.
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('permissions, assigned_module')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                if (!isMounted || !data) return;
+                const nextPerms = Array.isArray(data.permissions) ? data.permissions : [];
+                const nextAssigned = data.assigned_module ?? null;
+                const permsChanged = JSON.stringify(user.permissions || []) !== JSON.stringify(nextPerms);
+                const assignedChanged = (user.assignedModule ?? null) !== nextAssigned;
+                if (permsChanged || assignedChanged) {
+                    dispatch(updateUser({ permissions: nextPerms, assignedModule: nextAssigned }));
                 }
+                const effectiveUser = { ...user, permissions: nextPerms, assignedModule: nextAssigned };
+                setPermittedModules(permissionsService.getAccessibleModules(effectiveUser));
+                // Also seed localStorage for the legacy code paths that still read it.
+                if (nextPerms.length > 0) {
+                    permissionsService.saveUserPermissionsLocally(user.id, nextPerms, user.email);
+                }
+            } catch (e) {
+                console.warn('[EmployeeLayout] Permissions sync warning:', e);
             }
         };
 
