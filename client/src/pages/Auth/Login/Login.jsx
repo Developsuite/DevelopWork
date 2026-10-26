@@ -16,6 +16,8 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [localError, setLocalError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({ email: '', password: '' });
+    const [attemptCount, setAttemptCount] = useState(0);
 
     // Redirect if already authenticated
     useEffect(() => {
@@ -37,19 +39,35 @@ const Login = () => {
         dispatch(clearError());
     }, [dispatch]);
 
+    const validateField = (name, value) => {
+        if (name === 'email') {
+            const trimmed = (value || '').trim();
+            if (!trimmed) return 'Please enter your email address.';
+            if (!isValidEmail(trimmed)) return 'That doesn\'t look like a valid email. Example: name@company.com';
+            return '';
+        }
+        if (name === 'password') {
+            if (!value) return 'Please enter your password.';
+            return '';
+        }
+        return '';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLocalError('');
         const trimmedEmail = email.trim();
-
-        if (!trimmedEmail || !password) {
-            setLocalError('Please enter both your email address and password.');
+        const emailErr = validateField('email', trimmedEmail);
+        const passErr = validateField('password', password);
+        if (emailErr || passErr) {
+            setFieldErrors({ email: emailErr, password: passErr });
+            // Focus the first invalid field so the shake animation + outline is obvious.
+            if (emailErr) document.getElementById('email')?.focus();
+            else if (passErr) document.getElementById('password')?.focus();
             return;
         }
-        if (!isValidEmail(trimmedEmail)) {
-            setLocalError('Please enter a valid email address (e.g., name@example.com).');
-            return;
-        }
+        setFieldErrors({ email: '', password: '' });
+        setAttemptCount((n) => n + 1);
         dispatch(signInWithEmail({ email: trimmedEmail, password }));
     };
 
@@ -106,50 +124,80 @@ const Login = () => {
 
                     {(() => {
                         const displayError = localError || (error ? formatAuthError(error) : null);
-                        return displayError ? (
-                            <div className="login-page__error">
-                                <AlertCircle size={16} />
-                                <span>{displayError}</span>
+                        if (!displayError) return null;
+                        const isCredError = /incorrect email or password/i.test(displayError);
+                        return (
+                            <div className="login-page__error" role="alert" aria-live="assertive" key={attemptCount}>
+                                <AlertCircle size={18} />
+                                <div className="login-page__error-body">
+                                    <strong>{isCredError ? 'Sign-in failed' : 'Something went wrong'}</strong>
+                                    <span>{displayError}</span>
+                                    {isCredError && (
+                                        <small>
+                                            Double-check the email and password. If you forgot your password,{' '}
+                                            <Link to="/forgot-password" className="login-page__error-link">reset it here</Link>.
+                                        </small>
+                                    )}
+                                </div>
                             </div>
-                        ) : null;
+                        );
                     })()}
 
                     <form className="login-page__form" onSubmit={handleSubmit}>
-                        <div className="login-page__field">
+                        <div className={`login-page__field ${fieldErrors.email ? 'has-error' : ''}`}>
                             <label className="login-page__label" htmlFor="email">Email</label>
                             <input
                                 id="email"
                                 type="email"
-                                className="login-page__input"
+                                className={`login-page__input ${fieldErrors.email ? 'login-page__input--invalid' : ''}`}
                                 placeholder="you@company.com"
                                 value={email}
                                 onChange={(e) => {
                                     setEmail(e.target.value);
                                     if (localError) setLocalError('');
                                     if (error) dispatch(clearError());
+                                    if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: '' }));
+                                }}
+                                onBlur={(e) => {
+                                    const err = validateField('email', e.target.value);
+                                    if (err) setFieldErrors((p) => ({ ...p, email: err }));
                                 }}
                                 required
                                 disabled={isLoading}
                                 autoFocus
+                                aria-invalid={!!fieldErrors.email}
+                                aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                             />
+                            {fieldErrors.email && (
+                                <span id="email-error" className="login-page__field-error" role="alert">
+                                    <AlertCircle size={13} /> {fieldErrors.email}
+                                </span>
+                            )}
                         </div>
 
-                        <div className="login-page__field">
+                        <div className={`login-page__field ${fieldErrors.password ? 'has-error' : ''}`}>
                             <label className="login-page__label" htmlFor="password">Password</label>
                             <div className="login-page__password-wrapper">
                                 <input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
-                                    className="login-page__input login-page__input--password"
+                                    className={`login-page__input login-page__input--password ${fieldErrors.password ? 'login-page__input--invalid' : ''}`}
                                     placeholder="Enter your password"
                                     value={password}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
                                         if (localError) setLocalError('');
                                         if (error) dispatch(clearError());
+                                        if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: '' }));
+                                    }}
+                                    onBlur={(e) => {
+                                        const err = validateField('password', e.target.value);
+                                        if (err) setFieldErrors((p) => ({ ...p, password: err }));
                                     }}
                                     required
                                     disabled={isLoading}
+                                    aria-invalid={!!fieldErrors.password}
+                                    aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                                 />
                                 <button
                                     type="button"
@@ -162,6 +210,11 @@ const Login = () => {
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
+                            {fieldErrors.password && (
+                                <span id="password-error" className="login-page__field-error" role="alert">
+                                    <AlertCircle size={13} /> {fieldErrors.password}
+                                </span>
+                            )}
                         </div>
 
                         <div className="login-page__row">
