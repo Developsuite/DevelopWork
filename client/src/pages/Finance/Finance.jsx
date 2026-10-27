@@ -1591,18 +1591,18 @@ const Finance = () => {
                             </select>
                         </div>
                     </div>
-                    <table className="fin-table">
+                    <table className="fin-table fin-table--transactions">
                         <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Type</th><th>Status</th><th>Actions</th></tr></thead>
                         <tbody>
                             {filteredTransactions.map(t => (
                                 <tr key={t.id} onClick={() => handleViewTransaction(t)} style={{ cursor: 'pointer' }}>
-                                    <td>{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
-                                    <td><strong>{t.description}</strong><br /><span className="fin-ref">{t.reference}</span></td>
-                                    <td>{renderTag(t.category)}</td>
-                                    <td className={t.type === 'income' ? 'positive' : 'negative'}>{t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}</td>
-                                    <td>{t.type === 'income' ? <ArrowDownRight size={14} color="var(--success)" /> : <ArrowUpRight size={14} color="var(--danger)" />} {t.type}</td>
-                                    <td>{renderTag(t.status)}</td>
-                                    <td>
+                                    <td data-label="Date">{new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>
+                                    <td data-label="Description"><strong>{t.description}</strong><br /><span className="fin-ref">{t.reference}</span></td>
+                                    <td data-label="Category">{renderTag(t.category)}</td>
+                                    <td data-label="Amount" className={t.type === 'income' ? 'positive' : 'negative'}>{t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}</td>
+                                    <td data-label="Type">{t.type === 'income' ? <ArrowDownRight size={14} color="var(--success)" /> : <ArrowUpRight size={14} color="var(--danger)" />} {t.type}</td>
+                                    <td data-label="Status">{renderTag(t.status)}</td>
+                                    <td data-label="Actions">
                                         <div style={{ display: 'flex', gap: '8px' }}>
                                             <button className="fin-action-btn" onClick={(e) => handleEditTransaction(e, t)}><Pencil size={14} /></button>
                                             <button className="fin-action-btn delete" onClick={(e) => handleDeleteClick(e, t.id, 'transaction', 'Transaction')}><Trash2 size={14} /></button>
@@ -2428,10 +2428,10 @@ const Finance = () => {
                                         <tbody>
                                             {cashFlowHistory.map(row => (
                                                 <tr key={row.key}>
-                                                    <td className="cfr-hist-month">{row.label}</td>
-                                                    <td>{formatCurrency(row.revenue)}</td>
-                                                    <td className={row.netProfit > 0 ? 'cfr-hist-profit' : ''}>{formatCurrency(row.netProfit)}</td>
-                                                    <td>
+                                                    <td className="cfr-hist-month" data-label="Month">{row.label}</td>
+                                                    <td data-label="Revenue">{formatCurrency(row.revenue)}</td>
+                                                    <td data-label="Net Profit" className={row.netProfit > 0 ? 'cfr-hist-profit' : ''}>{formatCurrency(row.netProfit)}</td>
+                                                    <td data-label="Reserve">
                                                         {editingMonthKey === row.key ? (
                                                             <div className="cfr-inline-edit">
                                                                 <input
@@ -2468,9 +2468,9 @@ const Finance = () => {
                                                             </div>
                                                         )}
                                                     </td>
-                                                    <td>{formatCurrency(row.expenses)}</td>
-                                                    <td>{formatCurrency(row.used)}</td>
-                                                    <td>
+                                                    <td data-label="Expenses">{formatCurrency(row.expenses)}</td>
+                                                    <td data-label="Used">{formatCurrency(row.used)}</td>
+                                                    <td data-label="Status">
                                                         {row.over > 0
                                                             ? <span className="cfr-badge cfr-badge--red">Over cap</span>
                                                             : row.pct >= 80

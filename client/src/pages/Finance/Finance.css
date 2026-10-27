@@ -616,10 +616,297 @@
 .attachment-placeholder { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--bg-secondary); border-radius: 10px; border: 1px dashed var(--border-color); }
 .attachment-placeholder span { flex: 1; font-size: 13px; color: var(--text-secondary); }
 
+/* ═══════════════════════════════════════════
+   FINANCE — MOBILE RESPONSIVE  (≤ 768px)
+   ═══════════════════════════════════════════ */
 @media (max-width: 768px) {
-    .finance-dashboard__stats { grid-template-columns: repeat(2, 1fr); }
-    .fin-dashboard-grid { grid-template-columns: 1fr; }
+
+    /* ── Page wrapper ── */
+    .finance-dashboard {
+        padding: 0 0 32px;
+    }
+
+    /* ── Stats: 2 columns ── */
+    .finance-dashboard__stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .finance-dashboard__stat-card {
+        padding: 16px;
+    }
+    .finance-dashboard__stat-image {
+        width: 44px;
+        height: 44px;
+    }
+    .finance-dashboard__stat-value { font-size: 18px; }
+
+    /* ── Controls row: stack tabs + actions vertically ── */
+    .fin-controls-row {
+        flex-direction: column;
+        align-items: stretch !important;
+        flex-wrap: wrap !important;
+        gap: 10px;
+    }
+
+    /* ── Tabs: scrollable horizontal pill strip ── */
+    .fin-tabs {
+        display: flex;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .fin-tabs::-webkit-scrollbar { display: none; }
+    .fin-tab {
+        flex-shrink: 0;
+        font-size: 12px;
+        padding: 7px 12px;
+    }
+
+    /* ── Actions row: keep everything on ONE row on mobile ── */
+    .fin-actions {
+        display: flex;
+        flex-wrap: nowrap !important;
+        justify-content: flex-start;
+        align-items: center;
+        margin-left: 0;
+        width: 100%;
+        gap: 8px;
+        overflow: hidden;
+    }
+    .fin-date-filter-group {
+        flex-wrap: nowrap;
+        width: auto;
+        flex: 0 0 auto;
+        margin-right: 2px;
+    }
+    /* The date-range dropdown is a single short label — don't let it eat the row.
+       The base .fin-date-select rule uses !important, so our mobile override must too. */
+    .fin-actions .fin-date-filter-group,
+    .fin-actions .fin-date-filter-group .fin-date-select-wrap {
+        min-width: 0;
+        width: auto;
+        max-width: 140px;
+    }
+    .fin-actions .fin-date-filter-group .fin-date-select-wrap {
+        display: inline-flex;
+        align-items: center;
+    }
+    .fin-actions .fin-date-filter-group .fin-date-select {
+        width: 128px !important;
+        min-width: 128px !important;
+        max-width: 128px !important;
+        height: 34px !important;
+        padding: 0 24px 0 28px !important;
+        font-size: 12px !important;
+    }
+    .fin-actions .fin-date-filter-group .fin-date-select-icon {
+        left: 8px !important;
+    }
+    /* Compact buttons: icon with a small label; hide the label if space runs out. */
+    .fin-actions .btn,
+    .fin-actions button {
+        padding: 7px 10px;
+        font-size: 12px;
+        min-width: 0;
+        flex: 0 1 auto;
+        white-space: nowrap;
+        gap: 5px;
+    }
+    .fin-actions .btn svg,
+    .fin-actions button svg {
+        flex-shrink: 0;
+    }
+    /* The primary "New Transaction" CTA stays visible — give it the right to grow and
+       hide its text if the viewport is extremely narrow. The icon stays. */
+    .fin-actions .btn--primary,
+    .fin-actions .btn-primary,
+    .fin-actions button.primary {
+        flex: 0 1 auto;
+        min-width: 0;
+    }
+
+
+    /* ── Dashboard chart grid: single column ── */
+    .fin-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    .fin-chart-card {
+        min-height: 320px;
+        padding: 16px;
+    }
+
+    /* ── Invoice grid: single column ── */
     .fin-invoice-grid { grid-template-columns: 1fr; }
+
+    /* ── Invoice detail: stack columns ── */
+    .fin-invoice-info-grid { grid-template-columns: 1fr; gap: 20px; }
+    .fin-invoice-detail__header { flex-direction: column; gap: 16px; }
+    .fin-invoice-summary { width: 100%; }
+
+    /* ── General fin-table: scrollable ── */
+    /* All Transactions: drop the horizontal scroll and render each row as a card.
+       Non-transactions tables keep the overflow-scroll fallback. */
+    .fin-table-wrap,
+    .fin-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .fin-table:not(.fin-table--transactions) {
+        min-width: 520px;
+    }
+
+    /* ── Filters row (search + category) stacks vertically on mobile ── */
+    .fin-section__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .fin-filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+    }
+    .fin-filters .fin-search,
+    .fin-filters select {
+        width: 100%;
+    }
+
+    /* ── Transactions table → stacked cards ── */
+    .fin-table.fin-table--transactions,
+    .fin-table.fin-table--transactions thead,
+    .fin-table.fin-table--transactions tbody,
+    .fin-table.fin-table--transactions tr,
+    .fin-table.fin-table--transactions td {
+        display: block;
+        width: 100%;
+    }
+    .fin-table.fin-table--transactions thead {
+        /* visually hide the header row but keep it for screen readers */
+        position: absolute;
+        left: -9999px;
+        top: auto;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+    }
+    .fin-table.fin-table--transactions tbody tr {
+        margin: 0 0 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        background: var(--bg-primary);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+    .fin-table.fin-table--transactions tbody tr:last-child { margin-bottom: 0; }
+
+    .fin-table.fin-table--transactions td {
+        padding: 7px 0;
+        border: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        min-height: 24px;
+    }
+    .fin-table.fin-table--transactions td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+    }
+    .fin-table.fin-table--transactions td > :not(:first-child),
+    .fin-table.fin-table--transactions td > *,
+    .fin-table.fin-table--transactions td strong {
+        text-align: right;
+    }
+    .fin-table.fin-table--transactions td strong {
+        display: block;
+        margin: 0;
+    }
+    /* Give the description cell room to wrap underneath its label. */
+    .fin-table.fin-table--transactions td[data-label="Description"] {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+    }
+    .fin-table.fin-table--transactions td[data-label="Description"]::before {
+        text-align: left;
+    }
+    .fin-table.fin-table--transactions td[data-label="Description"] strong,
+    .fin-table.fin-table--transactions td[data-label="Description"] .fin-ref {
+        text-align: left;
+    }
+    .fin-table.fin-table--transactions td.positive,
+    .fin-table.fin-table--transactions td.negative {
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .fin-table.fin-table--transactions td[data-label="Actions"] > div {
+        justify-content: flex-end;
+    }
+
+    /* ── Ledger controls: stack ── */
+    .fin-ledger-controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .fin-minimal-tabs { width: 100%; justify-content: center; }
+
+    /* ── Ledger summary: compact ── */
+    .fin-ledger-summary { padding: 16px; }
+    .fin-summary-amount { font-size: 28px; }
+    .fin-summary-details { flex-wrap: wrap; gap: 14px; }
+
+    /* ── Banner ── */
+    .finance-dashboard__banner {
+        height: auto;
+        min-height: 130px;
+        padding: 28px 20px;
+        margin: 16px 0 20px;
+        border-radius: 16px;
+    }
+    .finance-dashboard__banner-content h1 { font-size: 22px; }
+
+    /* ── Header actions wrap ── */
+    .finance-dashboard__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .finance-dashboard__header-actions { flex-wrap: wrap; }
+
+    /* ── CFR stats ── */
+    .cfr-page__stats { grid-template-columns: repeat(2, 1fr); }
+    .cfr-page__body  { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .finance-dashboard__stats { grid-template-columns: 1fr; }
+    .finance-dashboard__stat-card { padding: 14px; }
+    .fin-chart-card { min-height: 260px; padding: 14px; }
+    .cfr-page__stats { grid-template-columns: 1fr; }
+}
+
+/* Very narrow phones: hide the "Import"/"Export" labels so the row still fits
+   on one line. The primary "New Transaction" CTA keeps its label. */
+@media (max-width: 420px) {
+    .fin-actions .btn,
+    .fin-actions button {
+        padding: 7px 9px;
+    }
+    .fin-actions > button:not(.btn--primary):not(.btn-primary):not(.primary) span,
+    .fin-actions > .btn:not(.btn--primary):not(.btn-primary):not(.primary) span {
+        display: none;
+    }
 }
 
 /* Ledger Professional Redesign - FIXED */
@@ -1249,3 +1536,124 @@ tr:hover .cfr-reserve-actions { opacity: 1; }
 [data-theme='dark'] .cfr-clear-btn:hover { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
 [data-theme='dark'] .cfr-inline-input { background: var(--bg-primary); border-color: var(--primary-400); color: var(--text-primary); }
 [data-theme='dark'] .cfr-inline-cancel { background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-muted); }
+
+/* ============================================================
+   EXPENSES LEDGER — MOBILE CARD LAYOUT  (≤ 768px)
+   Placed at end of file so it wins over the base .fin-ledger-row
+   grid rules that are defined later than the main @media block.
+   Selectors are scoped to .fin-ledger-section for extra specificity.
+   ============================================================ */
+@media (max-width: 768px) {
+    .fin-ledger-section .fin-ledger-list {
+        overflow: visible;
+        background: transparent;
+        border: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .fin-ledger-section .fin-ledger-list-header { display: none; }
+
+    /* Bulletproof flow layout — no grid tracks to fight the base rule, so nothing
+       can push off-screen. Icon + accent are absolute; amount sits top-right;
+       the chips/stakeholder/actions flow and wrap below the title. */
+    .fin-ledger-section .fin-ledger-row {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        padding: 14px 14px 12px 52px;   /* top, right, bottom, left-for-icon */
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        background: var(--bg-primary);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        min-height: 0;
+        position: relative;
+        box-sizing: border-box;
+        overflow: hidden;   /* clip the accent's rounded ends cleanly */
+    }
+    .fin-ledger-section .fin-ledger-row:hover { background: var(--bg-primary); }
+
+    .fin-ledger-section .fin-ledger-accent {
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 4px; height: auto;
+        border-radius: 0;
+    }
+    .fin-ledger-section .fin-ledger-icon {
+        position: absolute;
+        left: 14px; top: 14px;
+        width: 30px; height: 30px;
+        border-radius: 8px; margin: 0;
+    }
+
+    /* Title + meta, leaving room on the right for the amount. */
+    .fin-ledger-section .fin-ledger-content.col-desc {
+        display: block;
+        min-width: 0;
+        padding: 0;
+        margin-right: 84px;   /* reserve space for the amount pinned top-right */
+    }
+    .fin-ledger-section .fin-ledger-content.col-desc .title {
+        font-size: 14px; font-weight: 600; line-height: 1.3;
+        -webkit-line-clamp: 2; line-clamp: 2;
+        display: -webkit-box; -webkit-box-orient: vertical;
+        overflow: hidden; white-space: normal; word-break: break-word;
+        max-width: none; margin: 0;
+    }
+    .fin-ledger-section .fin-ledger-content.col-desc .meta {
+        font-size: 11px; color: var(--text-muted);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        margin-top: 3px;
+    }
+
+    /* Amount: pinned to the top-right corner of the card. */
+    .fin-ledger-section .fin-ledger-col.col-amount {
+        position: absolute;
+        top: 14px; right: 14px;
+        text-align: right;
+    }
+    .fin-ledger-section .fin-ledger-col.col-amount .amount-val {
+        font-size: 15px; font-weight: 700; color: var(--text-primary); white-space: nowrap;
+    }
+
+    /* Chips row: category + status + stakeholder flow inline and wrap. */
+    .fin-ledger-section .fin-ledger-col.col-cat,
+    .fin-ledger-section .fin-ledger-col.col-status {
+        display: inline-flex;
+        align-items: center;
+        vertical-align: middle;
+        margin: 10px 8px 0 0;
+    }
+    .fin-ledger-section .fin-ledger-col.col-stake {
+        display: inline-flex;
+        align-items: center;
+        vertical-align: middle;
+        margin: 10px 0 0 0;
+        min-width: 0; max-width: 100%;
+    }
+    .fin-ledger-section .fin-ledger-col.col-stake .stakeholder-info {
+        display: inline-flex; flex-direction: row; gap: 6px; align-items: baseline;
+        font-size: 12px; min-width: 0;
+    }
+    .fin-ledger-section .fin-ledger-col.col-stake .stakeholder-info strong {
+        font-size: 12px; font-weight: 600;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;
+    }
+    .fin-ledger-section .fin-ledger-col.col-stake .stakeholder-info span {
+        color: var(--text-muted); font-size: 11px; white-space: nowrap; text-transform: capitalize;
+    }
+
+    /* Actions: their own full-width row, right-aligned, under the chips. */
+    .fin-ledger-section .fin-ledger-col.col-actions {
+        display: block;
+        margin-top: 10px;
+    }
+    /* Action buttons are hover-revealed on desktop (opacity:0); always show on mobile. */
+    .fin-ledger-section .fin-ledger-row .action-group {
+        opacity: 1 !important;
+        display: flex; gap: 6px; justify-content: flex-end;
+    }
+    .fin-ledger-section .fin-ledger-col.col-actions .icon-btn {
+        width: 30px; height: 30px; border-radius: 8px;
+    }
+}
