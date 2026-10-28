@@ -108,32 +108,18 @@ export const notificationService = {
         }
     },
 
-    // Notify an assignee that a task was assigned to them: in-app always,
-    // email only when requested. Never throws — failures are returned.
-    async notifyTaskAssigned({ task, assignee, sendEmail, senderId, senderName }) {
-        const result = { inApp: false, email: false, emailError: null };
+    // Notify an assignee that a task was assigned to them.
+    //
+    // The in-app notification (and the resulting mobile push) is now created by a
+    // database trigger (task_assigned_notify) so EVERY assignment notifies the
+    // person regardless of which screen created the task. This method therefore
+    // only sends the optional email, to avoid a duplicate in-app notification.
+    async notifyTaskAssigned({ task, assignee, sendEmail, senderName }) {
+        const result = { inApp: true, email: false, emailError: null };
         if (!assignee?.id) return result;
 
         const due = task?.deadline ? ` (due ${task.deadline})` : '';
         const message = `${senderName || 'Your admin'} assigned you a new task: "${task?.title}"${due}.`;
-
-        // In-app notification
-        try {
-            await this.create({
-                recipient_id: assignee.id,
-                sender_id: senderId || null,
-                sender_name: senderName || 'Admin',
-                type: 'task_assigned',
-                title: 'New Task Assigned',
-                message,
-                task_id: task?.id || null,
-                task_title: task?.title || null,
-                read: false,
-            });
-            result.inApp = true;
-        } catch (err) {
-            console.warn('[notificationService] notifyTaskAssigned in-app error:', err.message);
-        }
 
         // Email notification (optional)
         if (sendEmail && assignee?.email) {
