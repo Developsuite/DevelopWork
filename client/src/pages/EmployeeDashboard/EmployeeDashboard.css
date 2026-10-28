@@ -1197,4 +1197,40 @@
     .employee-cockpit {
         overflow-x: hidden;
     }
+
+    /* ── Task cards: stack header so badges get full width instead of being
+       squeezed into a narrow column (which made pills wrap to 3 lines). ── */
+    .cockpit-task-card__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .cockpit-task-card__title-area {
+        width: 100%;
+    }
+    .cockpit-task-card__badges {
+        gap: 8px;
+    }
+    /* Pills must never wrap their text internally. */
+    .cockpit-scope-pill,
+    .cockpit-deadline-pill,
+    .priority-badge {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    /* Actions row: full width, left-aligned, status dropdown grows. */
+    .cockpit-task-card__actions {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+    .cockpit-status-dropdown {
+        flex: 1;
+        min-width: 0;
+        max-width: 180px;
+    }
+    .cockpit-task-card__title {
+        font-size: 15px;
+        word-break: break-word;
+    }
 }
