@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import './MobileBottomNav.css';
 
@@ -20,54 +20,46 @@ const MobileBottomNav = ({ items = [], homeItem, settingsItem, onMore, accentCol
 
     const innerRef = useRef(null);
     const itemRefs = useRef({});
-    const [indicator, setIndicator] = useState({ x: 0, w: 0, visible: false });
+    // The floating circle indicator follows whichever item is active.
+    const [circle, setCircle] = useState({ cx: 0, visible: false });
 
     const shortcuts = items.filter(Boolean).slice(0, 2);
 
-    // Build the ordered list of rendered buttons so the indicator can locate the active one.
     const slots = [];
     shortcuts.forEach((item, i) => slots.push({ key: `shortcut-${i}`, item, position: `shortcut-${i}` }));
     if (homeItem) slots.push({ key: 'home', item: homeItem, position: 'home' });
     if (settingsItem) slots.push({ key: 'settings', item: settingsItem, position: 'settings' });
     slots.push({ key: 'more', item: { label: 'More', onClick: onMore, icon: MoreHorizontal }, position: 'more' });
 
+    // The active item is any item (including Home) whose path matches the route.
     const activeKey = (() => {
-        // The home item has its own visual treatment (floating circle) so we skip the
-        // sliding pill when it is the active one — the circle itself is the indicator.
         for (const s of slots) {
-            if (s.position === 'home') continue;
             if (s.item?.path && isItemActive(s.item, location)) return s.key;
         }
-        return null;
+        return homeItem ? 'home' : null; // default the circle to Home
     })();
 
     useLayoutEffect(() => {
         const measure = () => {
-            if (!activeKey) {
-                setIndicator((prev) => ({ ...prev, visible: false }));
+            const container = innerRef.current;
+            const el = activeKey ? itemRefs.current[activeKey] : null;
+            if (!container || !el) {
+                setCircle((c) => ({ ...c, visible: false }));
                 return;
             }
-            const container = innerRef.current;
-            const el = itemRefs.current[activeKey];
-            if (!container || !el) return;
             const cRect = container.getBoundingClientRect();
             const eRect = el.getBoundingClientRect();
-            setIndicator({
-                x: eRect.left - cRect.left,
-                w: eRect.width,
-                visible: true,
-            });
+            setCircle({ cx: eRect.left - cRect.left + eRect.width / 2, visible: true });
         };
         measure();
         window.addEventListener('resize', measure);
         return () => window.removeEventListener('resize', measure);
-    }, [activeKey, location.pathname, location.search]);
+    }, [activeKey, location.pathname, location.search, items.length]);
 
     const renderItem = (slot) => {
         const { item, position, key } = slot;
         const Icon = item.icon;
         const active = key === activeKey;
-        const isHome = position === 'home';
         const isMore = position === 'more';
 
         return (
@@ -75,13 +67,15 @@ const MobileBottomNav = ({ items = [], homeItem, settingsItem, onMore, accentCol
                 ref={(el) => { if (el) itemRefs.current[key] = el; else delete itemRefs.current[key]; }}
                 key={key}
                 type="button"
-                className={`mobile-bottom-nav__item ${isHome ? 'mobile-bottom-nav__item--home' : ''} ${active ? 'active' : ''}`}
+                className={`mobile-bottom-nav__item ${active ? 'active' : ''}`}
                 onClick={() => item.onClick ? item.onClick() : navigate(item.path)}
                 aria-current={active ? 'page' : undefined}
                 aria-label={item.label}
             >
-                <span className="mobile-bottom-nav__icon-wrap">
-                    <Icon size={isHome ? 25 : 21} strokeWidth={active || isHome ? 2.35 : 1.9} />
+                {/* The active icon is shown inside the floating circle instead, so hide
+                    this one (keeps the slot's height/label in place). */}
+                <span className={`mobile-bottom-nav__icon-wrap ${active ? 'is-tucked' : ''}`}>
+                    <Icon size={22} strokeWidth={active ? 2.4 : 1.9} />
                     {!isMore && item.badge > 0 && (
                         <span className="mobile-bottom-nav__badge">
                             {item.badge > 99 ? '99+' : item.badge}
@@ -93,6 +87,9 @@ const MobileBottomNav = ({ items = [], homeItem, settingsItem, onMore, accentCol
         );
     };
 
+    const activeSlot = slots.find((s) => s.key === activeKey);
+    const ActiveIcon = activeSlot?.item?.icon;
+
     return (
         <nav
             className="mobile-bottom-nav"
@@ -100,15 +97,18 @@ const MobileBottomNav = ({ items = [], homeItem, settingsItem, onMore, accentCol
             style={accentColor ? { '--mobile-nav-accent': accentColor } : undefined}
         >
             <div className="mobile-bottom-nav__inner" ref={innerRef}>
+                {/* Floating circle indicator — slides to the active item and carries its
+                    icon, perfectly centred, so it moves smoothly from one button to another. */}
                 <span
-                    className="mobile-bottom-nav__pill"
+                    className="mobile-bottom-nav__circle"
                     aria-hidden="true"
                     style={{
-                        transform: `translateX(${indicator.x}px)`,
-                        width: `${indicator.w}px`,
-                        opacity: indicator.visible ? 1 : 0,
+                        transform: `translateX(calc(${circle.cx}px - 50%))`,
+                        opacity: circle.visible ? 1 : 0,
                     }}
-                />
+                >
+                    {ActiveIcon && <ActiveIcon size={23} strokeWidth={2.4} color="#fff" />}
+                </span>
                 {slots.map(renderItem)}
             </div>
         </nav>
