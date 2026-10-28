@@ -214,3 +214,76 @@ iframe {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* ============================================================
+   MOBILE PERFORMANCE  (≤ 768px)
+   backdrop-filter: blur() is extremely GPU-expensive on phones and
+   is the main cause of scroll jank / laggy feel across the admin
+   workspace and heavy pages like Documentation. Disable blur on
+   mobile and make the previously-translucent surfaces solid so they
+   still look right without it. Also trim the heaviest shadows.
+   ============================================================ */
+@media (max-width: 768px) {
+    *,
+    *::before,
+    *::after {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* Surfaces that relied on blur to look opaque — make them solid. */
+    .sidebar,
+    .topbar,
+    .employee-topbar,
+    .manager-topbar,
+    .employee-sidebar,
+    .manager-sidebar,
+    .mobile-bottom-nav__inner,
+    .dw-modal-container,
+    .glass,
+    .glass-elevated,
+    .glass-dropdown,
+    .glass-overlay,
+    .aicc-window,
+    .aicc-header,
+    [class*="__dropdown"],
+    [class*="-dropdown"] {
+        background-color: var(--bg-primary) !important;
+    }
+
+    /* Keep translucent scrims readable but cheap (no blur). */
+    .glass-overlay,
+    .module-hub__overlay,
+    .invoice-builder-modal {
+        background-color: rgba(15, 23, 42, 0.45) !important;
+    }
+
+    /* Trim very large/expensive shadows that repaint on scroll. */
+    .glass,
+    .glass-elevated,
+    .sidebar,
+    .topbar {
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+    }
+}
+
+/* Dark theme solid surfaces on mobile */
+@media (max-width: 768px) {
+    [data-theme="dark"] .sidebar,
+    [data-theme="dark"] .topbar,
+    [data-theme="dark"] .employee-topbar,
+    [data-theme="dark"] .manager-topbar,
+    [data-theme="dark"] .employee-sidebar,
+    [data-theme="dark"] .manager-sidebar,
+    [data-theme="dark"] .mobile-bottom-nav__inner,
+    [data-theme="dark"] .dw-modal-container,
+    [data-theme="dark"] .glass,
+    [data-theme="dark"] .glass-elevated,
+    [data-theme="dark"] .glass-dropdown,
+    [data-theme="dark"] .aicc-window,
+    [data-theme="dark"] .aicc-header,
+    [data-theme="dark"] [class*="__dropdown"],
+    [data-theme="dark"] [class*="-dropdown"] {
+        background-color: var(--bg-secondary) !important;
+    }
+}

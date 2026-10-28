@@ -549,3 +549,69 @@
 [data-theme="dark"] .doc-editor-btn.danger:hover {
     background: rgba(255, 71, 87, 0.2);
 }
+
+/* ============================================================
+   DOCS — MOBILE PERFORMANCE  (≤ 768px)
+   The 3D folder cards (perspective, preserve-3d, rotateX/Y,
+   filter: blur, layered gradients, heavy shadows) are very
+   expensive to paint on phones and make the module feel laggy.
+   Flatten them to simple 2D folder tiles on mobile.
+   ============================================================ */
+@media (max-width: 768px) {
+    .folder-container {
+        perspective: none;
+        gap: 10px;
+        transition: none;
+    }
+    .folder-container:hover { transform: none; }
+
+    .folder-3d {
+        width: 96px;
+        height: 72px;
+        transform: none !important;
+        transform-style: flat;
+        transition: none;
+    }
+    .folder-container:hover .folder-3d { transform: none !important; }
+
+    /* Kill the blurred ground shadow entirely */
+    .folder-3d::after { display: none !important; }
+
+    /* Flatten each 3D layer to a single clean folder shape */
+    .folder-3d-back {
+        transform: none !important;
+        box-shadow: none !important;
+        border-radius: 10px;
+    }
+    .folder-3d-back::before { display: none; }
+    .folder-3d-paper,
+    .folder-3d-paper::before { display: none !important; }
+
+    .folder-3d-front {
+        transform: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: none !important;
+        border-radius: 10px;
+        transition: none;
+    }
+    .folder-container:hover .folder-3d-front { transform: none !important; box-shadow: none !important; }
+
+    .folder-icon-inner {
+        filter: none !important;
+        transform: none !important;
+        transition: none;
+        color: #fff;
+    }
+
+    /* Cheaper doc list cards: drop the "transition: all" repaints */
+    .doc-file-item,
+    .doc-tab,
+    .doc-editor-btn,
+    .btn-back-folder,
+    .view-toggle-btn,
+    .doc-back-btn {
+        transition: background-color 0.15s ease, color 0.15s ease !important;
+    }
+    .docs-dashboard { animation: none; }
+}
