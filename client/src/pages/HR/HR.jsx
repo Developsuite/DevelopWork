@@ -58,6 +58,7 @@ const HR = () => {
     const [createLoginAccount, setCreateLoginAccount] = useState(true);
     const [accountPassword, setAccountPassword] = useState('Employee@2026');
     const [accountRole, setAccountRole] = useState('employee');
+    const [selectedPipelineStage, setSelectedPipelineStage] = useState('all');
 
     const handleContactClick = (e, emp, type) => {
         e.stopPropagation();
@@ -1217,8 +1218,8 @@ const HR = () => {
             </div>
 
             {/* Sub-tab Navigation and Actions */}
-            <div className="hr-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div className="hr-tabs" style={{ marginBottom: 0 }}>
+            <div className="hr-toolbar">
+                <div className="hr-tabs">
                     {tabs.map(tab => (
                         <button 
                             key={tab.id} 
@@ -1230,9 +1231,9 @@ const HR = () => {
                         </button>
                     ))}
                 </div>
-                <div>
+                <div className="hr-toolbar-actions">
                     {activeTab === 'recruitment' ? (
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className="hr-toolbar-actions__group">
                             <Button variant="secondary" icon={Briefcase} onClick={() => handleOpenJobModal()}>Post Job</Button>
                             <Button variant="primary" icon={UserPlus} onClick={() => handleOpenApplicantModal()}>Add Candidate</Button>
                         </div>
@@ -1490,8 +1491,18 @@ const HR = () => {
                                                     </button>
                                                 </div>
                                             </td>
-                                            <td>{emp.location}</td>
-                                            <td>{emp.manager}</td>
+                                            <td>
+                                                <div className="hr-table-meta-item">
+                                                    <MapPin size={13} className="hr-table-meta-icon" />
+                                                    <span>{emp.location || 'Remote'}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="hr-table-meta-item">
+                                                    <Users size={13} className="hr-table-meta-icon" />
+                                                    <span>{emp.manager || 'CEO'}</span>
+                                                </div>
+                                            </td>
                                             <td>
                                                 <div style={{ display: 'flex', gap: '8px' }}>
                                                     <button className="hr-icon-btn" onClick={(e) => handleEditEmployee(e, emp)}><Pencil size={14} /></button>
@@ -1516,7 +1527,7 @@ const HR = () => {
                 <div className="hr-section glass-card">
                     <div className="hr-section__header">
                         <h2>Payroll — {payrollMonth}</h2>
-                        <div className="hr-payroll-actions" style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div className="hr-payroll-actions">
                             <select className="hr-month-select" value={payrollMonth} onChange={e => setPayrollMonth(e.target.value)}>
                                 {['January 2026', 'February 2026', 'March 2026', 'April 2026', 'May 2026', 'June 2026'].map(m => <option key={m}>{m}</option>)}
                             </select>
@@ -1531,8 +1542,8 @@ const HR = () => {
                             <Button variant="primary" size="sm" icon={DollarSign} onClick={handleRunPayroll}>Run Payroll</Button>
                         </div>
                     </div>
-                    <div id="payroll-report-container" style={{ padding: '20px', background: 'var(--bg-primary)', borderRadius: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                    <div id="payroll-report-container" className="hr-payroll-report-container">
+                        <div className="hr-payroll-summary-banner">
                             <div>
                                 <h3 style={{ margin: 0, color: 'var(--text-muted)', fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Payroll Amount</h3>
                                 <div style={{ fontSize: '28px', fontWeight: '800', color: 'var(--primary-600)', marginTop: '4px' }}>
@@ -1660,7 +1671,7 @@ const HR = () => {
 
                                 {recruitmentView === 'pipeline' && (
                                     <>
-                                        <div className="hr-search" style={{ width: '220px' }}>
+                                        <div className="hr-search hr-recruitment-search">
                                             <Search size={15} style={{ color: 'var(--text-muted)' }} />
                                             <input 
                                                 type="text"
@@ -1693,9 +1704,36 @@ const HR = () => {
 
                         {/* Pipeline Kanban View */}
                         {recruitmentView === 'pipeline' && (
-                            <div className="recruitment-pipeline-scroll">
-                                <div className="recruitment-pipeline-board">
-                                    {pipelineStages.map(stage => {
+                            <>
+                                <div className="recruitment-mobile-stage-bar">
+                                    <button 
+                                        type="button" 
+                                        className={`recruitment-stage-pill ${selectedPipelineStage === 'all' ? 'active' : ''}`}
+                                        onClick={() => setSelectedPipelineStage('all')}
+                                    >
+                                        All Stages ({filteredApplicants.length})
+                                    </button>
+                                    {pipelineStages.map(s => {
+                                        const count = filteredApplicants.filter(a => a.stage === s.key).length;
+                                        return (
+                                            <button
+                                                key={s.key}
+                                                type="button"
+                                                className={`recruitment-stage-pill ${selectedPipelineStage === s.key ? 'active' : ''}`}
+                                                onClick={() => setSelectedPipelineStage(s.key)}
+                                            >
+                                                <span className="stage-pill-dot" style={{ backgroundColor: s.color }} />
+                                                <span>{s.label}</span>
+                                                <span className="stage-pill-count">({count})</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div className="recruitment-pipeline-scroll">
+                                    <div className="recruitment-pipeline-board">
+                                        {pipelineStages
+                                            .filter(stage => selectedPipelineStage === 'all' || stage.key === selectedPipelineStage)
+                                            .map(stage => {
                                         const stageApplicants = filteredApplicants.filter(a => a.stage === stage.key);
                                         const isOver = dragOverStage === stage.key;
 
@@ -1863,6 +1901,7 @@ const HR = () => {
                                     })}
                                 </div>
                             </div>
+                        </>
                         )}
 
                         {/* Job Openings View */}

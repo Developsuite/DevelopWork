@@ -33,6 +33,6 @@
     }
 
     .app-layout__content {
-        padding: 18px;
+        padding: 18px 18px calc(108px + env(safe-area-inset-bottom));
     }
 }

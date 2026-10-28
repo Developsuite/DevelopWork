@@ -13,7 +13,7 @@ import Modal from '../../components/common/Modal/Modal';
 import {
     Users, Target, Clock, Award, TrendingUp, Search, Plus, Filter,
     Mail, Phone, MapPin, Building2, MoreVertical, LayoutGrid, List,
-    ChevronRight, Star, FileText, Send, BarChart3, Trash2, Pencil,
+    ChevronRight, ChevronDown, Star, FileText, Send, BarChart3, Trash2, Pencil,
     ArrowRight, CheckCircle2, AlertCircle, Briefcase, UserCircle2,
     Calendar, DollarSign, GripVertical, Download, Upload, FileJson, X
 } from 'lucide-react';
@@ -34,6 +34,10 @@ const Leads = () => {
     const theme = useSelector((state) => state.ui.theme);
     const currency = useSelector((state) => state.ui.currency) || 'PKR';
     const { user } = useSelector((state) => state.auth);
+
+    // Mobile pipeline: track which stages are expanded (accordion)
+    const [expandedStages, setExpandedStages] = useState({ New: true });
+    const toggleStage = (stage) => setExpandedStages(prev => ({ ...prev, [stage]: !prev[stage] }));
 
     // Initial Data
     const [leads, setLeads] = useState([]);
@@ -412,6 +416,7 @@ const Leads = () => {
             <div className="ld__pipeline">
                 {stages.map(stage => {
                     const stageLeads = filteredLeads.filter(l => l.stage === stage);
+                    const isOpen = expandedStages[stage];
                     return (
                         <Droppable key={stage} droppableId={stage}>
                             {(provided, snapshot) => (
@@ -420,44 +425,53 @@ const Leads = () => {
                                     ref={provided.innerRef}
                                     className={`ld__pipeline-column ${snapshot.isDraggingOver ? 'dragging-over' : ''}`}
                                 >
-                                    <div className="ld__pipeline-header">
+                                    <div
+                                        className="ld__pipeline-header"
+                                        onClick={() => toggleStage(stage)}
+                                    >
                                         <h3>{stage}</h3>
                                         <span className="ld__pipeline-count">{stageLeads.length}</span>
+                                        <span className={`ld__pipeline-toggle ${isOpen ? 'open' : ''}`}>
+                                            <ChevronDown size={16} />
+                                        </span>
                                     </div>
-                                    <div className="ld__pipeline-cards">
-                                        {stageLeads.map((lead, index) => (
-                                            <Draggable key={lead.id} draggableId={lead.id.toString()} index={index}>
-                                                {(provided, snapshot) => (
-                                                    <div 
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        className={`ld__lead-card ${snapshot.isDragging ? 'dragging' : ''}`} 
-                                                        onClick={() => { setSelectedLead(lead); setIsDetailModalOpen(true); }}
-                                                    >
-                                                        <div className="ld__lead-card-header">
-                                                            <span className="ld__lead-card-company">{lead.company}</span>
-                                                            {renderTag(lead.priority)}
-                                                        </div>
-                                                        <h4 className="ld__lead-card-name">{lead.name}</h4>
-                                                        <div className="ld__lead-card-meta">
-                                                            <span style={{ fontWeight: 600 }}>{formatCurrency(lead.value || 0, currency)}</span>
-                                                            <span><Clock size={12} /> {lead.lastContact}</span>
-                                                        </div>
-                                                        <div className="ld__lead-card-footer">
-                                                            <Avatar name={lead.contact} size="xs" />
-                                                            <div className="ld__lead-card-actions">
-                                                                <button onClick={(e) => handleEditLead(e, lead)}><Pencil size={12}/></button>
-                                                                <div className="ld__drag-indicator">
-                                                                    <GripVertical size={14} />
+                                    {/* Desktop: always visible wrapper; Mobile: collapsible via .open class */}
+                                    <div className={`ld__pipeline-cards-wrapper ${isOpen ? 'open' : ''}`}>
+                                        <div className="ld__pipeline-cards">
+                                            {stageLeads.map((lead, index) => (
+                                                <Draggable key={lead.id} draggableId={lead.id.toString()} index={index}>
+                                                    {(provided, snapshot) => (
+                                                        <div 
+                                                            ref={provided.innerRef}
+                                                            {...provided.draggableProps}
+                                                            {...provided.dragHandleProps}
+                                                            className={`ld__lead-card ${snapshot.isDragging ? 'dragging' : ''}`} 
+                                                            onClick={() => { setSelectedLead(lead); setIsDetailModalOpen(true); }}
+                                                        >
+                                                            <div className="ld__lead-card-header">
+                                                                <span className="ld__lead-card-company">{lead.company}</span>
+                                                                {renderTag(lead.priority)}
+                                                            </div>
+                                                            <h4 className="ld__lead-card-name">{lead.name}</h4>
+                                                            <div className="ld__lead-card-meta">
+                                                                <span style={{ fontWeight: 600 }}>{formatCurrency(lead.value || 0, currency)}</span>
+                                                                <span><Clock size={12} /> {lead.lastContact}</span>
+                                                            </div>
+                                                            <div className="ld__lead-card-footer">
+                                                                <Avatar name={lead.contact} size="xs" />
+                                                                <div className="ld__lead-card-actions">
+                                                                    <button onClick={(e) => handleEditLead(e, lead)}><Pencil size={12}/></button>
+                                                                    <div className="ld__drag-indicator">
+                                                                        <GripVertical size={14} />
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
+                                                    )}
+                                                </Draggable>
+                                            ))}
+                                            {provided.placeholder}
+                                        </div>
                                     </div>
                                 </div>
                             )}
@@ -471,7 +485,8 @@ const Leads = () => {
     // --- ALL LEADS VIEW ---
     const renderLeadsList = () => (
         <div className="ld__table-container">
-            <table className="ld__table">
+            {/* Desktop Table */}
+            <table className="ld__table ld__table--desktop">
                 <thead>
                     <tr>
                         <th>Lead / Company</th>
@@ -520,6 +535,46 @@ const Leads = () => {
                     )}
                 </tbody>
             </table>
+
+            {/* Mobile Cards */}
+            <div className="ld__mobile-leads">
+                {filteredLeads.length === 0 ? (
+                    <div className="ld__mobile-empty">
+                        {searchQuery ? `No leads found matching "${searchQuery}"` : 'No leads yet. Add your first lead!'}
+                    </div>
+                ) : (
+                    filteredLeads.map(lead => (
+                        <div
+                            key={lead.id}
+                            className="ld__mobile-lead-card"
+                            onClick={() => { setSelectedLead(lead); setIsDetailModalOpen(true); }}
+                        >
+                            <div className="ld__mlc-top">
+                                <div className="ld__mlc-name">
+                                    <strong>{lead.name}</strong>
+                                    <span>{lead.company}{lead.location ? ` · ${lead.location}` : ''}</span>
+                                </div>
+                                <div className="ld__mlc-badges">
+                                    {renderTag(lead.stage)}
+                                    {renderTag(lead.priority)}
+                                </div>
+                            </div>
+                            <div className="ld__mlc-meta">
+                                <span className="ld__mlc-value">{formatCurrency(lead.value || 0, currency)}</span>
+                                {lead.contact && <span className="ld__mlc-contact"><UserCircle2 size={12}/> {lead.contact}</span>}
+                                {lead.phone && <span className="ld__mlc-phone"><Phone size={12}/> {lead.phone}</span>}
+                            </div>
+                            <div className="ld__mlc-footer">
+                                <span className="ld__mlc-time"><Clock size={11}/> {lead.lastContact}</span>
+                                <div className="ld__mlc-actions">
+                                    <button className="ld__icon-btn" onClick={(e) => handleEditLead(e, lead)}><Pencil size={13}/></button>
+                                    <button className="ld__icon-btn ld__icon-btn--danger" onClick={(e) => handleDeleteLead(e, lead.id)}><Trash2 size={13}/></button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 
@@ -627,14 +682,14 @@ const Leads = () => {
                             <Button variant="ghost" icon={Upload}>Import</Button>
                             <input type="file" accept=".csv" onChange={handleImportLeads} />
                         </div>
+                        <Button variant="primary" icon={Plus} onClick={() => {
+                            setEditMode(false);
+                            setSelectedLead(null);
+                            setLeadFormData({ name: '', contact: '', email: '', phone: '', company: '', stage: 'New', value: '', priority: 'Medium', location: '' });
+                            setLeadFormErrors({});
+                            setIsAddLeadModalOpen(true);
+                        }}>Add Lead</Button>
                     </div>
-                    <Button variant="primary" icon={Plus} onClick={() => {
-                        setEditMode(false);
-                        setSelectedLead(null);
-                        setLeadFormData({ name: '', contact: '', email: '', phone: '', company: '', stage: 'New', value: '', priority: 'Medium', location: '' });
-                        setLeadFormErrors({});
-                        setIsAddLeadModalOpen(true);
-                    }}>Add Lead</Button>
                 </div>
             </div>
 

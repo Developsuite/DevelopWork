@@ -12,7 +12,8 @@
 .employee-sidebar {
     width: 260px;
     min-height: 100vh;
-    background: var(--bg-surface);
+    background: #FFFFFF;
+    background: var(--bg-surface, #FFFFFF);
     border-right: 1px solid var(--border-light);
     display: flex;
     flex-direction: column;
@@ -323,7 +324,23 @@
     .employee-sidebar {
         transform: translateX(-100%);
         width: min(84vw, 300px);
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.18);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.35);
+        z-index: 10001 !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        position: fixed !important;
+        background: #FFFFFF !important;
+        color: var(--text-primary) !important;
+        border-right: 1px solid var(--border-light) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    [data-theme='dark'] .employee-sidebar {
+        background: #090A0E !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
 
     .employee-sidebar.open {
@@ -338,9 +355,21 @@
         display: flex;
     }
 
+    .employee-layout__overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        z-index: 10000 !important;
+        background: rgba(15, 23, 42, 0.45) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+    }
+
     .employee-layout__overlay.show {
-        display: block;
-        opacity: 1;
+        display: block !important;
+        opacity: 1 !important;
     }
 
     .employee-layout__main {
@@ -353,12 +382,12 @@
         padding: 0 16px;
     }
 
-    .employee-topbar__dept-pill span {
+    .employee-topbar__dept-pill {
         display: none;
     }
 
     .employee-layout__content {
-        padding: 16px;
+        padding: 16px 16px calc(108px + env(safe-area-inset-bottom));
     }
 }
 
@@ -368,6 +397,6 @@
     }
 
     .employee-layout__content {
-        padding: 14px 12px;
+        padding: 14px 12px calc(108px + env(safe-area-inset-bottom));
     }
 }

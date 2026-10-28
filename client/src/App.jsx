@@ -1,15 +1,17 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { Capacitor } from '@capacitor/core';
 import { restoreSession, setUser } from './store/slices/authSlice';
 import { authService } from './services/authService';
 import { permissionsService } from './services/permissionsService';
-import { supabase } from './lib/supabase';
 import AppLayout from './components/layout/AppLayout/AppLayout';
 import ManagerLayout from './components/layout/ManagerLayout/ManagerLayout';
 import EmployeeLayout from './components/layout/EmployeeLayout/EmployeeLayout';
 import ToastContainer from './components/common/Toast/Toast';
 import AICommandCenter from './components/common/AICommandCenter/AICommandCenter';
+import NativeRuntimeBridge from './components/native/NativeRuntimeBridge';
+import NativeLaunchScreen from './components/native/NativeLaunchScreen';
 import AdminRoute from './components/guards/AdminRoute';
 import ManagerRoute from './components/guards/ManagerRoute';
 import EmployeeRoute from './components/guards/EmployeeRoute';
@@ -42,6 +44,8 @@ import { Loader2 } from 'lucide-react';
 
 function App() {
   const dispatch = useDispatch();
+  const isNativeApp = Capacitor.isNativePlatform();
+  const [showNativeLaunch, setShowNativeLaunch] = useState(isNativeApp);
   const theme = useSelector((state) => state.ui.theme);
   const { user, isAuthenticated, isLoading } = useSelector((state) => state.auth);
   const existingUserId = useRef(null);
@@ -50,6 +54,14 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  // Keep the branded launch moment visible long enough to feel intentional.
+  // This is only used by the installed Capacitor app; the website is unchanged.
+  useEffect(() => {
+    if (!isNativeApp) return undefined;
+    const timer = window.setTimeout(() => setShowNativeLaunch(false), 1900);
+    return () => window.clearTimeout(timer);
+  }, [isNativeApp]);
 
   // Mirror the current user id in a ref so the auth-state handler (set up once) can tell
   // whether Redux already holds a usable user without listing `user` as a hook dep.
@@ -175,7 +187,7 @@ function App() {
 
   // Smart redirect for root path based on role
   const getRootRedirect = () => {
-    if (!isAuthenticated || !user) return '/landing';
+    if (!isAuthenticated || !user) return isNativeApp ? '/login' : '/landing';
     if (user.role === 'super_admin') return '/super-admin';
     if (user.role === 'manager') {
       const accessibleModules = permissionsService.getAccessibleModules(user);
@@ -191,7 +203,12 @@ function App() {
     // Removed the 3-second aggressive timeout. If Supabase is cold-starting, 
     // it can take up to 5-10 seconds to restore the session or login.
 
-  // Show a loading spinner while restoring session
+  // The installed app uses the branded launch screen while the session is restored.
+  if (isNativeApp && (showNativeLaunch || isLoading)) {
+    return <NativeLaunchScreen />;
+  }
+
+  // Keep the existing website loader while restoring a browser session.
   if (isLoading) {
     return (
       <div style={{
@@ -213,10 +230,14 @@ function App() {
 
   return (
     <BrowserRouter>
+      <NativeRuntimeBridge />
       {isAuthenticated && user && <AICommandCenter />}
       <Routes>
         {/* Public Routes */}
-        <Route path="/landing" element={<Landing />} />
+        <Route
+          path="/landing"
+          element={isNativeApp ? <Navigate to="/login" replace /> : <Landing />}
+        />
         <Route path="/login" element={<Login />} />
         {/* Public self-registration is disabled — only the Super Admin provisions workspaces */}
         <Route path="/register" element={<Navigate to="/login" replace />} />

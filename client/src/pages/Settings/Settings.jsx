@@ -614,7 +614,7 @@ const Settings = () => {
     useEffect(() => { if (activeTab === 'team') loadData(); }, [activeTab]);
 
     const tabs = [
-        { id: 'profile', label: 'My Profile', icon: User },
+        { id: 'profile', label: 'Profile', icon: User },
         { id: 'workspace', label: 'Workspace', icon: Building2, adminOnly: true },
         { id: 'team', label: 'Team & Managers', icon: Users, adminOnly: true },
         { id: 'modules', label: 'Modules', icon: LayoutGrid, adminOnly: true },
@@ -633,16 +633,19 @@ const Settings = () => {
             <div className="settings-container">
                 {/* Sidebar */}
                 <aside className="settings-nav glass-card">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            className={`settings-nav-item ${activeTab === tab.id ? 'active' : ''}`}
-                            onClick={() => setActiveTab(tab.id)}
-                        >
-                            <tab.icon size={18} />
-                            <span>{tab.label}</span>
-                        </button>
-                    ))}
+                    {tabs.map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                            <button
+                                key={tab.id}
+                                className={`settings-nav-item ${activeTab === tab.id ? 'active' : ''}`}
+                                onClick={() => setActiveTab(tab.id)}
+                            >
+                                <Icon size={18} />
+                                <span>{tab.label}</span>
+                            </button>
+                        );
+                    })}
                 </aside>
 
                 {/* Content */}

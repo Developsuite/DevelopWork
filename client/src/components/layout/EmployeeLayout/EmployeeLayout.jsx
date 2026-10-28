@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { permissionsService } from '../../../services/permissionsService';
 import { supabase } from '../../../lib/supabase';
+import MobileBottomNav from '../MobileBottomNav/MobileBottomNav';
 import './EmployeeLayout.css';
 
 const navItems = [
@@ -91,10 +92,11 @@ const EmployeeLayout = () => {
                 }
                 const effectiveUser = { ...user, permissions: nextPerms, assignedModule: nextAssigned };
                 setPermittedModules(permissionsService.getAccessibleModules(effectiveUser));
-                // Also seed localStorage for the legacy code paths that still read it.
-                if (nextPerms.length > 0) {
-                    permissionsService.saveUserPermissionsLocally(user.id, nextPerms, user.email);
-                }
+                // Always mirror the DB value into the local cache — including when it's
+                // empty. Skipping an empty-permissions write used to leave the stale
+                // cache behind, which the UI then merged back in on the next render,
+                // bringing a revoked module back to life on that device.
+                permissionsService.saveUserPermissionsLocally(user.id, nextPerms, user.email);
             } catch (e) {
                 console.warn('[EmployeeLayout] Permissions sync warning:', e);
             }
@@ -156,6 +158,40 @@ const EmployeeLayout = () => {
     };
 
     const currentNav = navItems.find((n) => n.path === location.pathname) || navItems[0];
+    const mobileModuleLabels = {
+        projects: 'Projects',
+        tasks: 'Tasks',
+        hr: 'HR',
+        finance: 'Finance',
+        leads: 'Leads',
+        clients: 'Clients',
+        docs: 'Docs',
+        meetings: 'Meetings',
+    };
+    const moduleShortcuts = permittedModules.slice(0, 2).map((mod) => ({
+        label: mobileModuleLabels[mod.key] || mod.label,
+        path: `/${mod.key}`,
+        icon: modIconMap[mod.key] || FolderKanban,
+    }));
+    const myTasksShortcut = {
+        label: 'My Tasks',
+        icon: CheckSquare,
+        isActive: () => false,
+        onClick: () => {
+            navigate('/employee/dashboard');
+            window.setTimeout(() => {
+                document.querySelector('.cockpit-tasks-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 120);
+        },
+    };
+    const mobileItems = moduleShortcuts.length >= 2
+        ? moduleShortcuts
+        : moduleShortcuts.length === 1
+            ? [moduleShortcuts[0], myTasksShortcut]
+            : [
+                myTasksShortcut,
+                { label: 'Workspaces', icon: Briefcase, isActive: () => false, onClick: () => setMobileNavOpen(true) },
+            ];
 
     return (
         <div className="employee-layout">
@@ -286,10 +322,11 @@ const EmployeeLayout = () => {
                         </div>
                     </div>
                     <div className="employee-topbar__right">
-                        <div className="employee-topbar__dept-pill">
-                            <Briefcase size={14} />
-                            <span>{user?.department || 'Employee'}</span>
-                        </div>
+                        {user?.department && (
+                            <div className="employee-topbar__dept-pill">
+                                <span>{user.department}</span>
+                            </div>
+                        )}
                         <div className="employee-topbar__user">
                             <Avatar name={user?.name || 'E'} src={user?.avatar} size="xs" />
                             <span>{user?.name ? user.name.split(' ')[0] : 'User'}</span>
@@ -301,6 +338,12 @@ const EmployeeLayout = () => {
                     <Outlet />
                 </div>
             </div>
+            <MobileBottomNav
+                items={mobileItems}
+                homeItem={{ label: 'Home', path: '/employee/dashboard', icon: Home, end: true }}
+                settingsItem={{ label: 'Settings', path: '/employee/settings', icon: Settings }}
+                onMore={() => setMobileNavOpen(true)}
+            />
         </div>
     );
 };

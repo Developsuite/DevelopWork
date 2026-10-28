@@ -47,6 +47,7 @@ import {
 import { toggleTheme } from '../../../store/slices/uiSlice';
 import Avatar from '../../common/Avatar/Avatar';
 import CreateProjectModal from '../../modals/CreateProjectModal/CreateProjectModal';
+import MobileBottomNav from '../MobileBottomNav/MobileBottomNav';
 import hrIcon from '../../../assets/hr/1.png';
 import './ManagerLayout.css';
 
@@ -228,6 +229,33 @@ const ManagerLayout = () => {
             console.error('Logout failed:', err);
         }
     };
+
+    const mobileModuleLabels = {
+        projects: 'Projects',
+        tasks: 'Tasks',
+        hr: 'HR',
+        finance: 'Finance',
+        leads: 'Leads',
+        clients: 'Clients',
+        docs: 'Docs',
+        meetings: 'Meetings',
+    };
+    const otherModuleShortcuts = permittedModules
+        .filter((mod) => mod.key !== currentModuleKey)
+        .map((mod) => ({
+            label: mobileModuleLabels[mod.key] || mod.label,
+            path: `/manager/${mod.key}`,
+            icon: moduleIconMap[mod.icon] || FolderKanban,
+        }));
+    const subPageShortcuts = subPages
+        .filter((sub) => !['overview', 'dashboard'].includes((sub.matchTab || '').toLowerCase()))
+        .map((sub) => ({ label: sub.label, path: sub.path, icon: sub.icon }));
+    const mobileItems = [...otherModuleShortcuts, ...subPageShortcuts].slice(0, 2);
+    while (mobileItems.length < 2) {
+        mobileItems.push(mobileItems.length === 0
+            ? { label: 'Workspace', icon: ModuleIcon, isActive: () => false, onClick: () => setMobileNavOpen(true) }
+            : { label: 'All Work', icon: Inbox, isActive: () => false, onClick: () => setMobileNavOpen(true) });
+    }
 
     return (
         <div className="manager-layout">
@@ -426,6 +454,18 @@ const ManagerLayout = () => {
                     <Outlet />
                 </div>
             </main>
+
+            <MobileBottomNav
+                items={mobileItems}
+                homeItem={{
+                    label: 'Home',
+                    path: `/manager/${currentModuleKey}`,
+                    icon: Home,
+                    isActive: ({ pathname }) => pathname === `/manager/${currentModuleKey}`,
+                }}
+                settingsItem={{ label: 'Settings', path: `/manager/${currentModuleKey}/settings`, icon: Settings }}
+                onMore={() => setMobileNavOpen(true)}
+            />
 
             {/* Modals */}
             <CreateProjectModal />

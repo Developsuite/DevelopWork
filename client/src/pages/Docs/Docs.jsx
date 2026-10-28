@@ -1087,15 +1087,15 @@ const Docs = () => {
                 </div>
             </div>
 
-            <div className="doc-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <div className="doc-tabs" style={{ marginBottom: 0 }}>
+            <div className="doc-toolbar">
+                <div className="doc-tabs">
                     {tabs.map(tab => (
                         <button key={tab.id} className={`doc-tab ${activeTab === tab.id ? 'active' : ''}`} onClick={() => navigate(`/docs${tab.id === 'all' ? '' : `?tab=${tab.id}`}`)}>
                             <tab.icon size={16} /><span>{tab.label}</span>
                         </button>
                     ))}
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="doc-toolbar-actions">
                     <Button variant="ghost" icon={Folder} onClick={handleAddFolder}>New Folder</Button>
                     <Button variant="primary" icon={Plus} onClick={handleAddDoc}>New Document</Button>
                 </div>
@@ -1152,15 +1152,7 @@ const Docs = () => {
                                     )}
 
                                     {/* Document Content Preview */}
-                                    <div className="doc-preview-body" style={{ 
-                                        marginTop: '24px', 
-                                        padding: '40px', 
-                                        background: 'var(--bg-body)', 
-                                        borderRadius: '16px', 
-                                        border: '1px solid var(--border-default)', 
-                                        minHeight: '600px',
-                                        boxShadow: 'var(--shadow-sm)'
-                                    }}>
+                                    <div className="doc-preview-body">
                                         <div className="doc-editor-area" dangerouslySetInnerHTML={{ __html: selectedDoc.content }} />
                                     </div>
                                 </div>
@@ -1168,40 +1160,44 @@ const Docs = () => {
                         ) : activeFolder ? (
                             <div className="folder-view">
                                 <div className="folder-view-header">
-                                    <button className="btn-back-folder" onClick={() => { 
-                                        setActiveFolder(null); 
-                                        setSelectedDocIds([]); 
-                                        navigate('/docs');
-                                    }}><ArrowLeft size={16} /></button>
-                                    <div className="folder-view-title"><Folder size={20} color="var(--primary-500)" /> {activeFolder}</div>
-                                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                        {filteredDocs.filter(doc => doc.category === activeFolder).length > 0 && (
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px', background: 'var(--bg-secondary)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-default)' }}>
-                                                <input 
-                                                    type="checkbox" 
-                                                    checked={selectedDocIds.length === filteredDocs.filter(doc => doc.category === activeFolder).length && filteredDocs.filter(doc => doc.category === activeFolder).length > 0}
-                                                    onChange={() => handleSelectAllDocs(filteredDocs.filter(doc => doc.category === activeFolder))}
-                                                    style={{ width: '15px', height: '15px', cursor: 'pointer' }}
-                                                />
-                                                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>SELECT ALL</span>
+                                    <div className="folder-view-header-left">
+                                        <button className="btn-back-folder" onClick={() => { 
+                                            setActiveFolder(null); 
+                                            setSelectedDocIds([]); 
+                                            navigate('/docs');
+                                        }}><ArrowLeft size={16} /></button>
+                                        <div className="folder-view-title"><Folder size={20} color="var(--primary-500)" /> {activeFolder}</div>
+                                    </div>
+                                    <div className="folder-view-actions">
+                                        <div className="folder-view-actions-group">
+                                            {filteredDocs.filter(doc => doc.category === activeFolder).length > 0 && (
+                                                <div className="doc-select-all-pill">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={selectedDocIds.length === filteredDocs.filter(doc => doc.category === activeFolder).length && filteredDocs.filter(doc => doc.category === activeFolder).length > 0}
+                                                        onChange={() => handleSelectAllDocs(filteredDocs.filter(doc => doc.category === activeFolder))}
+                                                        style={{ width: '15px', height: '15px', cursor: 'pointer' }}
+                                                    />
+                                                    <span>SELECT ALL</span>
+                                                </div>
+                                            )}
+                                            <div className="view-toggles">
+                                                <button 
+                                                    className={`view-toggle-btn ${viewType === 'grid' ? 'active' : ''}`}
+                                                    onClick={() => setViewType('grid')}
+                                                ><LayoutGrid size={16} /></button>
+                                                <button 
+                                                    className={`view-toggle-btn ${viewType === 'list' ? 'active' : ''}`}
+                                                    onClick={() => setViewType('list')}
+                                                ><List size={16} /></button>
                                             </div>
-                                        )}
-                                        <div className="view-toggles" style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '8px', padding: '4px' }}>
-                                            <button 
-                                                className={`view-toggle-btn ${viewType === 'grid' ? 'active' : ''}`}
-                                                onClick={() => setViewType('grid')}
-                                                style={{ border: 'none', background: viewType === 'grid' ? 'var(--bg-primary)' : 'transparent', padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', color: viewType === 'grid' ? 'var(--primary-500)' : 'var(--text-muted)' }}
-                                            ><LayoutGrid size={16} /></button>
-                                            <button 
-                                                className={`view-toggle-btn ${viewType === 'list' ? 'active' : ''}`}
-                                                onClick={() => setViewType('list')}
-                                                style={{ border: 'none', background: viewType === 'list' ? 'var(--bg-primary)' : 'transparent', padding: '6px', borderRadius: '6px', cursor: 'pointer', display: 'flex', color: viewType === 'list' ? 'var(--primary-500)' : 'var(--text-muted)' }}
-                                            ><List size={16} /></button>
                                         </div>
-                                        {selectedDocIds.length > 0 && (
-                                            <Button variant="primary" size="sm" icon={Trash2} onClick={handleBulkDelete} style={{ background: 'var(--danger)', color: 'white', borderColor: 'var(--danger)' }}>Delete Selected ({selectedDocIds.length})</Button>
-                                        )}
-                                        <Button variant="ghost" size="sm" icon={Plus} onClick={() => handleDeleteFolder(activeFolder)} style={{ color: 'var(--danger-600)' }}>Delete Folder</Button>
+                                        <div className="folder-view-actions-group">
+                                            {selectedDocIds.length > 0 && (
+                                                <Button variant="primary" size="sm" icon={Trash2} onClick={handleBulkDelete} style={{ background: 'var(--danger)', color: 'white', borderColor: 'var(--danger)' }}>Delete Selected ({selectedDocIds.length})</Button>
+                                            )}
+                                            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => handleDeleteFolder(activeFolder)} style={{ color: 'var(--danger-600)' }}>Delete Folder</Button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="doc-files-container">

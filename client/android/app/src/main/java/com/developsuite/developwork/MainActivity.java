@@ -1,0 +1,5 @@
+package com.developsuite.developwork;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

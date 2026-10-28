@@ -1121,7 +1121,21 @@
     }
 
     .cockpit-kpi-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .cockpit-kpi-card {
+        padding: 14px;
+        gap: 10px;
+    }
+
+    .cockpit-kpi-value {
+        font-size: 20px;
+    }
+
+    .cockpit-kpi-label {
+        font-size: 11px;
     }
 
     .cockpit-tasks-section,
@@ -1135,5 +1149,52 @@
 
     .cockpit-priority-select {
         width: 100%;
+    }
+
+    /* Scope + filter tabs: wrap onto multiple rows instead of scrolling sideways. */
+    .cockpit-scope-selector-strip,
+    .cockpit-filter-tabs {
+        overflow-x: visible;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .cockpit-scope-chip {
+        padding: 7px 12px;
+        font-size: 12px;
+        flex: 1 1 calc(50% - 6px);
+        min-width: 0;
+        justify-content: center;
+    }
+    /* Three scope chips: first stays full width, remaining two share a row. */
+    .cockpit-scope-chip:first-child {
+        flex-basis: 100%;
+    }
+
+    .cockpit-tab {
+        padding: 7px 10px;
+        font-size: 12px;
+        flex: 1 1 calc(33.333% - 6px);
+        min-width: 0;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    /* Welcome header: avoid the greeting-plus-date-row from pushing anything off-screen. */
+    .cockpit-welcome__main {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    /* Workspace cards + any inner permission chips should wrap. */
+    .cockpit-rbac-perm-list,
+    .cockpit-rbac-card__footer {
+        flex-wrap: wrap;
+    }
+
+    /* Protect the whole page from any lingering overflow. */
+    .employee-cockpit {
+        overflow-x: hidden;
     }
 }

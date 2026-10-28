@@ -386,19 +386,17 @@
         display: flex !important;
     }
 
+    /* Hide search bar on mobile */
     .topbar__search {
-        width: 160px;
-    }
-
-    .topbar__search-input:focus {
-        width: 180px;
-    }
-
-    .topbar__search-shortcut {
         display: none;
     }
 
     .topbar__profile-name {
+        display: none;
+    }
+
+    /* Hide settings gear icon on mobile */
+    #settings-btn {
         display: none;
     }
 }

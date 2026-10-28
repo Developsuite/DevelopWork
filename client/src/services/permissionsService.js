@@ -136,28 +136,41 @@ export const permissionsService = {
         return [];
     },
 
-    // Get permissions list for a user (accepts user object or userId string)
+    // Get permissions list for a user (accepts user object or userId string).
+    //
+    // Ordering matters: if the user object carries an authoritative permissions
+    // array (populated from the profiles row at sign-in / session-restore /
+    // self-heal in EmployeeLayout), trust it exclusively. Merging stale
+    // localStorage on top used to re-add modules the admin had just revoked.
     getUserPermissions(userOrId) {
         if (!userOrId) return [];
         const userId = typeof userOrId === 'object' ? (userOrId.id || userOrId._id) : userOrId;
         const userObj = typeof userOrId === 'object' ? userOrId : null;
 
+        // Authoritative path: Redux-backed user with an explicit permissions array.
+        if (userObj && Array.isArray(userObj.permissions)) {
+            const perms = [...userObj.permissions];
+            const assignedMod = userObj.assignedModule || userObj.assigned_module;
+            if (assignedMod) {
+                perms.push(...this.parsePermissionsData(assignedMod));
+            }
+            return Array.from(new Set(perms));
+        }
+
+        // Fallback path: no explicit permissions on userObj — walk every source.
         let permissions = [];
 
-        // 1. Direct permissions property on user object
         if (userObj?.permissions) {
             const parsed = this.parsePermissionsData(userObj.permissions);
             if (parsed.length > 0) permissions.push(...parsed);
         }
 
-        // 2. assignedModule / assigned_module on user object
         const assignedMod = userObj?.assignedModule || userObj?.assigned_module;
         if (assignedMod) {
             const parsed = this.parsePermissionsData(assignedMod);
             if (parsed.length > 0) permissions.push(...parsed);
         }
 
-        // 3. LocalStorage by userId
         if (userId) {
             try {
                 const raw = localStorage.getItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${userId}`);
@@ -170,7 +183,6 @@ export const permissionsService = {
             }
         }
 
-        // 4. LocalStorage by user email if available
         if (userObj?.email) {
             try {
                 const raw = localStorage.getItem(`${PERMISSIONS_STORAGE_KEY_PREFIX}${userObj.email}`);
@@ -274,9 +286,11 @@ export const permissionsService = {
                 perms = this.parsePermissionsData(data.assigned_module);
             }
 
-            if (perms.length > 0) {
-                this.saveUserPermissionsLocally(userId, perms, data.email);
-            }
+            // Always mirror the DB state into the local cache — including when the admin
+            // revoked all modules. Previously we skipped this write for empty results,
+            // so a stale cache kept the revoked modules alive on that device until the
+            // user cleared their browser data.
+            this.saveUserPermissionsLocally(userId, perms, data.email);
             return perms;
         } catch (err) {
             console.warn('[RBAC] Error fetching user permissions from Supabase:', err);

@@ -70,11 +70,47 @@
     letter-spacing: 0.5px;
 }
 
-/* Tabs */
-.hr-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px; overflow-x: auto; position: relative; z-index: 10; }
+/* Toolbar & Tabs */
+.hr-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 12px;
+}
+.hr-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.hr-toolbar-actions__group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.hr-tabs { display: flex; gap: 4px; margin-bottom: 0; background: rgba(0,0,0,0.03); padding: 4px; border-radius: 12px; overflow-x: auto; position: relative; z-index: 10; }
 .hr-tab { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border: none; background: transparent; font-size: 13px; font-weight: 500; color: var(--text-muted); cursor: pointer; border-radius: 8px; transition: all 0.2s; font-family: inherit; white-space: nowrap; position: relative; z-index: 1; }
 .hr-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.5); z-index: 2; }
 .hr-tab.active { color: var(--primary-600); background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.08); font-weight: 600; z-index: 3; }
+
+.hr-payroll-report-container {
+    padding: 20px;
+    background: var(--bg-primary);
+    border-radius: 12px;
+}
+.hr-payroll-summary-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.hr-recruitment-search {
+    width: 220px;
+}
 
 /* Section */
 .hr-section { padding: 24px; margin-bottom: 24px; }
@@ -702,6 +738,8 @@
 .hr-payroll-table td.negative { color: var(--danger); font-weight: 600; }
 .hr-payroll-net { font-weight: 700 !important; color: var(--text-primary) !important; }
 .hr-payroll-employee { display: flex; align-items: center; gap: 10px; }
+.hr-table-meta-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
+.hr-table-meta-icon { color: var(--text-muted); flex-shrink: 0; }
 
 /* Performance */
 .hr-performance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
@@ -828,13 +866,7 @@
 .hr-profile-info-group label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .hr-profile-info-group div { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 
-@media (max-width: 768px) {
-    .hr-dashboard__stats { grid-template-columns: repeat(2, 1fr); }
-    .hr-employee-grid { grid-template-columns: 1fr; }
-    .hr-tabs { flex-wrap: wrap; }
-    .hr-payroll-actions { flex-direction: column; align-items: stretch; }
-    .hr-profile-info-grid { grid-template-columns: 1fr; }
-}
+.hr-payroll-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
 /* ==========================================================================
    RECRUITMENT & HIRING PIPELINE MODULE STYLES
@@ -994,6 +1026,11 @@
 
 [data-theme="dark"] .recruitment-metric-card:hover {
     border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Mobile Stage Bar (hidden on desktop) */
+.recruitment-mobile-stage-bar {
+    display: none;
 }
 
 /* Pipeline Kanban Board */
@@ -1365,23 +1402,717 @@
     color: var(--primary-500);
 }
 
+/* ==========================================================================
+   MOBILE RESPONSIVE OVERRIDES (HR MODULE)
+   ========================================================================== */
 @media (max-width: 1024px) {
     .recruitment-metrics {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 640px) {
-    .recruitment-metrics {
-        grid-template-columns: 1fr;
+@media (max-width: 768px) {
+    /* ── Main Container ── */
+    .hr-dashboard {
+        padding: 8px 12px 100px !important;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+        overflow-x: clip;
     }
+
+    .page-header {
+        padding: 12px 0 10px 0 !important;
+    }
+
+    .page-header__info h1 {
+        font-size: 22px;
+        line-height: 1.2;
+        margin-bottom: 2px;
+    }
+
+    .page-header__info p {
+        font-size: 13px;
+    }
+
+    /* ── Stats Grid ── */
+    .hr-dashboard__stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-stat-card {
+        height: 80px;
+        border-radius: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-stat-card__content {
+        padding: 0 10px;
+    }
+
+    .hr-stat-card__value {
+        font-size: 16px;
+    }
+
+    .hr-stat-card__label {
+        font-size: 10px;
+    }
+
+    .hr-stat-card__image-container {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* ── Toolbar & Tabs ── */
+    .hr-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-tabs {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        white-space: nowrap;
+        box-sizing: border-box;
+        padding: 4px;
+        gap: 4px;
+        display: flex;
+        margin-bottom: 0;
+    }
+
+    .hr-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .hr-tab {
+        flex-shrink: 0;
+        font-size: 12px;
+        padding: 8px 14px;
+        white-space: nowrap;
+    }
+
+    .hr-toolbar-actions,
+    .hr-toolbar-actions__group {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-toolbar-actions .dw-button,
+    .hr-toolbar-actions__group .dw-button {
+        flex: 1;
+        justify-content: center;
+        height: 38px;
+        font-size: 13px;
+        padding: 0 10px;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+
+    /* ── Section & Filter Controls ── */
+    .hr-section {
+        padding: 14px 12px;
+        border-radius: 14px;
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-section__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+
+    .hr-section__header h2 {
+        font-size: 17px;
+    }
+
+    .hr-section__header > div:last-child {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .hr-section__header > div:last-child .dw-button {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .hr-filters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-filters > .dw-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hr-view-toggle {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-view-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 6px 10px;
+    }
+
+    .hr-search {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .hr-dept-select,
+    .hr-month-select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    /* ── Directory: Grid View ── */
+    .hr-employee-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-employee-card {
+        padding: 20px 16px 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-employee-card__actions {
+        opacity: 1 !important;
+    }
+
+    /* ── Directory: List View (Table to Cards) ── */
+    .hr-employee-list {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-employee-list .hr-payroll-table {
+        display: block;
+        width: 100%;
+    }
+
+    .hr-employee-list .hr-payroll-table thead {
+        display: none;
+    }
+
+    .hr-employee-list .hr-payroll-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .hr-employee-list .hr-payroll-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 14px;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-employee-list .hr-payroll-table td {
+        display: flex;
+        align-items: center;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    .hr-employee-list .hr-payroll-table td:nth-child(1) {
+        width: 100%;
+        margin-bottom: 2px;
+    }
+
+    .hr-employee-list .hr-payroll-table td:nth-child(2),
+    .hr-employee-list .hr-payroll-table td:nth-child(3),
+    .hr-employee-list .hr-payroll-table td:nth-child(4) {
+        width: auto;
+    }
+
+    .hr-employee-list .hr-payroll-table td:nth-child(5) {
+        width: auto;
+        margin-left: auto;
+    }
+
+    .hr-employee-list .hr-payroll-table td:nth-child(6),
+    .hr-employee-list .hr-payroll-table td:nth-child(7) {
+        width: 100%;
+        font-size: 12px;
+        color: var(--text-muted);
+        padding-top: 4px !important;
+    }
+
+    .hr-employee-list .hr-payroll-table td:nth-child(6) .hr-table-meta-item,
+    .hr-employee-list .hr-payroll-table td:nth-child(7) .hr-table-meta-item {
+        font-size: 12px;
+        gap: 6px;
+        color: var(--text-secondary);
+    }
+
+    .hr-employee-list .hr-payroll-table td:nth-child(8) {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 8px !important;
+        border-top: 1px dashed var(--border-color) !important;
+    }
+
+    /* ── Organization Hierarchy Chart (Vertical Tree on Mobile) ── */
+    .hr-org-chart {
+        padding: 14px 4px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+        cursor: default !important;
+        user-select: auto !important;
+    }
+
+    .hr-org-root-level {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .hr-org-node {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        position: relative !important;
+        box-sizing: border-box !important;
+    }
+
+    .hr-org-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin-bottom: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        padding: 12px 14px !important;
+        border-radius: 12px !important;
+        transform: none !important;
+    }
+
+    .hr-org-card:hover {
+        transform: none !important;
+    }
+
+    .hr-org-card--ceo-office {
+        border-color: var(--primary-500) !important;
+        border-left: 4px solid var(--primary-600) !important;
+        background: color-mix(in srgb, var(--primary-500) 8%, var(--bg-secondary)) !important;
+    }
+
+    .hr-org-card__name {
+        font-size: 13px !important;
+        font-weight: 700 !important;
+    }
+
+    .hr-org-card__role {
+        font-size: 11px !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    .hr-org-children {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-top: 4px !important;
+        margin-left: 14px !important;
+        padding-left: 14px !important;
+        border-left: 2px solid var(--primary-500) !important;
+        position: relative !important;
+        width: calc(100% - 14px) !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Disable all desktop horizontal and connector lines on mobile */
+    .hr-org-children::before,
+    .hr-org-children::after,
+    .hr-org-node::before,
+    .hr-org-node::after,
+    .hr-org-node:first-child::after,
+    .hr-org-node:last-child::after,
+    .hr-org-node:not(:only-child)::after {
+        display: none !important;
+    }
+
+    /* Clean branching horizontal line from parent's vertical trunk to each child */
+    .hr-org-children > .hr-org-node::before {
+        display: block !important;
+        content: '' !important;
+        position: absolute !important;
+        top: 24px !important;
+        left: -14px !important;
+        width: 14px !important;
+        height: 2px !important;
+        background: var(--primary-500) !important;
+    }
+
+    /* ── Payroll Tab ── */
+    .hr-payroll-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .hr-payroll-actions select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .hr-payroll-actions .dw-button {
+        width: 100%;
+        justify-content: center;
+        height: 38px;
+    }
+
+    .hr-payroll-report-container,
+    #payroll-report-container {
+        padding: 12px 10px !important;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-payroll-summary-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px !important;
+    }
+
+    .hr-payroll-summary-banner > div:last-child {
+        text-align: left !important;
+    }
+
+    #payroll-report-container .hr-payroll-table {
+        display: block;
+        width: 100%;
+    }
+
+    #payroll-report-container .hr-payroll-table thead {
+        display: none;
+    }
+
+    #payroll-report-container .hr-payroll-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    #payroll-report-container .hr-payroll-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 12px 14px;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #payroll-report-container .hr-payroll-table td {
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(1) {
+        width: calc(100% - 70px);
+        font-weight: 600;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(6) {
+        width: 70px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(2),
+    #payroll-report-container .hr-payroll-table td:nth-child(3),
+    #payroll-report-container .hr-payroll-table td:nth-child(4) {
+        width: 33.33%;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(2)::before {
+        content: 'Base';
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 700;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(3)::before {
+        content: 'Bonus';
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 700;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(4)::before {
+        content: 'Deductions';
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 700;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(5) {
+        width: calc(100% - 40px);
+        padding-top: 10px !important;
+        border-top: 1px dashed var(--border-color) !important;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(5)::before {
+        content: 'Net Pay:';
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
+    #payroll-report-container .hr-payroll-table td:nth-child(7) {
+        width: 40px;
+        padding-top: 10px !important;
+        border-top: 1px dashed var(--border-color) !important;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* ── Performance Tab ── */
+    .hr-performance-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-performance-card {
+        padding: 16px !important;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .hr-performance-card__actions {
+        opacity: 1 !important;
+    }
+
+    /* ── Recruitment Tab ── */
+    .recruitment-container {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .recruitment-metric-card {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .recruitment-metric-card__val {
+        font-size: 20px;
+    }
+
+    .recruitment-metric-card__lbl {
+        font-size: 11px;
+    }
+
     .recruitment-subbar {
         flex-direction: column;
         align-items: stretch;
-    }
-    .recruitment-subbar__left, .recruitment-subbar__right {
+        gap: 10px;
         width: 100%;
-        justify-content: space-between;
+    }
+
+    .recruitment-subbar__left {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .recruitment-view-switcher {
+        width: 100%;
+    }
+
+    .recruitment-view-btn {
+        flex: 1;
+        justify-content: center;
+        font-size: 12px;
+        padding: 8px 10px;
+    }
+
+    .hr-search.hr-recruitment-search {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .recruitment-select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    .recruitment-subbar__right {
+        display: none !important;
+    }
+
+    /* ── Mobile Stage Selector Bar ── */
+    .recruitment-mobile-stage-bar {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 6px;
+        margin-bottom: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .recruitment-mobile-stage-bar::-webkit-scrollbar {
+        display: none;
+    }
+    .recruitment-stage-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        white-space: nowrap;
+        cursor: pointer;
+        flex-shrink: 0;
+        font-family: inherit;
+        transition: all 0.15s ease;
+    }
+    .recruitment-stage-pill.active {
+        background: var(--primary-500);
+        color: #ffffff;
+        border-color: var(--primary-500);
+        font-weight: 600;
+        box-shadow: 0 1px 4px rgba(0, 85, 254, 0.25);
+    }
+    .recruitment-stage-pill .stage-pill-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    .recruitment-stage-pill.active .stage-pill-dot {
+        background-color: #ffffff !important;
+    }
+    .recruitment-stage-pill .stage-pill-count {
+        font-size: 11px;
+        opacity: 0.85;
+    }
+
+    /* ── Candidate Pipeline: No Horizontal Scroll on Mobile ── */
+    .recruitment-pipeline-scroll {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .recruitment-pipeline-board {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        min-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 0 !important;
+    }
+
+    .recruitment-pipeline-col {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        max-height: none !important;
+    }
+
+    .recruitment-col-body {
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+
+    .recruitment-jobs-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .recruitment-job-card {
+        padding: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* ── Modals & Info Grid ── */
+    .hr-profile-info-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
 }
 

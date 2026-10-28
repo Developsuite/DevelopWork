@@ -65,6 +65,7 @@ const TaskManagement = () => {
     const [statusFilter, setStatusFilter] = useState('all');
     const [priorityFilter, setPriorityFilter] = useState('all');
     const [assigneeFilter, setAssigneeFilter] = useState('all');
+    const [selectedKanbanCol, setSelectedKanbanCol] = useState('all');
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -471,7 +472,10 @@ const TaskManagement = () => {
                     >
                         <UserCheck size={15} />
                         <span>Delegation Center</span>
-                        <span className="task-tab-badge">{teamMembers.length} Members</span>
+                        <span className="task-tab-badge">
+                            <span className="badge-full">{teamMembers.length} Members</span>
+                            <span className="badge-short">{teamMembers.length}</span>
+                        </span>
                     </button>
 
                     <button
@@ -614,14 +618,14 @@ const TaskManagement = () => {
                                                 </div>
                                             </td>
 
-                                            <td>
+                                            <td className="task-cell-assignee">
                                                 <div className="task-assignee-pill">
                                                     <Avatar name={task.assignee_name || 'Unassigned'} size="xs" />
                                                     <span className="task-assignee-name">{task.assignee_name || 'Unassigned'}</span>
                                                 </div>
                                             </td>
 
-                                            <td>
+                                            <td className="task-cell-scope">
                                                 {task.is_operational ? (
                                                     <span className="task-scope-pill scope--operational" title="General daily task completed by employee independently of projects">
                                                         <ClipboardList size={12} />
@@ -635,11 +639,11 @@ const TaskManagement = () => {
                                                 )}
                                             </td>
 
-                                            <td>{getPriorityBadge(task.priority)}</td>
+                                            <td className="task-cell-priority">{getPriorityBadge(task.priority)}</td>
 
-                                            <td>{getDeadlineBadge(task.deadline, task.status)}</td>
+                                            <td className="task-cell-deadline">{getDeadlineBadge(task.deadline, task.status)}</td>
 
-                                            <td>
+                                            <td className="task-cell-status">
                                                 <select
                                                     className={`task-status-selector status-${(task.status || 'not-started').toLowerCase().replace(' ', '-')}`}
                                                     value={task.status || 'Not Started'}
@@ -653,7 +657,7 @@ const TaskManagement = () => {
                                                 </select>
                                             </td>
 
-                                            <td style={{ textAlign: 'right' }}>
+                                            <td className="task-cell-actions" style={{ textAlign: 'right' }}>
                                                 <div className="task-row-actions">
                                                     <button
                                                         className="task-action-btn"
@@ -751,8 +755,36 @@ const TaskManagement = () => {
 
             {/* TAB 3: KANBAN BOARD */}
             {activeTab === 'kanban' && (
-                <div className="task-kanban-board">
-                    {STATUS_COLUMNS.map((col) => {
+                <>
+                    <div className="task-mobile-kanban-bar">
+                        <button
+                            type="button"
+                            className={`task-kanban-pill ${selectedKanbanCol === 'all' ? 'active' : ''}`}
+                            onClick={() => setSelectedKanbanCol('all')}
+                        >
+                            All Lanes ({tasks.length})
+                        </button>
+                        {STATUS_COLUMNS.map((col) => {
+                            const count = tasks.filter(t => (t.status || 'Not Started').toLowerCase() === col.key.toLowerCase()).length;
+                            return (
+                                <button
+                                    key={col.key}
+                                    type="button"
+                                    className={`task-kanban-pill ${selectedKanbanCol === col.key ? 'active' : ''}`}
+                                    onClick={() => setSelectedKanbanCol(col.key)}
+                                >
+                                    <span className="task-kanban-pill-dot" style={{ backgroundColor: col.color }} />
+                                    <span>{col.label}</span>
+                                    <span className="task-kanban-pill-count">({count})</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="task-kanban-board">
+                        {STATUS_COLUMNS
+                            .filter(col => selectedKanbanCol === 'all' || col.key === selectedKanbanCol)
+                            .map((col) => {
                         const colTasks = tasks.filter(t => (t.status || 'Not Started').toLowerCase() === col.key.toLowerCase());
 
                         return (
@@ -815,6 +847,7 @@ const TaskManagement = () => {
                         );
                     })}
                 </div>
+                </>
             )}
 
             {/* TAB 4: WORKLOAD & ANALYTICS */}
@@ -897,7 +930,7 @@ const TaskManagement = () => {
                         />
                     </div>
 
-                    <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+                    <div className="dw-form-grid task-modal-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
                         <div className="dw-form-group">
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
                                 <label className="dw-form-label" style={{ margin: 0 }}>Assign To *</label>
@@ -1022,7 +1055,7 @@ const TaskManagement = () => {
                         </div>
                     </div>
 
-                    <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                    <div className="dw-form-grid task-modal-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                         <div className="dw-form-group">
                             <label className="dw-form-label">Priority</label>
                             <select

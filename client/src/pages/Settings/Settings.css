@@ -481,10 +481,28 @@
 @media (max-width: 992px) {
     .settings-container {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
     .settings-nav {
-        flex-direction: row;
-        overflow-x: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 8px;
+        padding: 10px;
+        border-radius: 14px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        overflow-x: visible;
+    }
+    .settings-nav-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
     }
 }
 
@@ -792,18 +810,482 @@
     color: #2563eb;
 }
 
-@media (max-width: 680px) {
-    .integration-connect-card {
-        align-items: flex-start;
-        flex-wrap: wrap;
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE RULES (Zero Horizontal Scroll, Touch Optimized)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .settings-page {
+        padding: 10px 10px 90px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        margin: 0 !important;
     }
 
-    .integration-connect-card__body {
-        min-width: calc(100% - 64px);
+    .settings-header {
+        margin-bottom: 14px !important;
     }
 
-    .integration-connect-card__actions {
-        width: 100%;
-        padding-left: 62px;
+    .settings-title {
+        font-size: 22px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .settings-subtitle {
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+    }
+
+    .settings-container {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* Mobile 2-Column App Grid Navigation (Zero Horizontal Scrolling) */
+    .settings-nav {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        padding: 10px !important;
+        border-radius: 16px !important;
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-color) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: visible !important;
+    }
+
+    .settings-nav::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .settings-nav-item {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
+        padding: 10px 12px !important;
+        border-radius: 11px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        color: var(--text-secondary) !important;
+        background: var(--bg-primary, #ffffff) !important;
+        border: 1px solid var(--border-color) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        min-height: 44px !important;
+        box-sizing: border-box !important;
+        cursor: pointer !important;
+        text-align: left !important;
+    }
+
+    .settings-nav-item:last-child:nth-child(odd) {
+        grid-column: span 2 !important;
+        justify-content: center !important;
+    }
+
+    .settings-nav-item:hover {
+        background: var(--bg-hover) !important;
+        color: var(--text-primary) !important;
+    }
+
+    .settings-nav-item:active {
+        transform: scale(0.97) !important;
+    }
+
+    .settings-nav-item.active {
+        background: var(--primary-600, #2563eb) !important;
+        color: #ffffff !important;
+        border-color: var(--primary-600, #2563eb) !important;
+        box-shadow: 0 3px 12px rgba(37, 99, 235, 0.3) !important;
+    }
+
+    .settings-nav-item.active svg {
+        color: #ffffff !important;
+    }
+
+    .settings-nav-item svg {
+        flex-shrink: 0 !important;
+        color: var(--primary-500, #3b82f6) !important;
+    }
+
+    .settings-nav-item span {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        font-size: 13px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Content Area */
+    .settings-content {
+        padding: 16px 14px !important;
+        border-radius: 14px !important;
+        min-height: auto !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+    }
+
+    .settings-section-title {
+        font-size: 18px !important;
+        margin-bottom: 14px !important;
+    }
+
+    .settings-subsection-title {
+        font-size: 15px !important;
+        margin: 18px 0 12px !important;
+    }
+
+    /* Profile Tab */
+    .profile-upload {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 12px !important;
+        margin-bottom: 20px !important;
+        padding-bottom: 20px !important;
+    }
+
+    .profile-upload-info {
+        align-items: center !important;
+        width: 100% !important;
+    }
+
+    .profile-upload-info .dw-button,
+    .profile-upload-info button {
+        width: auto !important;
+    }
+
+    /* Form Fields Grid - Single Column */
+    .settings-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        margin-bottom: 16px !important;
+        width: 100% !important;
+    }
+
+    .settings-field {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .settings-field input,
+    .settings-field select,
+    .settings-field textarea {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 14px !important;
+    }
+
+    /* Actions Bottom Bar */
+    .settings-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-top: 20px !important;
+        padding-top: 16px !important;
+        width: 100% !important;
+    }
+
+    .settings-actions .dw-button,
+    .settings-actions button {
+        width: 100% !important;
+        justify-content: center !important;
+        height: 40px !important;
+    }
+
+    /* Theme Selector */
+    .theme-selector {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+        margin-bottom: 20px !important;
+        width: 100% !important;
+    }
+
+    .theme-preview {
+        height: 60px !important;
+    }
+
+    .theme-option span {
+        font-size: 12px !important;
+    }
+
+    /* Modules Tab */
+    .module-settings-list {
+        gap: 10px !important;
+    }
+
+    .module-setting-item {
+        padding: 12px 14px !important;
+        gap: 12px !important;
+        border-radius: 10px !important;
+    }
+
+    .module-setting-info {
+        gap: 10px !important;
+        min-width: 0 !important;
+        flex: 1 !important;
+    }
+
+    .module-setting-icon {
+        flex-shrink: 0 !important;
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .module-toggle {
+        flex-shrink: 0 !important;
+    }
+
+    /* Integrations Tab */
+    .integration-connect-list {
+        gap: 12px !important;
+        margin-top: 16px !important;
+    }
+
+    .integration-connect-card,
+    .tg-connect-card {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 14px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+    }
+
+    .integration-connect-card__icon,
+    .tg-connect-card__icon {
+        align-self: flex-start !important;
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    .integration-connect-card__body,
+    .tg-connect-card__body {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .integration-connect-card__heading {
+        gap: 8px !important;
+    }
+
+    .integration-connect-card__actions,
+    .tg-connect-card__actions {
+        width: 100% !important;
+        padding-left: 0 !important;
+        margin-top: 4px !important;
+    }
+
+    .integration-connect-card__actions .dw-button,
+    .integration-connect-card__actions button,
+    .tg-connect-card__actions .dw-button,
+    .tg-connect-card__actions button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .integration-note {
+        padding: 10px 12px !important;
+        font-size: 11px !important;
+        line-height: 1.4 !important;
+    }
+
+    /* Security Tab */
+    .tfa-box {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 14px !important;
+        border-radius: 12px !important;
+    }
+
+    .tfa-box .dw-button,
+    .tfa-box button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Team & Managers Directory Tab */
+    .team-directory__header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    .team-directory__header .settings-section-title {
+        font-size: 20px !important;
+    }
+
+    .team-directory__actions {
+        width: 100% !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .team-directory__actions .dw-button,
+    .team-directory__actions button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .team-directory__stats {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        margin-bottom: 20px !important;
+    }
+
+    .team-directory__stats > div {
+        padding: 10px 12px !important;
+    }
+
+    .team-directory__person {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        padding: 12px !important;
+        border-radius: 10px !important;
+    }
+
+    .team-directory__identity {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    .team-directory__person-actions {
+        width: 100% !important;
+        justify-content: space-between !important;
+        padding-top: 8px !important;
+        border-top: 1px dashed var(--border-color) !important;
+    }
+
+    .team-directory__badges,
+    .team-directory__access-list {
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 4px !important;
+    }
+
+    .team-directory__access-pill {
+        max-width: 100% !important;
+    }
+
+    .team-directory__empty {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 14px !important;
+    }
+
+    .team-directory__empty .dw-button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Granular RBAC Permissions Modal */
+    .permissions-modal-container {
+        max-height: 70vh !important;
+        padding: 0 !important;
+        gap: 12px !important;
+    }
+
+    .permissions-user-header {
+        flex-direction: column !important;
+        gap: 10px !important;
+        align-items: stretch !important;
+        padding: 10px 12px !important;
+    }
+
+    .permissions-quick-actions {
+        width: 100% !important;
+        display: flex !important;
+        gap: 6px !important;
+    }
+
+    .permissions-quick-actions .dw-button {
+        flex: 1 !important;
+        justify-content: center !important;
+        font-size: 11px !important;
+        padding: 6px 8px !important;
+    }
+
+    .permissions-features-grid {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+    }
+
+    .permissions-feature-item {
+        padding: 8px 10px !important;
+        font-size: 11.5px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .settings-page {
+        padding: 6px 6px 80px !important;
+    }
+
+    .settings-title {
+        font-size: 20px !important;
+    }
+
+    .settings-content {
+        padding: 14px 10px !important;
+    }
+
+    .settings-nav {
+        gap: 6px !important;
+        padding: 8px !important;
+    }
+
+    .settings-nav-item {
+        padding: 9px 10px !important;
+        font-size: 12.5px !important;
+        min-height: 42px !important;
+        gap: 7px !important;
+    }
+
+    .settings-nav-item span {
+        font-size: 12.5px !important;
+    }
+
+    .theme-selector {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    .theme-preview {
+        height: 50px !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .settings-nav {
+        gap: 5px !important;
+        padding: 6px !important;
+    }
+
+    .settings-nav-item {
+        padding: 8px 6px !important;
+        font-size: 11.5px !important;
+        min-height: 40px !important;
+        gap: 6px !important;
+    }
+
+    .settings-nav-item svg {
+        width: 15px !important;
+        height: 15px !important;
+    }
+
+    .settings-nav-item span {
+        font-size: 11.5px !important;
     }
 }

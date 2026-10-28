@@ -620,7 +620,8 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                         onClick={() => handleTabChange('upcoming')}
                     >
                         <Video size={16} />
-                        <span>Upcoming & All Meetings</span>
+                        <span className="meetings-tab-text-full">Upcoming & All Meetings</span>
+                        <span className="meetings-tab-text-short">Upcoming</span>
                         <span className="meetings-tab-count">{meetings.length}</span>
                     </button>
 
@@ -629,7 +630,8 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                         onClick={() => handleTabChange('clients')}
                     >
                         <Handshake size={16} />
-                        <span>Client Meetings Hub</span>
+                        <span className="meetings-tab-text-full">Client Meetings Hub</span>
+                        <span className="meetings-tab-text-short">Client Hub</span>
                         <span className="meetings-tab-count">{clients.length}</span>
                     </button>
 
@@ -638,7 +640,8 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                         onClick={() => handleTabChange('calendar')}
                     >
                         <CalendarDays size={16} />
-                        <span>Calendar Schedule</span>
+                        <span className="meetings-tab-text-full">Calendar Schedule</span>
+                        <span className="meetings-tab-text-short">Calendar</span>
                     </button>
 
                     <button
@@ -646,7 +649,8 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                         onClick={() => handleTabChange('minutes')}
                     >
                         <FileText size={16} />
-                        <span>Minutes & Action Items</span>
+                        <span className="meetings-tab-text-full">Minutes & Action Items</span>
+                        <span className="meetings-tab-text-short">Minutes</span>
                         <span className="meetings-tab-count">{stats.allActionItemsCount}</span>
                     </button>
                 </div>
@@ -657,58 +661,21 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                 <div className="meetings-content">
                     {/* Filter & Toolbar */}
                     <div className="meetings-toolbar">
-                        <div className="meetings-toolbar__search">
-                            <Search size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search by meeting title, client, or project..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                            {searchQuery && (
-                                <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
-                                    <X size={14} />
-                                </button>
-                            )}
-                        </div>
-
-                        <div className="meetings-toolbar__filters">
-                            {/* Client selector filter */}
-                            <select
-                                className="meetings-select"
-                                value={selectedClientFilter}
-                                onChange={(e) => setSelectedClientFilter(e.target.value)}
-                            >
-                                <option value="all">All Clients ({clients.length})</option>
-                                {clients.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
-                                ))}
-                            </select>
-
-                            {/* Status filter */}
-                            <select
-                                className="meetings-select"
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                            >
-                                <option value="all">All Statuses</option>
-                                <option value="Scheduled">Scheduled</option>
-                                <option value="Completed">Completed</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
-
-                            {/* Type filter */}
-                            <select
-                                className="meetings-select"
-                                value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value)}
-                            >
-                                <option value="all">All Types</option>
-                                {MEETING_TYPES.map(t => (
-                                    <option key={t.label} value={t.label}>{t.label}</option>
-                                ))}
-                            </select>
+                        <div className="meetings-toolbar__top">
+                            <div className="meetings-toolbar__search">
+                                <Search size={16} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by meeting title, client, or project..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                                {searchQuery && (
+                                    <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
 
                             {/* View toggle */}
                             <div className="meetings-view-toggle">
@@ -726,6 +693,47 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                                 >
                                     <List size={16} />
                                 </button>
+                            </div>
+                        </div>
+
+                        <div className="meetings-toolbar__filters">
+                            {/* Client selector filter */}
+                            <select
+                                className="meetings-select meetings-select--client"
+                                value={selectedClientFilter}
+                                onChange={(e) => setSelectedClientFilter(e.target.value)}
+                            >
+                                <option value="all">All Clients ({clients.length})</option>
+                                {clients.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name} ({c.company})</option>
+                                ))}
+                            </select>
+
+                            <div className="meetings-toolbar__subfilters">
+                                {/* Status filter */}
+                                <select
+                                    className="meetings-select"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                >
+                                    <option value="all">All Statuses</option>
+                                    <option value="Scheduled">Scheduled</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+
+                                {/* Type filter */}
+                                <select
+                                    className="meetings-select"
+                                    value={typeFilter}
+                                    onChange={(e) => setTypeFilter(e.target.value)}
+                                >
+                                    <option value="all">All Types</option>
+                                    {MEETING_TYPES.map(t => (
+                                        <option key={t.label} value={t.label}>{t.label}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -909,19 +917,19 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                                 <tbody>
                                     {filteredMeetings.map(meeting => (
                                         <tr key={meeting.id} onClick={() => handleOpenDetailModal(meeting)} style={{ cursor: 'pointer' }}>
-                                            <td>
+                                            <td className="m-cell-time">
                                                 <div className="table-time-col">
                                                     <span className="date-str">{meeting.date}</span>
                                                     <span className="time-str">{meeting.time} ({meeting.duration}m)</span>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td className="m-cell-subject">
                                                 <div className="table-title-col">
                                                     <strong>{meeting.title}</strong>
                                                     <span className="type-tag">{meeting.type}</span>
                                                 </div>
                                             </td>
-                                            <td>
+                                            <td className="m-cell-client">
                                                 {meeting.client_name ? (
                                                     <div className="table-client-col">
                                                         <Avatar name={meeting.client_name} size="xs" />
@@ -934,22 +942,22 @@ ${(meeting.action_items || []).map(act => `- [${act.completed ? 'x' : ' '}] ${ac
                                                     <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Internal</span>
                                                 )}
                                             </td>
-                                            <td>
+                                            <td className="m-cell-platform">
                                                 <span className="table-platform-pill">{meeting.platform}</span>
                                             </td>
-                                            <td>
+                                            <td className="m-cell-status">
                                                 <span className={`status-pill ${meeting.status.toLowerCase().replace(/\s+/g, '-')}`}>
                                                     {meeting.status}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td className="m-cell-attendees">
                                                 <div className="attendee-avatars">
                                                     {(meeting.attendees || []).slice(0, 3).map((a, i) => (
                                                         <Avatar key={i} name={a.name} size="xs" />
                                                     ))}
                                                 </div>
                                             </td>
-                                            <td onClick={(e) => e.stopPropagation()}>
+                                            <td className="m-cell-actions" onClick={(e) => e.stopPropagation()}>
                                                 <div className="table-action-btns">
                                                     {meeting.meeting_link && (
                                                         <a

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authService } from '../../services/authService';
+import { nativePushService } from '../../services/nativePushService';
 
 // ========================
 // ASYNC THUNKS
@@ -157,6 +158,7 @@ export const signOutUser = createAsyncThunk(
     'auth/signOut',
     async (_, { rejectWithValue }) => {
         try {
+            await nativePushService.unregisterCurrentDevice();
             await authService.signOut();
         } catch (error) {
             return rejectWithValue(error.message);

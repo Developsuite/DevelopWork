@@ -241,6 +241,14 @@
     transition: all 0.15s ease;
 }
 
+.badge-full {
+    display: inline;
+}
+
+.badge-short {
+    display: none;
+}
+
 /* Active State: Solid filled blue pill */
 .task-tab-btn.active {
     background: #2563eb;
@@ -1256,4 +1264,543 @@
 [data-theme='dark'] .multi-assign-role {
     color: #9CA3B5;
 }
+
+/* Mobile Kanban Column Switcher (hidden on desktop) */
+.task-mobile-kanban-bar {
+    display: none;
+}
+
+/* ==========================================================================
+   MOBILE RESPONSIVE OVERRIDES (TASK MANAGEMENT MODULE)
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .task-kanban-board {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .task-analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    /* ── Main Page Layout ── */
+    .task-management-page {
+        padding: 8px 12px 90px !important;
+        gap: 14px;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .task-header {
+        padding: 16px 14px !important;
+        gap: 14px !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-header__top {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .task-header__badge {
+        font-size: 10px;
+        padding: 3px 8px;
+        margin-bottom: 4px;
+    }
+
+    .task-header__info h1 {
+        font-size: 19px !important;
+        line-height: 1.25 !important;
+        margin-bottom: 4px !important;
+    }
+
+    .task-header__info p {
+        font-size: 12.5px !important;
+        line-height: 1.4 !important;
+    }
+
+    .task-header__actions {
+        display: flex !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    .task-header__actions .task-btn {
+        flex: 1 !important;
+        justify-content: center !important;
+        padding: 0 10px !important;
+        height: 38px !important;
+        font-size: 12.5px !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── KPI Strip (Modern 2-column Dashboard Grid) ── */
+    .task-kpi-strip {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+        padding: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: visible !important;
+    }
+
+    .task-kpi-divider {
+        display: none !important;
+    }
+
+    .task-kpi-item {
+        min-width: 0 !important;
+        background: var(--bg-surface) !important;
+        border: 1px solid var(--border-light) !important;
+        border-radius: 10px !important;
+        padding: 10px 12px !important;
+        text-align: left !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-kpi-num {
+        font-size: 20px !important;
+    }
+
+    .task-kpi-txt {
+        font-size: 10px !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    /* ── Navigation Tabs Bar (2x2 Grid — All Tabs Visible, Zero Horizontal Scroll) ── */
+    .task-nav-bar {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-tabs-group {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-tabs-group::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .task-tab-btn {
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 10px 8px !important;
+        font-size: 11.5px !important;
+        font-weight: 600 !important;
+        border-radius: 12px !important;
+        white-space: normal !important;
+        text-align: center !important;
+        min-height: 44px !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        line-height: 1.25 !important;
+    }
+
+    .task-tab-btn svg {
+        flex-shrink: 0 !important;
+    }
+
+    .task-tab-badge {
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        padding: 1px 6px !important;
+        border-radius: 6px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .badge-full {
+        display: none !important;
+    }
+
+    .badge-short {
+        display: inline !important;
+    }
+
+    /* ── Tab 1: All Tasks Section & Filters ── */
+    .task-content-section {
+        padding: 14px 12px !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-filters-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        margin-bottom: 14px !important;
+        width: 100% !important;
+    }
+
+    .task-search-box {
+        width: 100% !important;
+        min-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-search-box input {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-filters-group {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-filter-select {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 8px 10px !important;
+        font-size: 11.5px !important;
+        box-sizing: border-box !important;
+        text-overflow: ellipsis !important;
+    }
+
+    .task-clear-btn {
+        grid-column: span 2 !important;
+        width: 100% !important;
+        text-align: center !important;
+        height: 36px !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── Tab 1: Table to Touch-Friendly Cards ── */
+    .task-table-wrapper {
+        border: none !important;
+        overflow: visible !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-table {
+        display: block !important;
+        width: 100% !important;
+        border-collapse: separate !important;
+    }
+
+    .task-table thead {
+        display: none !important;
+    }
+
+    .task-table tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-table tr {
+        display: grid !important;
+        grid-template-columns: 1fr auto !important;
+        gap: 8px 10px !important;
+        background: var(--bg-surface) !important;
+        border: 1px solid var(--border-light) !important;
+        border-radius: 14px !important;
+        padding: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    }
+
+    .task-table tr:hover {
+        background: var(--bg-surface) !important;
+    }
+
+    .task-table td {
+        padding: 0 !important;
+        border: none !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Row 1: Task Title & Description */
+    .task-cell-title {
+        grid-column: 1 / -1 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    .task-main-title {
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        line-height: 1.35 !important;
+    }
+
+    .task-sub-desc {
+        white-space: normal !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        font-size: 11.5px !important;
+        color: var(--text-muted) !important;
+        margin-top: 2px !important;
+        max-width: 100% !important;
+    }
+
+    /* Row 2: Assignee */
+    .task-cell-assignee {
+        grid-column: 1 / -1 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 2px 0 !important;
+    }
+
+    .task-assignee-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+    }
+
+    .task-assignee-name {
+        font-size: 12.5px !important;
+        font-weight: 600 !important;
+    }
+
+    /* Row 3: Scope Tag */
+    .task-cell-scope {
+        grid-column: 1 / -1 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .task-scope-pill {
+        font-size: 11px !important;
+        padding: 3px 8px !important;
+    }
+
+    /* Row 4: Priority & Deadline */
+    .task-cell-priority {
+        grid-column: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .task-cell-deadline {
+        grid-column: 2 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+    }
+
+    /* Row 5: Status Dropdown & Action Buttons */
+    .task-cell-status {
+        grid-column: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        padding-top: 10px !important;
+        border-top: 1px dashed var(--border-light) !important;
+    }
+
+    .task-status-selector {
+        width: 100% !important;
+        max-width: 140px !important;
+        height: 32px !important;
+        font-size: 11.5px !important;
+    }
+
+    .task-cell-actions {
+        grid-column: 2 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        padding-top: 10px !important;
+        border-top: 1px dashed var(--border-light) !important;
+    }
+
+    .task-row-actions {
+        display: flex !important;
+        gap: 6px !important;
+    }
+
+    .task-action-btn {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    /* ── Tab 2: Delegation Center ── */
+    .task-delegation-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .delegation-card {
+        padding: 16px 14px !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .delegation-card__header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+    }
+
+    .delegation-assign-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        height: 38px !important;
+        box-sizing: border-box !important;
+    }
+
+    .delegation-preview-title {
+        max-width: 150px !important;
+    }
+
+    /* ── Tab 3: Mobile Kanban Column Switcher & Board ── */
+    .task-mobile-kanban-bar {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        overflow-x: visible !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .task-mobile-kanban-bar::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .task-kanban-pill {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 6px 12px !important;
+        border-radius: 20px !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        background: var(--bg-surface) !important;
+        border: 1px solid var(--border-light) !important;
+        color: var(--text-muted) !important;
+        white-space: nowrap !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        font-family: inherit !important;
+        transition: all 0.15s ease !important;
+    }
+
+    .task-kanban-pill.active {
+        background: var(--primary-500, #0055FE) !important;
+        color: #ffffff !important;
+        border-color: var(--primary-500, #0055FE) !important;
+        font-weight: 600 !important;
+        box-shadow: 0 1px 4px rgba(0, 85, 254, 0.25) !important;
+    }
+
+    .task-kanban-pill .task-kanban-pill-dot {
+        width: 6px !important;
+        height: 6px !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important;
+    }
+
+    .task-kanban-pill.active .task-kanban-pill-dot {
+        background-color: #ffffff !important;
+    }
+
+    .task-kanban-pill .task-kanban-pill-count {
+        font-size: 11px !important;
+        opacity: 0.85 !important;
+    }
+
+    .task-kanban-board {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 14px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    .kanban-column {
+        min-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 14px !important;
+        border-radius: 14px !important;
+    }
+
+    .kanban-task-card {
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* ── Tab 4: Workload & Analytics ── */
+    .task-analytics-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .analytics-card {
+        padding: 16px 14px !important;
+        border-radius: 14px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .analytics-metric-big span:first-child {
+        font-size: 32px !important;
+    }
+
+    .analytics-stats-row {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    .analytics-workload-row {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px !important;
+    }
+
+    /* ── Task Create/Edit Modal Overrides ── */
+    .task-modal-grid-2,
+    .task-modal-grid-3 {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    .multi-assign-box {
+        max-height: 200px !important;
+    }
+
+    .task-notify-toggle {
+        padding: 12px 14px !important;
+        gap: 10px !important;
+    }
+}
+
 

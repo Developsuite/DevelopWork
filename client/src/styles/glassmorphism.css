@@ -238,6 +238,7 @@
     --bg-body: #f4f6fc;
     --bg-primary: rgba(255, 255, 255, 0.45);
     --bg-secondary: rgba(255, 255, 255, 0.6);
+    --bg-surface: #FFFFFF;
     --bg-sidebar: rgba(255, 255, 255, 0.35);
     --bg-hover: rgba(0, 85, 254, 0.05);
     --bg-active: rgba(0, 85, 254, 0.08);

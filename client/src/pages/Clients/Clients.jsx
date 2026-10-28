@@ -447,7 +447,7 @@ const Clients = () => {
 
                                 return (
                                     <tr key={client.id}>
-                                        <td>
+                                        <td className="cl__td-bill-client" data-label="Client">
                                             <div className="cl__table-user">
                                                 <Avatar name={client.name} size="sm" />
                                                 <div>
@@ -456,13 +456,13 @@ const Clients = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td className="cl__td-bill-budget" data-label="Total Budget">
                                             <div className={`cl__billing-amount ${fin.paymentStatus === 'Paid' ? 'success' : 'pending'}`}>
                                                 {formatCurrency(clientTotal, currency)}
                                             </div>
                                         </td>
-                                        <td>{renderTag(fin.paymentStatus)}</td>
-                                        <td>
+                                        <td className="cl__td-bill-status" data-label="Status">{renderTag(fin.paymentStatus)}</td>
+                                        <td className="cl__td-bill-progress" data-label="Progress">
                                             <div className="cl__billing-progress">
                                                 <div className="cl__billing-progress-bar">
                                                     <div className="cl__billing-progress-fill paid" style={{width: `${fin.pct}%`}}></div>
@@ -474,7 +474,7 @@ const Clients = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td className="cl__td-bill-actions" data-label="Actions">
                                             <div className="cl__billing-actions">
                                                 <Button variant="ghost" size="sm" onClick={() => handleOpenPaymentModal(client)}>
                                                     Update Payment
@@ -649,7 +649,7 @@ const Clients = () => {
                         {/* === CLIENTS LIST VIEW === */}
                         {viewType === 'list' && filteredClients.length > 0 && (
                             <div className="cl__list-section">
-                                <table className="cl__table">
+                                <table className="cl__table cl__table--clients">
                                     <thead>
                                         <tr>
                                             <th>Client</th>
@@ -664,7 +664,7 @@ const Clients = () => {
                                     <tbody>
                                         {filteredClients.map(client => (
                                             <tr key={client.id} onClick={() => handleViewClient(client)} style={{ cursor: 'pointer' }}>
-                                                <td>
+                                                <td className="cl__td-client" data-label="Client">
                                                     <div className="cl__table-user">
                                                         <Avatar name={client.name} size="sm" />
                                                         <div>
@@ -673,13 +673,13 @@ const Clients = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td>{client.company}</td>
-                                                <td>{renderTag(client.status)}</td>
-                                                <td>{renderTag(client.payment)}</td>
-                                                <td>{client.projects.length}</td>
-                                                <td>{client.address}</td>
-                                                <td>
-                                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                                <td className="cl__td-company" data-label="Company">{client.company}</td>
+                                                <td className="cl__td-status" data-label="Status">{renderTag(client.status)}</td>
+                                                <td className="cl__td-payment" data-label="Payment">{renderTag(client.payment)}</td>
+                                                <td className="cl__td-projects" data-label="Projects">{client.projects.length} {client.projects.length === 1 ? 'Project' : 'Projects'}</td>
+                                                <td className="cl__td-location" data-label="Location">{client.address}</td>
+                                                <td className="cl__td-actions" data-label="Actions">
+                                                    <div className="cl__table-actions">
                                                         <button 
                                                             className="cl__icon-btn" 
                                                             onClick={e => {
@@ -760,7 +760,7 @@ const Clients = () => {
                         {/* PROJECTS LIST */}
                         {viewType === 'list' && filteredProjects.length > 0 && (
                             <div className="cl__list-section">
-                                <table className="cl__table">
+                                <table className="cl__table cl__table--projects">
                                     <thead>
                                         <tr>
                                             <th>Project Name</th>
@@ -773,8 +773,8 @@ const Clients = () => {
                                     <tbody>
                                         {filteredProjects.map(project => (
                                             <tr key={project.id} onClick={() => handleViewClient(project.client_data)} style={{ cursor: 'pointer' }}>
-                                                <td><strong>{project.name}</strong></td>
-                                                <td>
+                                                <td className="cl__td-project-name" data-label="Project"><strong>{project.name}</strong></td>
+                                                <td className="cl__td-project-client" data-label="Client">
                                                     <div className="cl__table-user">
                                                         <Avatar name={project.clientName} size="sm" />
                                                         <div>
@@ -783,9 +783,9 @@ const Clients = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td>{renderTag(project.status)}</td>
-                                                <td>{project.due_date || '-'}</td>
-                                                <td><strong>{formatCurrency(project.amount || 0, currency)}</strong></td>
+                                                <td className="cl__td-project-status" data-label="Status">{renderTag(project.status)}</td>
+                                                <td className="cl__td-project-deadline" data-label="Deadline">{project.due_date || '-'}</td>
+                                                <td className="cl__td-project-budget" data-label="Budget"><strong>{formatCurrency(project.amount || 0, currency)}</strong></td>
                                             </tr>
                                         ))}
                                     </tbody>

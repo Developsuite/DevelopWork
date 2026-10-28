@@ -1170,14 +1170,528 @@
 }
 
 @media (max-width: 768px) {
-    .cl { padding: 0 16px 24px; }
-    .cl__stats { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .cl__toolbar { flex-direction: column; align-items: stretch; gap: 12px; }
-    .cl__filters-bar { flex-direction: column; align-items: stretch; }
-    .cl__filters-left { flex-wrap: wrap; }
-    .cl__grid { grid-template-columns: 1fr; }
+    .cl {
+        padding: 0 12px 100px;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+        overflow-x: clip;
+    }
+    .cl__stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cl__stat-card {
+        padding: 14px;
+        box-sizing: border-box;
+        min-width: 0;
+    }
+    .cl__stat-img {
+        width: 40px;
+        height: 40px;
+    }
+    .cl__stat-value {
+        font-size: 18px;
+    }
+
+    /* ─── Toolbar & Tabs ─── */
+    .cl__toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cl__tabs {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        display: flex;
+        white-space: nowrap;
+        box-sizing: border-box;
+        padding: 3px;
+        gap: 3px;
+    }
+    .cl__tabs::-webkit-scrollbar { display: none; }
+    .cl__tab {
+        flex-shrink: 0;
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+    .cl__toolbar-right {
+        width: 100%;
+    }
+    .cl__toolbar-right .dw-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ─── Filters Bar: Search + Selects ─── */
+    .cl__filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 16px;
+    }
+    .cl__filters-left {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cl__search {
+        flex: 1 1 100%;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 8px 12px;
+    }
+    .cl__filter-select {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    .cl__view-toggle {
+        align-self: flex-start;
+    }
+
+    .cl__grid {
+        grid-template-columns: 1fr;
+        width: 100%;
+        box-sizing: border-box;
+    }
     .cl__detail-grid { grid-template-columns: 1fr; }
     .cl__form-grid { grid-template-columns: 1fr; }
-    .cl__banner { height: 200px; padding: 24px; }
-    .cl__banner-content h1 { font-size: 24px; }
+    .cl__banner { height: auto; min-height: 140px; padding: 24px 16px; border-radius: 16px; }
+    .cl__banner-content h1 { font-size: 22px; }
+
+    /* ─── Clients Table: Mobile Card Transformation (Zero Horizontal Scroll) ─── */
+    .cl__list-section {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        overflow: visible;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .cl__table--clients,
+    .cl__table--clients thead,
+    .cl__table--clients tbody,
+    .cl__table--clients tr,
+    .cl__table--clients td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .cl__table--clients thead {
+        display: none;
+    }
+
+    .cl__table--clients tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .cl__table--clients tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "client     actions"
+            "company    company"
+            "location   location"
+            "status     payment"
+            "projects   projects";
+        gap: 8px 12px;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        background: var(--bg-primary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        box-sizing: border-box;
+        width: 100%;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .cl__table--clients tbody tr:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Client Cell (Avatar + Name + Email) */
+    .cl__table--clients td.cl__td-client {
+        grid-area: client;
+        padding: 0;
+        border: none;
+        align-self: center;
+        min-width: 0;
+    }
+    .cl__table--clients .cl__table-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    .cl__table--clients .cl__table-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+    }
+    .cl__table--clients .cl__table-email {
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
+    }
+
+    /* Actions (Top-Right) */
+    .cl__table--clients td.cl__td-actions {
+        grid-area: actions;
+        padding: 0;
+        border: none;
+        justify-self: end;
+        align-self: center;
+        width: auto;
+    }
+    .cl__table-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+    .cl__table-actions .cl__icon-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+    }
+
+    /* Company */
+    .cl__table--clients td.cl__td-company {
+        grid-area: company;
+        padding: 0;
+        border: none;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .cl__table--clients td.cl__td-company::before {
+        content: '🏢';
+        font-size: 11px;
+    }
+
+    /* Location */
+    .cl__table--clients td.cl__td-location {
+        grid-area: location;
+        padding: 0;
+        border: none;
+        font-size: 11px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .cl__table--clients td.cl__td-location::before {
+        content: '📍';
+        font-size: 11px;
+    }
+
+    /* Status Tag */
+    .cl__table--clients td.cl__td-status {
+        grid-area: status;
+        padding: 0;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-self: start;
+    }
+
+    /* Payment Tag */
+    .cl__table--clients td.cl__td-payment {
+        grid-area: payment;
+        padding: 0;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-self: end;
+    }
+
+    /* Projects Count */
+    .cl__table--clients td.cl__td-projects {
+        grid-area: projects;
+        padding-top: 8px;
+        margin-top: 2px;
+        border-top: 1px dashed var(--border-light, var(--border-color));
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    .cl__table--clients td.cl__td-projects::before {
+        content: 'PROJECTS';
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        color: var(--text-muted);
+    }
+
+    /* ─── Projects Table: Mobile Cards ─── */
+    .cl__table--projects,
+    .cl__table--projects thead,
+    .cl__table--projects tbody,
+    .cl__table--projects tr,
+    .cl__table--projects td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cl__table--projects thead { display: none; }
+    .cl__table--projects tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+    .cl__table--projects tbody tr {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        background: var(--bg-primary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        box-sizing: border-box;
+    }
+    .cl__table--projects td {
+        padding: 0;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+    }
+    .cl__table--projects td::before {
+        content: attr(data-label);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--text-muted);
+    }
+    .cl__table--projects td.cl__td-project-name::before { display: none; }
+    .cl__table--projects td.cl__td-project-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+
+    /* ─── Billing / Outstanding: Mobile Card Layout (Zero Horizontal Scroll) ─── */
+    .cl__billing-overview {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cl__billing-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 16px;
+    }
+    .cl__billing-summary-card {
+        padding: 14px 16px;
+        border-radius: 12px;
+        box-sizing: border-box;
+    }
+    .cl__billing-summary-card h4 {
+        font-size: 11px;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+    .cl__billing-summary-card .amount {
+        font-size: 20px;
+    }
+
+    .cl__billing-table-wrapper {
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        overflow: visible;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cl__billing-table,
+    .cl__billing-table thead,
+    .cl__billing-table tbody,
+    .cl__billing-table tr,
+    .cl__billing-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .cl__billing-table {
+        min-width: 0 !important;
+    }
+    .cl__billing-table thead {
+        display: none;
+    }
+    .cl__billing-table tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+    .cl__billing-table tbody tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "client     status"
+            "budget     budget"
+            "progress   progress"
+            "actions    actions";
+        gap: 10px 12px;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        background: var(--bg-primary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        box-sizing: border-box;
+        width: 100%;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .cl__billing-table tbody tr:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Client info (Avatar + Name & Company) */
+    .cl__billing-table td.cl__td-bill-client {
+        grid-area: client;
+        padding: 0;
+        border: none;
+        align-self: center;
+        min-width: 0;
+    }
+    .cl__billing-table .cl__table-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    .cl__billing-table .cl__table-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 170px;
+    }
+    .cl__billing-table .cl__table-email {
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 170px;
+    }
+
+    /* Status badge (Top-Right) */
+    .cl__billing-table td.cl__td-bill-status {
+        grid-area: status;
+        padding: 0;
+        border: none;
+        align-self: center;
+        justify-self: end;
+        width: auto;
+    }
+
+    /* Total Budget row */
+    .cl__billing-table td.cl__td-bill-budget {
+        grid-area: budget;
+        padding: 0;
+        border: none;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .cl__billing-table td.cl__td-bill-budget::before {
+        content: 'TOTAL BUDGET';
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        color: var(--text-muted);
+    }
+    .cl__billing-table .cl__billing-amount {
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    /* Progress section */
+    .cl__billing-table td.cl__td-bill-progress {
+        grid-area: progress;
+        padding: 8px 0 0;
+        border-top: 1px dashed var(--border-light, var(--border-color));
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+    }
+    .cl__billing-table .cl__billing-progress {
+        min-width: 0;
+        max-width: 100%;
+        width: 100%;
+    }
+    .cl__billing-table .cl__billing-progress-bar {
+        height: 8px;
+    }
+    .cl__billing-table .cl__billing-progress-labels {
+        font-size: 11px;
+    }
+
+    /* Actions */
+    .cl__billing-table td.cl__td-bill-actions {
+        grid-area: actions;
+        padding: 4px 0 0;
+        border: none;
+    }
+    .cl__billing-table .cl__billing-actions {
+        width: 100%;
+    }
+    .cl__billing-table .cl__billing-actions .dw-button {
+        width: 100%;
+        justify-content: center;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 8px 14px;
+        height: 36px;
+    }
+    .cl__billing-table .cl__billing-actions .dw-button:hover {
+        background: var(--primary-50);
+        border-color: var(--primary-400);
+        color: var(--primary-600);
+    }
 }

@@ -448,33 +448,36 @@ const ProjectManagement = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredTasks.length === 0 && <tr><td colSpan={7} style={{textAlign:'center',color:'var(--text-muted)',padding:'40px'}}>No tasks found. Create one to get started!</td></tr>}
-                    {filteredTasks.map(task => (
-                        <tr key={task.id}>
-                            <td><strong>{task.title}</strong></td>
-                            <td><span className="pm__project-link">{task.project_name}</span></td>
-                            <td>{renderTag(task.status)}</td>
-                            <td>{renderTag(task.priority)}</td>
-                            <td>
-                                <div className="pm__task-assignee">
-                                    <Avatar name={task.assignee_name || 'Unassigned'} size="xs" />
-                                    <span>{task.assignee_name || 'Unassigned'}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div className="pm__task-deadline">
-                                    <Clock size={12} />
-                                    {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No date'}
-                                </div>
-                            </td>
-                            <td>
-                                <div className="pm__task-actions">
-                                    <button className="pm__icon-btn" onClick={() => handleEditTask(task)}><Pencil size={14}/></button>
-                                    <button className="pm__icon-btn danger" onClick={() => handleDeleteTask(task.id)}><Trash2 size={14}/></button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
+                    {filteredTasks.length === 0 ? (
+                        <tr><td colSpan={7} style={{textAlign:'center',color:'var(--text-muted)',padding:'40px'}}>No tasks found. Create one to get started!</td></tr>
+                    ) : (
+                        filteredTasks.map(task => (
+                            <tr key={task.id}>
+                                <td className="pm__task-cell-title"><strong>{task.title}</strong></td>
+                                <td className="pm__task-cell-project"><span className="pm__project-link">{task.project_name}</span></td>
+                                <td className="pm__task-cell-status">{renderTag(task.status)}</td>
+                                <td className="pm__task-cell-priority">{renderTag(task.priority)}</td>
+                                <td className="pm__task-cell-assignee">
+                                    <div className="pm__task-assignee">
+                                        <Avatar name={task.assignee_name || 'Unassigned'} size="xs" />
+                                        <span>{task.assignee_name || 'Unassigned'}</span>
+                                    </div>
+                                </td>
+                                <td className="pm__task-cell-deadline">
+                                    <div className="pm__task-deadline">
+                                        <Clock size={12} />
+                                        {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No date'}
+                                    </div>
+                                </td>
+                                <td className="pm__task-cell-actions">
+                                    <div className="pm__task-actions">
+                                        <button className="pm__icon-btn" onClick={() => handleEditTask(task)}><Pencil size={14}/></button>
+                                        <button className="pm__icon-btn danger" onClick={() => handleDeleteTask(task.id)}><Trash2 size={14}/></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))
+                    )}
                 </tbody>
             </table>
         </div>
@@ -613,14 +616,20 @@ const ProjectManagement = () => {
                 </div>
 
                 <div className="pm__actions">
-                    {activeTab === 'projects' && (
-                        <div className="pm__view-toggle">
-                            <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')}><LayoutGrid size={16}/></button>
-                            <button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')}><List size={16}/></button>
+                    <div className="pm__actions-top">
+                        <div className="pm__search">
+                            <Search size={15} />
+                            <input placeholder={activeTab === 'tasks' ? 'Search tasks...' : 'Search projects...'} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
                         </div>
-                    )}
+                        {activeTab === 'projects' && (
+                            <div className="pm__view-toggle">
+                                <button className={viewMode === 'grid' ? 'active' : ''} onClick={() => setViewMode('grid')}><LayoutGrid size={16}/></button>
+                                <button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')}><List size={16}/></button>
+                            </div>
+                        )}
+                    </div>
                     {(activeTab === 'projects' || activeTab === 'tasks') && (
-                        <>
+                        <div className="pm__filters-group">
                             <select className="pm__filter-select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                                 <option value="all">All Status</option>
                                 <option value="Planning">Planning</option>
@@ -637,26 +646,24 @@ const ProjectManagement = () => {
                                 <option value="High">High</option>
                                 <option value="Critical">Critical</option>
                             </select>
-                        </>
+                        </div>
                     )}
-                    <div className="pm__search">
-                        <Search size={15} />
-                        <input placeholder={activeTab === 'tasks' ? 'Search tasks...' : 'Search projects...'} value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                    <div className="pm__action-btn-wrap">
+                        <Button variant="primary" icon={Plus} onClick={() => {
+                            if (activeTab === 'tasks') {
+                                setEditingTask(null);
+                                setTaskForm({ title: '', project_id: projectList[0]?.id || '', priority: 'Medium', status: 'Not Started', deadline: '', assignee_id: '', assignee_name: '', description: '' });
+                                setIsAddTaskModalOpen(true);
+                            } else {
+                                setEditMode(false);
+                                setSelectedProject(null);
+                                setProjectForm({ name: '', description: '', status: 'Planning', priority: 'Medium', dueDate: '', client_id: '', amount: 0 });
+                                setIsAddProjectModalOpen(true);
+                            }
+                        }}>
+                            {activeTab === 'tasks' ? 'Add Task' : 'New Project'}
+                        </Button>
                     </div>
-                    <Button variant="primary" icon={Plus} onClick={() => {
-                        if (activeTab === 'tasks') {
-                            setEditingTask(null);
-                            setTaskForm({ title: '', project_id: projectList[0]?.id || '', priority: 'Medium', status: 'Not Started', deadline: '', assignee_id: '', assignee_name: '', description: '' });
-                            setIsAddTaskModalOpen(true);
-                        } else {
-                            setEditMode(false);
-                            setSelectedProject(null);
-                            setProjectForm({ name: '', description: '', status: 'Planning', priority: 'Medium', dueDate: '', client_id: '', amount: 0 });
-                            setIsAddProjectModalOpen(true);
-                        }
-                    }}>
-                        {activeTab === 'tasks' ? 'Add Task' : 'New Project'}
-                    </Button>
                 </div>
             </div>
 
@@ -689,7 +696,7 @@ const ProjectManagement = () => {
                         </select>
                     </div>
 
-                    <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="dw-form-grid pm__form-grid">
                         <div className="dw-form-group">
                             <label className="dw-form-label">Status</label>
                             <select className="dw-form-input" value={projectForm.status} onChange={e => setProjectForm({...projectForm, status: e.target.value})}>
@@ -750,7 +757,7 @@ const ProjectManagement = () => {
                             ))}
                         </select>
                     </div>
-                    <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="dw-form-grid pm__form-grid">
                         <div className="dw-form-group">
                             <label className="dw-form-label">Status</label>
                             <select className="dw-form-input" value={taskForm.status} onChange={e => setTaskForm({...taskForm, status: e.target.value})}>
@@ -797,7 +804,7 @@ const ProjectManagement = () => {
                             <label className="dw-form-label">Description</label>
                             <div style={{color: 'var(--text-secondary)'}}>{viewingProject.description || 'No description provided.'}</div>
                         </div>
-                        <div className="dw-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div className="dw-form-grid pm__form-grid">
                             <div className="dw-form-group">
                                 <label className="dw-form-label">Status</label>
                                 <div>{renderTag(viewingProject.status)}</div>
