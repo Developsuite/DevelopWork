@@ -293,11 +293,11 @@
 
 @media (max-width: 768px) {
     .docs-dashboard {
-        padding: 8px 12px 100px;
+        padding: 0 0 40px 0;
         width: 100%;
-        max-width: 100vw;
+        max-width: 100%;
         box-sizing: border-box;
-        overflow-x: clip;
+        overflow-x: hidden;
     }
 
     .page-header {
@@ -568,27 +568,127 @@
 
     .doc-detail__header h2 {
         font-size: 18px;
+        line-height: 1.3;
+        margin-bottom: 8px;
+        word-break: break-word;
+    }
+
+    .doc-detail__meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+        color: var(--text-muted);
     }
 
     .doc-detail__actions {
         width: 100%;
-        gap: 6px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
     }
 
-    .doc-detail__actions .dw-button {
-        flex: 1 1 calc(50% - 3px);
+    .doc-detail__actions .dw-button--primary {
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 42px;
+        font-size: 14px;
+        font-weight: 700;
         justify-content: center;
+        border-radius: 10px;
+    }
+
+    .doc-detail__actions .dw-button:not(.dw-button--primary) {
+        width: 100%;
+        height: 38px;
+        min-width: 0;
+        font-size: 12px;
+        padding: 0 8px;
+        justify-content: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        box-sizing: border-box;
+        border: 1px solid var(--border-default);
+        background: var(--bg-secondary);
+        border-radius: 8px;
+    }
+
+    .doc-detail__actions .doc-detail__action-version-btn {
+        display: none !important;
+    }
+
+    .doc-detail__versions-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 16px 0 !important;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .doc-detail__versions-toggle {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 10px 12px !important;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .doc-detail__versions-toggle-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .doc-detail__versions-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .doc-detail__versions-toggle-right {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        flex-shrink: 0;
+    }
+
+    .doc-detail__versions-content {
+        padding: 10px 12px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .doc-version {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px 10px;
+        font-size: 12px;
     }
 
     .doc-preview-body {
-        margin-top: 16px;
-        padding: 14px;
-        border-radius: 12px;
-        min-height: 250px;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        box-sizing: border-box;
-        width: 100%;
+        margin-top: 14px;
+        padding: 18px 14px 40px !important;
+        border-radius: 14px;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        margin-bottom: 90px !important;
     }
 
     .doc-preview-body .doc-editor-area {
@@ -597,6 +697,7 @@
         font-size: 14px;
         line-height: 1.6;
         word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     /* ── Editor on Mobile ── */
@@ -734,6 +835,9 @@
         overflow-x: hidden !important;
         overflow-wrap: anywhere;
         word-break: break-word;
+    }
+    .doc-preview-body {
+        margin-bottom: 90px !important;
     }
     .doc-editor-area *,
     .doc-preview-body * {

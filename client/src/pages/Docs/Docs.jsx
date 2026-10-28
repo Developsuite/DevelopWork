@@ -1316,13 +1316,15 @@ const Docs = () => {
                 <div className="doc-layout">
                     {/* Main */}
                     <div className="doc-main">
-                        <div className="doc-main__header">
-                            <div className="doc-search"><Search size={16} /><input placeholder="Search documents..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
-                            <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
-                                <option value="all">All Folders</option>
-                                {folderList.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
+                        {!selectedDoc && (
+                            <div className="doc-main__header">
+                                <div className="doc-search"><Search size={16} /><input placeholder="Search documents..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} /></div>
+                                <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)}>
+                                    <option value="all">All Folders</option>
+                                    {folderList.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                        )}
 
                         {selectedDoc ? (
                             <div className="doc-detail">
@@ -1350,12 +1352,13 @@ const Docs = () => {
                                                     variant={showVersionHistory ? "secondary" : "ghost"} 
                                                     size="sm" 
                                                     icon={Clock} 
+                                                    className="doc-detail__action-version-btn"
                                                     onClick={() => setShowVersionHistory(prev => !prev)}
                                                 >
                                                     {showVersionHistory ? 'Hide History' : 'Version History'} ({selectedDoc.versions.length})
                                                 </Button>
                                             )}
-                                            <Button variant="ghost" size="sm" icon={Trash2} onClick={() => handleDeleteDoc(selectedDoc.id)} style={{ color: 'var(--danger)' }}>Delete</Button>
+                                            <Button variant="ghost" size="sm" icon={Trash2} className="doc-detail__action-delete-btn" onClick={() => handleDeleteDoc(selectedDoc.id)} style={{ color: 'var(--danger)' }}>Delete</Button>
                                         </div>
                                     </div>
                                     {isAdmin && selectedDoc.versions?.length > 0 && (
