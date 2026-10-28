@@ -254,7 +254,7 @@ const ModuleHub = () => {
                     <div className="module-hub__stat-icon-wrapper">
                         <img src="/assets/stats/1.png" alt="Active Modules" className="module-hub__stat-image" />
                     </div>
-                    <div>
+                    <div className="module-hub__stat-info">
                         <div className="module-hub__stat-value">{DEPARTMENT_MODULES.length}</div>
                         <div className="module-hub__stat-label">Active Modules</div>
                     </div>
@@ -263,7 +263,7 @@ const ModuleHub = () => {
                     <div className="module-hub__stat-icon-wrapper">
                         <img src="/assets/stats/2.png" alt="Assigned Managers" className="module-hub__stat-image" />
                     </div>
-                    <div>
+                    <div className="module-hub__stat-info">
                         <div className="module-hub__stat-value">{realManagers.length}</div>
                         <div className="module-hub__stat-label">Assigned Managers</div>
                     </div>
@@ -272,7 +272,7 @@ const ModuleHub = () => {
                     <div className="module-hub__stat-icon-wrapper">
                         <img src="/assets/stats/3.png" alt="Pending Invites" className="module-hub__stat-image" />
                     </div>
-                    <div>
+                    <div className="module-hub__stat-info">
                         <div className="module-hub__stat-value">0</div>
                         <div className="module-hub__stat-label">Pending Invites</div>
                     </div>
@@ -281,7 +281,7 @@ const ModuleHub = () => {
                     <div className="module-hub__stat-icon-wrapper">
                         <img src="/assets/stats/4.png" alt="Access Control" className="module-hub__stat-image" />
                     </div>
-                    <div>
+                    <div className="module-hub__stat-info">
                         <div className="module-hub__stat-value">RBAC</div>
                         <div className="module-hub__stat-label">Access Control</div>
                     </div>
