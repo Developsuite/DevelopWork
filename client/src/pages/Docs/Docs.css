@@ -111,10 +111,83 @@
 .doc-editor-topbar { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--border-default); background: var(--bg-surface); }
 .doc-editor-topbar .doc-back-btn { margin-bottom: 0; flex-shrink: 0; }
 .doc-editor-title { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.doc-detail__versions { border-top: 1px solid var(--border-default); padding-top: 20px; }
-.doc-detail__versions h4 { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; }
+/* Version History */
+.doc-detail__versions-section {
+    margin: 4px 0 24px 0;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    background: var(--bg-surface, var(--bg-primary));
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.doc-detail__versions-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease;
+    user-select: none;
+}
+
+.doc-detail__versions-toggle:hover {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.04));
+}
+
+.doc-detail__versions-toggle.is-expanded {
+    border-bottom: 1px solid var(--border-default);
+}
+
+.doc-detail__versions-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.doc-detail__versions-icon {
+    color: var(--primary-500);
+}
+
+.doc-detail__versions-pill {
+    background: rgba(0, 85, 254, 0.1);
+    color: var(--primary-500);
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.doc-detail__versions-toggle-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.doc-detail__versions-toggle:hover .doc-detail__versions-toggle-right {
+    color: var(--text-primary);
+}
+
+.doc-detail__versions-content {
+    padding: 12px 14px;
+    background: var(--bg-surface, var(--bg-primary));
+    animation: fadeIn 0.15s ease;
+}
+
 .doc-version { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
-.doc-version:hover { background: rgba(0,0,0,0.02); }
+.doc-version:hover { background: var(--bg-hover, rgba(0, 0, 0, 0.03)); }
+.doc-version__date { color: var(--text-secondary); }
+.doc-version__author { color: var(--text-muted); font-size: 12px; }
 .doc-version__tag { background: var(--primary-50); color: var(--primary-600); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 
 /* Editor */
@@ -123,7 +196,7 @@
 .doc-editor-btn { background: none; border: none; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; transition: all 0.2s; }
 .doc-editor-btn:hover { background: rgba(0,0,0,0.06); color: var(--text-primary); }
 .doc-editor-divider { width: 1px; height: 20px; background: var(--border-default); margin: 0 4px; }
-.doc-editor-area { flex: 1; padding: 40px 60px; min-height: 600px; font-size: 16px; line-height: 1.8; font-family: 'Inter', sans-serif; color: var(--text-primary); background: transparent; width: 100%; outline: none; overflow-y: auto; }
+.doc-editor-area { flex: 1; padding: 40px 60px; min-height: 600px; font-size: 16px; line-height: 1.8; font-family: 'Inter', sans-serif; color: var(--text-primary); background: transparent; width: 100%; outline: none; overflow-y: auto; cursor: text; user-select: text; -webkit-user-select: text; }
 .doc-editor-area:empty::before { content: attr(data-placeholder); color: var(--text-muted); font-style: italic; pointer-events: none; }
 .doc-editor-area h1 { font-size: 2em; font-weight: 700; margin: 8px 0 16px; border-bottom: 2px solid var(--border-default); padding-bottom: 8px; }
 .doc-editor-area h2 { font-size: 1.5em; font-weight: 700; margin: 8px 0 12px; color: var(--text-primary); }
@@ -139,6 +212,39 @@
 .doc-editor-area th { background: var(--bg-secondary); font-weight: 600; }
 .doc-editor-area hr { border: none; border-top: 1px solid var(--border-default); margin: 16px 0; }
 .doc-editor-area:focus { outline: none; }
+
+/* Ensure pasted text never renders as invisible white or light gray */
+.doc-editor-area [style*="color: rgb(255"],
+.doc-editor-area [style*="color:rgb(255"],
+.doc-editor-area [style*="color: #fff"],
+.doc-editor-area [style*="color:#fff"],
+.doc-editor-area [style*="color: #FFF"],
+.doc-editor-area [style*="color:#FFF"],
+.doc-editor-area [style*="color: white"],
+.doc-editor-area [style*="color:white"],
+.doc-editor-area font[color="#ffffff"],
+.doc-editor-area font[color="white"],
+.doc-editor-area font[color="#fff"],
+.doc-preview-body [style*="color: rgb(255"],
+.doc-preview-body [style*="color:rgb(255"],
+.doc-preview-body [style*="color: #fff"],
+.doc-preview-body [style*="color:#fff"],
+.doc-preview-body [style*="color: white"],
+.doc-preview-body [style*="color:white"],
+.doc-preview-body font[color="#ffffff"],
+.doc-preview-body font[color="white"],
+.doc-preview-body font[color="#fff"] {
+    color: var(--text-primary) !important;
+}
+
+.doc-editor-area span[style*="background-color"],
+.doc-editor-area p[style*="background-color"],
+.doc-editor-area div[style*="background-color"],
+.doc-preview-body span[style*="background-color"],
+.doc-preview-body p[style*="background-color"],
+.doc-preview-body div[style*="background-color"] {
+    background-color: transparent !important;
+}
 .doc-editor-container { width: 100%; border-radius: 16px; display: flex; flex-direction: column; }
 .doc-editor-footer { display: flex; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--border-default); font-size: 12px; color: var(--text-muted); }
 .doc-editor-footer span { display: flex; align-items: center; gap: 4px; }
@@ -614,4 +720,68 @@
         transition: background-color 0.15s ease, color 0.15s ease !important;
     }
     .docs-dashboard { animation: none; }
+}
+
+/* ============================================================
+   DOCS EDITOR / PREVIEW — MOBILE: no horizontal scrolling
+   ============================================================ */
+@media (max-width: 768px) {
+    /* Tighter padding and force long words/links/emails to wrap. */
+    .doc-editor-area,
+    .doc-preview-body {
+        padding: 18px 16px !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .doc-editor-area *,
+    .doc-preview-body * {
+        max-width: 100%;
+    }
+    .doc-editor-area p,
+    .doc-editor-area li,
+    .doc-editor-area h1,
+    .doc-editor-area h2,
+    .doc-editor-area h3,
+    .doc-preview-body p,
+    .doc-preview-body li,
+    .doc-preview-body h1,
+    .doc-preview-body h2,
+    .doc-preview-body h3 {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    /* Tables: fixed layout + wrapping cells so they fit the screen width
+       instead of forcing the page to scroll sideways. */
+    .doc-editor-area table,
+    .doc-preview-body table {
+        width: 100% !important;
+        table-layout: fixed;
+        word-break: break-word;
+    }
+    .doc-editor-area th,
+    .doc-editor-area td,
+    .doc-preview-body th,
+    .doc-preview-body td {
+        padding: 6px 8px !important;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        font-size: 13px;
+    }
+
+    /* Code blocks keep their own horizontal scroll (don't break code). */
+    .doc-editor-area pre,
+    .doc-preview-body pre {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    /* Images can't exceed the column. */
+    .doc-editor-area img,
+    .doc-preview-body img {
+        max-width: 100% !important;
+        height: auto;
+    }
 }
