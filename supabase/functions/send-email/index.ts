@@ -55,7 +55,7 @@ Deno.serve(async (req: Request) => {
     // Tenant check: the recipient email must belong to someone in the admin's workspace.
     const { data: recipient } = await adminClient
       .from("profiles")
-      .select("tenant_id")
+      .select("id, tenant_id")
       .ilike("email", payload.to)
       .maybeSingle();
     if (!recipient || recipient.tenant_id !== profile.tenant_id) {
@@ -112,6 +112,26 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: "Email delivery failed", details: resendData }), {
         status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Also create an in-app notification so the recipient gets a mobile push when
+    // the caller opts in with data.notify_recipient (e.g. an admin emailing an
+    // employee through Jarvis). Callers that already create their own notification
+    // elsewhere — task assignments (tasks trigger) and task-assignment emails —
+    // simply omit the flag, so there is never a duplicate. Best effort.
+    if (recipient?.id && data.notify_recipient === true) {
+      try {
+        const bodyText = String(data.message || data.body || "").trim();
+        await adminClient.from("notifications").insert({
+          recipient_id: recipient.id,
+          sender_id: user.id,
+          sender_name: ctx.senderName,
+          type: "message",
+          title: payload.subject || "New message",
+          message: bodyText ? bodyText.slice(0, 500) : `${ctx.senderName} sent you a message.`,
+          read: false,
+        });
+      } catch (_) { /* don't fail the email */ }
     }
 
     // Log to notification_outbox (best effort)

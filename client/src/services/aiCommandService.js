@@ -824,6 +824,9 @@ const executeWriteTool = async (name, args) => {
             if (body) emailData.message = body;
             emailData.sender_name = senderName === 'DevelopWork' ? '' : senderName;
             if (emailType === 'task_assigned' && !emailData.assigned_by) emailData.assigned_by = adminName;
+            // Also push a mobile notification to the employee for Jarvis messages
+            // (but not for task_assigned — the tasks trigger already pushes those).
+            if (emailType !== 'task_assigned') emailData.notify_recipient = true;
             const result = await callSendEmail(args.to_email, args.subject, emailType, emailData);
             if (result.error) return { success: false, message: `Email failed: ${result.error}` };
             return { success: true, message: `Email sent to ${args.to_email}.`, data: result };
