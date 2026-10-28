@@ -23,6 +23,60 @@ import tpl6 from '../../assets/templates/6.png';
 import './Docs.css';
 import html2pdf from 'html2pdf.js';
 
+const cleanInvisibleText = (html) => {
+    if (!html) return html;
+    try {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        doc.querySelectorAll('*').forEach(el => {
+            if (el.style) {
+                const color = (el.style.color || '').toLowerCase().replace(/\s/g, '');
+                if (
+                    color === 'white' || 
+                    color === '#fff' || 
+                    color === '#ffffff' || 
+                    color === 'rgb(255,255,255)' ||
+                    color === 'rgba(255,255,255,1)' ||
+                    color.startsWith('rgb(25') ||
+                    color.startsWith('rgba(25')
+                ) {
+                    el.style.color = '';
+                }
+
+                const bg = (el.style.backgroundColor || el.style.background || '').toLowerCase();
+                if (
+                    bg.includes('rgb(0') || 
+                    bg.includes('rgb(1') || 
+                    bg.includes('rgb(2') || 
+                    bg.includes('rgb(3') || 
+                    bg.includes('#0') || 
+                    bg.includes('#1') || 
+                    bg.includes('#2') || 
+                    bg.includes('#3') || 
+                    bg === 'black'
+                ) {
+                    el.style.backgroundColor = '';
+                    el.style.background = '';
+                }
+
+                if (!el.getAttribute('style') || el.getAttribute('style').trim() === '') {
+                    el.removeAttribute('style');
+                }
+            }
+
+            if (el.tagName === 'FONT') {
+                const fontColor = (el.getAttribute('color') || '').toLowerCase().replace(/\s/g, '');
+                if (fontColor === 'white' || fontColor === '#fff' || fontColor === '#ffffff' || fontColor.startsWith('rgb(25')) {
+                    el.removeAttribute('color');
+                }
+            }
+        });
+        return doc.body.innerHTML;
+    } catch {
+        return html;
+    }
+};
+
 const Docs = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -49,6 +103,7 @@ const Docs = () => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const [templateFolder, setTemplateFolder] = useState('General');
+    const [showVersionHistory, setShowVersionHistory] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         category: 'General'
@@ -153,7 +208,7 @@ const Docs = () => {
         if (activeTab === 'editor' && editorRef.current) {
             // Always sync if we have a specific doc being edited
             if (editorContentRef.current) {
-                editorRef.current.innerHTML = editorContentRef.current;
+                editorRef.current.innerHTML = cleanInvisibleText(editorContentRef.current);
             }
         }
     }, [activeTab, editingDocId]);
@@ -187,7 +242,7 @@ const Docs = () => {
     };
 
     const handleEditDoc = (doc) => {
-        const htmlContent = doc.content || `<h1>${doc.title}</h1><p>Start writing here...</p>`;
+        const htmlContent = cleanInvisibleText(doc.content || `<h1>${doc.title}</h1><p>Start writing here...</p>`);
         editorContentRef.current = htmlContent;
         setEditingDocId(doc.id);
         setSelectedDoc(doc);
@@ -906,6 +961,161 @@ const Docs = () => {
         }
     };
 
+    const insertHtmlAtSelection = (htmlString) => {
+        if (!editorRef.current) return;
+        editorRef.current.focus();
+
+        const selection = window.getSelection();
+        let range;
+
+        if (selection && selection.rangeCount > 0 && editorRef.current.contains(selection.anchorNode)) {
+            range = selection.getRangeAt(0);
+        } else {
+            range = document.createRange();
+            range.selectNodeContents(editorRef.current);
+            range.collapse(false);
+            if (selection) {
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        }
+
+        range.deleteContents();
+
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlString;
+        const frag = document.createDocumentFragment();
+        let node;
+        let lastNode = null;
+        while ((node = tempDiv.firstChild)) {
+            lastNode = frag.appendChild(node);
+        }
+
+        range.insertNode(frag);
+
+        if (lastNode && selection) {
+            const newRange = document.createRange();
+            newRange.setStartAfter(lastNode);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+        }
+    };
+
+    const insertPlainTextAtSelection = (text) => {
+        if (!text) return;
+        const escaped = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        const lines = escaped.split(/\r\n|\r|\n/);
+        let html;
+        if (lines.length > 1) {
+            html = lines.map(line => line.trim() === '' ? '<p><br></p>' : `<p>${line}</p>`).join('');
+        } else {
+            html = escaped;
+        }
+
+        insertHtmlAtSelection(html);
+    };
+
+    const handleEditorPaste = (e) => {
+        const clipboardData = e.clipboardData || window.clipboardData;
+        if (!clipboardData) return;
+
+        // 1. Handle image files from clipboard (e.g. screenshots, copied images)
+        const items = clipboardData.items;
+        if (items && items.length > 0) {
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type && items[i].type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = items[i].getAsFile();
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            insertHtmlAtSelection(
+                                `<p><img src="${ev.target.result}" style="max-width:100%;border-radius:8px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,0.1);" /></p><p><br></p>`
+                            );
+                            handleEditorInput();
+                        };
+                        reader.readAsDataURL(file);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 2. Handle HTML or plain text
+        const html = clipboardData.getData('text/html');
+        const text = clipboardData.getData('text/plain');
+
+        if (html || text) {
+            e.preventDefault();
+
+            if (html) {
+                try {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    doc.querySelectorAll('script, style, meta, link, noscript, iframe, svg, button, input, select, textarea').forEach(el => el.remove());
+
+                    // Strip ALL inline styling and layout attributes so pasted content
+                    // inherits the editor's clean theme instead of dragging in the source
+                    // page's colors, fonts, margins and big structural spacing.
+                    doc.querySelectorAll('*').forEach(el => {
+                        el.removeAttribute('style');
+                        el.removeAttribute('class');
+                        el.removeAttribute('width');
+                        el.removeAttribute('height');
+                        el.removeAttribute('align');
+                        el.removeAttribute('bgcolor');
+                        if (el.tagName === 'FONT') {
+                            el.removeAttribute('color');
+                            el.removeAttribute('face');
+                            el.removeAttribute('size');
+                        }
+                    });
+
+                    // Collapse layout wrappers: unwrap DIV/SPAN that only exist for
+                    // styling, so we keep semantic text structure without the gaps.
+                    doc.querySelectorAll('div').forEach(div => {
+                        // Replace a plain block DIV with a paragraph to normalise spacing.
+                        const p = doc.createElement('p');
+                        while (div.firstChild) p.appendChild(div.firstChild);
+                        div.replaceWith(p);
+                    });
+
+                    // Remove empty blocks (whitespace-only or just <br>) that create the
+                    // "strange extra spacing", and drop stray empty paragraphs.
+                    doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li').forEach(el => {
+                        const txt = (el.textContent || '').replace(/ /g, ' ').trim();
+                        const hasMedia = el.querySelector('img, a');
+                        if (!txt && !hasMedia) el.remove();
+                    });
+
+                    // Collapse runs of consecutive <br> into a single line break.
+                    doc.querySelectorAll('br + br').forEach(br => br.remove());
+
+                    let cleanHtml = doc.body.innerHTML
+                        // squeeze any remaining runs of blank paragraphs
+                        .replace(/(<p>\s*<\/p>\s*){2,}/gi, '<p></p>')
+                        .trim();
+                    if (cleanHtml && cleanHtml.trim()) {
+                        insertHtmlAtSelection(cleanHtml);
+                    } else if (text) {
+                        insertPlainTextAtSelection(text);
+                    }
+                } catch {
+                    if (text) insertPlainTextAtSelection(text);
+                }
+            } else if (text) {
+                insertPlainTextAtSelection(text);
+            }
+
+            handleEditorInput();
+        }
+    };
+
     const fileInputRef = useRef(null);
 
     const handleTableAction = (action) => {
@@ -1135,19 +1345,57 @@ const Docs = () => {
                                             <Button variant="primary" size="sm" icon={Edit3} onClick={() => handleEditDoc(selectedDoc)}>Edit</Button>
                                             <Button variant="ghost" size="sm" icon={Share2}>Share</Button>
                                             <Button variant="ghost" size="sm" icon={Download} onClick={handleExportPDF}>Export PDF</Button>
+                                            {isAdmin && selectedDoc.versions?.length > 0 && (
+                                                <Button 
+                                                    variant={showVersionHistory ? "secondary" : "ghost"} 
+                                                    size="sm" 
+                                                    icon={Clock} 
+                                                    onClick={() => setShowVersionHistory(prev => !prev)}
+                                                >
+                                                    {showVersionHistory ? 'Hide History' : 'Version History'} ({selectedDoc.versions.length})
+                                                </Button>
+                                            )}
                                             <Button variant="ghost" size="sm" icon={Trash2} onClick={() => handleDeleteDoc(selectedDoc.id)} style={{ color: 'var(--danger)' }}>Delete</Button>
                                         </div>
                                     </div>
                                     {isAdmin && selectedDoc.versions?.length > 0 && (
-                                        <div className="doc-detail__versions">
-                                            <h4><Clock size={12} /> Version History</h4>
-                                            {selectedDoc.versions.map((v, i) => {
-                                                const d = v.date ? new Date(v.date) : null;
-                                                const when = d && !isNaN(d) ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : v.date;
-                                                return (
-                                                    <div key={i} className="doc-version"><span className="doc-version__tag">v{v.v}</span><span>{when}</span><span>{v.author || 'Unknown'}</span>{i === 0 && <Badge variant="status" color="var(--success)">Current</Badge>}</div>
-                                                );
-                                            })}
+                                        <div className="doc-detail__versions-section">
+                                            <button 
+                                                type="button" 
+                                                className={`doc-detail__versions-toggle ${showVersionHistory ? 'is-expanded' : ''}`}
+                                                onClick={() => setShowVersionHistory(prev => !prev)}
+                                                aria-expanded={showVersionHistory}
+                                                title={showVersionHistory ? 'Click to hide version history' : 'Click to show version history'}
+                                            >
+                                                <div className="doc-detail__versions-toggle-left">
+                                                    <Clock size={13} className="doc-detail__versions-icon" />
+                                                    <span className="doc-detail__versions-title">Version History</span>
+                                                    <span className="doc-detail__versions-pill">{selectedDoc.versions.length}</span>
+                                                </div>
+                                                <div className="doc-detail__versions-toggle-right">
+                                                    <span className="doc-detail__versions-toggle-text">
+                                                        {showVersionHistory ? 'Hide' : 'Show'}
+                                                    </span>
+                                                    {showVersionHistory ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                                </div>
+                                            </button>
+
+                                            {showVersionHistory && (
+                                                <div className="doc-detail__versions-content">
+                                                    {selectedDoc.versions.map((v, i) => {
+                                                        const d = v.date ? new Date(v.date) : null;
+                                                        const when = d && !isNaN(d) ? d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : v.date;
+                                                        return (
+                                                            <div key={i} className="doc-version">
+                                                                <span className="doc-version__tag">v{v.v}</span>
+                                                                <span className="doc-version__date">{when}</span>
+                                                                <span className="doc-version__author">{v.author || 'Unknown'}</span>
+                                                                {i === 0 && <Badge variant="status" color="var(--success)">Current</Badge>}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -1375,17 +1623,46 @@ const Docs = () => {
                         </div>
                     </div>
 
-                    <div style={{ position: 'relative', flex: 1, overflow: 'auto' }}>
+                    <div 
+                        style={{ position: 'relative', flex: 1, overflow: 'auto', cursor: 'text' }}
+                        onClick={(e) => {
+                            if (e.target !== editorRef.current && !editorRef.current?.contains(e.target)) {
+                                editorRef.current?.focus();
+                                const selection = window.getSelection();
+                                if (selection) {
+                                    const range = document.createRange();
+                                    range.selectNodeContents(editorRef.current);
+                                    range.collapse(false);
+                                    selection.removeAllRanges();
+                                    selection.addRange(range);
+                                }
+                            }
+                        }}
+                    >
                         <div
                             ref={editorRef}
                             className="doc-editor-area"
                             contentEditable
                             suppressContentEditableWarning
                             onInput={handleEditorInput}
+                            onPaste={handleEditorPaste}
+                            onClick={(e) => {
+                                if (e.target === editorRef.current) {
+                                    const selection = window.getSelection();
+                                    if (selection && (!selection.rangeCount || selection.isCollapsed)) {
+                                        const range = document.createRange();
+                                        range.selectNodeContents(editorRef.current);
+                                        range.collapse(false);
+                                        selection.removeAllRanges();
+                                        selection.addRange(range);
+                                    }
+                                }
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Tab') {
                                     e.preventDefault();
-                                    document.execCommand('insertHTML', false, '&nbsp;&nbsp;&nbsp;&nbsp;');
+                                    insertHtmlAtSelection('&nbsp;&nbsp;&nbsp;&nbsp;');
+                                    handleEditorInput();
                                 }
                             }}
                             data-placeholder="Start writing your document here..."
