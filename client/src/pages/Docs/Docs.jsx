@@ -214,10 +214,10 @@ const Docs = () => {
     }, [activeTab, editingDocId]);
 
     const handleAddDoc = () => {
-        setFormData(prev => ({
-            ...prev,
-            category: activeFolder || 'General'
-        }));
+        // Clear any document we were previously editing so this creates a NEW
+        // document instead of renaming the last-edited one. Also reset the title.
+        setEditingDocId(null);
+        setFormData({ title: '', category: activeFolder || 'General' });
         setIsModalOpen(true);
     };
 
