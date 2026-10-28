@@ -399,4 +399,29 @@
     #settings-btn {
         display: none;
     }
+
+    /* Notification dropdown: anchor to the viewport so it never overflows the
+       screen edge. Full-width panel just below the top bar. */
+    .notif-dropdown {
+        position: fixed;
+        top: calc(var(--topbar-height, 60px) + 6px);
+        left: 8px;
+        right: 8px;
+        width: auto;
+        max-width: none;
+        border-radius: 14px;
+        max-height: calc(100dvh - var(--topbar-height, 60px) - 20px);
+        display: flex;
+        flex-direction: column;
+    }
+    .notif-dropdown__list {
+        max-height: none;
+        flex: 1;
+    }
+    .notif-item {
+        padding: 12px 14px;
+    }
+    .notif-item__message {
+        word-break: break-word;
+    }
 }
