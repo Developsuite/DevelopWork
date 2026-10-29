@@ -25,6 +25,7 @@ import InvoiceBuilder from './components/InvoiceBuilder/InvoiceBuilder';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { savePdfDoc, saveTextFile } from '../../utils/nativeFiles';
 import { 
     LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, 
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
@@ -1011,7 +1012,7 @@ const Finance = () => {
         setIsDeleteModalOpen(false);
     };
 
-    const handleExportCSV = () => {
+    const handleExportCSV = async () => {
         let dataToExport = [];
         let headers = [];
         if (activeTab === 'transactions' || activeTab === 'dashboard') {
@@ -1026,14 +1027,8 @@ const Finance = () => {
         }
 
         const csvContent = [headers.join(','), ...dataToExport.map(e => e.join(','))].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `${activeTab}_export.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        dispatch(addToast({ title: 'Export Successful', message: 'CSV file has been downloaded.', type: 'success' }));
+        await saveTextFile(csvContent, `${activeTab}_export.csv`);
+        dispatch(addToast({ title: 'Export Successful', message: 'CSV file has been saved.', type: 'success' }));
     };
 
     const handleImportCSV = () => {
@@ -1142,7 +1137,7 @@ const Finance = () => {
         setExpenseFormData({ description: '', amount: '', category: 'Power', type: 'company', requester: '', date: '' });
     };
 
-    const handleExportPDF = () => {
+    const handleExportPDF = async () => {
         const doc = new jsPDF();
         doc.setFontSize(18);
         doc.text('Expense Management Report', 14, 20);
@@ -1175,8 +1170,8 @@ const Finance = () => {
             alternateRowStyles: { fillColor: [245, 245, 245] }
         });
 
-        doc.save(`expense_report_${new Date().toISOString().slice(0,10)}.pdf`);
-        dispatch(addToast({title:'Export Successful', message:'Expense report downloaded as PDF', type:'success'}));
+        await savePdfDoc(doc, `expense_report_${new Date().toISOString().slice(0,10)}.pdf`);
+        dispatch(addToast({title:'Export Successful', message:'Expense report saved as PDF', type:'success'}));
     };
 
     const handleEditExpense = (e, exp) => {
@@ -1259,7 +1254,7 @@ const Finance = () => {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`${selectedInvoice.id}_Invoice.pdf`);
+            await savePdfDoc(pdf, `${selectedInvoice.id}_Invoice.pdf`);
 
             dispatch(addToast({ title: 'Download Complete', message: `Invoice ${selectedInvoice.id} has been saved.`, type: 'success' }));
         } catch (error) {
@@ -1268,7 +1263,7 @@ const Finance = () => {
         }
     };
 
-    const handleDownloadReceipt = () => {
+    const handleDownloadReceipt = async () => {
         if (!selectedExpense) return;
         const doc = new jsPDF();
         
@@ -1317,8 +1312,8 @@ const Finance = () => {
         doc.setTextColor(148, 163, 184); // slate-400
         doc.text('DevelopSuite - Automated Finance System', 20, 280);
 
-        doc.save(`receipt_EXP-${selectedExpense.id}.pdf`);
-        dispatch(addToast({ title: 'Download Started', message: 'Receipt downloaded successfully.', type: 'success' }));
+        await savePdfDoc(doc, `receipt_EXP-${selectedExpense.id}.pdf`);
+        dispatch(addToast({ title: 'Download Started', message: 'Receipt saved successfully.', type: 'success' }));
     };
 
     const handleViewInvoice = (inv) => {

@@ -7,6 +7,7 @@ import Button from '../../../../components/common/Button/Button';
 import { clientsService } from '../../../../services/clientsService';
 import { projectService } from '../../../../services/projectService';
 import './InvoiceBuilder.css';
+import { savePdfDoc } from '../../../../utils/nativeFiles';
 
 const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
     const currency = useSelector(state => state.ui.currency) || 'PKR';
@@ -224,7 +225,7 @@ const InvoiceBuilder = ({ isOpen, onClose, onSave }) => {
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`${invoiceData.invoiceNumber}.pdf`);
+            await savePdfDoc(pdf, `${invoiceData.invoiceNumber}.pdf`);
 
             // Also save to the invoices list
             handleSaveInvoice();

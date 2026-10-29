@@ -77,9 +77,14 @@
 }
 
 .workspace-switcher__icon {
-    width: 28px;
-    height: 28px;
-    background: transparent;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -544,6 +549,12 @@
     background: rgba(255, 255, 255, 0.08);
 }
 
+[data-theme="dark"] .workspace-switcher__icon {
+    background: #fff;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
 [data-theme="dark"] .workspace-switcher__name {
     color: rgba(255, 255, 255, 0.9);
 }
@@ -715,6 +726,16 @@
     [data-theme='dark'] .sidebar {
         background: #090A0E !important;
         border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Clear the device status bar / notch so the DevelopWork logo + name
+       are never tucked under the phone's clock and battery. */
+    .sidebar__header {
+        height: auto !important;
+        min-height: var(--topbar-height) !important;
+        padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+        padding-bottom: 8px !important;
+        align-items: center !important;
     }
 
     .sidebar.collapsed {

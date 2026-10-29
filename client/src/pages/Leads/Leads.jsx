@@ -18,6 +18,7 @@ import {
     Calendar, DollarSign, GripVertical, Download, Upload, FileJson, X
 } from 'lucide-react';
 import './Leads.css';
+import { saveTextFile } from '../../utils/nativeFiles';
 
 const isUuid = (id) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
@@ -258,7 +259,7 @@ const Leads = () => {
         }
     };
 
-    const handleExportLeads = () => {
+    const handleExportLeads = async () => {
         const headers = ['Name', 'Company', 'Contact', 'Email', 'Phone', 'Stage', 'Value', 'Priority', 'Location'];
         const csvRows = [headers.join(',')];
         
@@ -268,29 +269,16 @@ const Leads = () => {
         });
 
         const csvContent = csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        await saveTextFile(csvContent, `leads_export_${new Date().toISOString().split('T')[0]}.csv`);
         dispatch(addToast({ title: 'Export Successful', message: 'Leads data exported to CSV.', type: 'success' }));
     };
 
-    const downloadTemplate = () => {
+    const downloadTemplate = async () => {
         const headers = ['Name', 'Company', 'Contact', 'Email', 'Phone', 'Stage', 'Value', 'Priority', 'Location'];
         const exampleRow = ['Example Corp', 'Example Inc', 'John Doe', 'john@example.com', '+1 555-0000', 'New', '50000', 'High', 'New York'];
         const csvContent = [headers.join(','), exampleRow.join(',')].join('\n');
-        
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'leads_import_template.csv');
-        link.click();
+
+        await saveTextFile(csvContent, 'leads_import_template.csv');
         dispatch(addToast({ title: 'Template Downloaded', message: 'Please follow the format for importing.', type: 'info' }));
     };
 

@@ -32,4 +32,20 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Camera (take profile photo / insert images) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Reading images from the gallery -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Saving downloaded files (PDF / CSV) on older Android -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>

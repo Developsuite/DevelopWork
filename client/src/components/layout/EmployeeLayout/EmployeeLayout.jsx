@@ -205,7 +205,7 @@ const EmployeeLayout = () => {
             <aside className={`employee-sidebar ${mobileNavOpen ? 'open' : ''}`}>
                 <div className="employee-sidebar__header">
                     <div className="employee-sidebar__logo">
-                        <img src="/images/logo.png" alt="Logo" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                        <img src="/images/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     </div>
                     <div className="employee-sidebar__brand">
                         <div className="employee-sidebar__brand-name">{wsName}</div>

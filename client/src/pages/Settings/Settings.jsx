@@ -43,6 +43,7 @@ import {
     Unplug,
 } from 'lucide-react';
 import './Settings.css';
+import { pickImageNative, isNativeApp } from '../../utils/nativeCamera';
 
 const moduleIconMap = {
     projects: LayoutGrid,
@@ -522,8 +523,7 @@ const Settings = () => {
         }
     }, [user]);
 
-    const handleAvatarChange = (e) => {
-        const file = e.target.files[0];
+    const processAvatarFile = (file) => {
         if (!file) return;
 
         if (file.size > 800 * 1024) {
@@ -539,6 +539,25 @@ const Settings = () => {
             }));
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleAvatarChange = (e) => {
+        processAvatarFile(e.target.files[0]);
+    };
+
+    // On the native app, let the user take a photo or pick from the gallery.
+    // On web, fall back to the hidden file input.
+    const handleChangeAvatar = async () => {
+        if (isNativeApp()) {
+            try {
+                const file = await pickImageNative({ source: 'prompt', quality: 70, width: 512 });
+                if (file) processAvatarFile(file);
+            } catch {
+                // user cancelled or denied permission — no-op
+            }
+            return;
+        }
+        document.getElementById('avatar-file-input')?.click();
     };
 
     const handleUpdateProfile = async () => {
@@ -664,10 +683,10 @@ const Settings = () => {
                                         style={{ display: 'none' }} 
                                         onChange={handleAvatarChange} 
                                     />
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        onClick={() => document.getElementById('avatar-file-input').click()}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleChangeAvatar}
                                     >
                                         Change Avatar
                                     </Button>

@@ -25,6 +25,7 @@ import hr4 from '../../assets/hr/4.png';
 import vectorCeo from '../../assets/hr/vector_ceo.png';
 import vectorEmployee from '../../assets/hr/vector_employee.png';
 import './HR.css';
+import { savePdfDoc, saveTextFile } from '../../utils/nativeFiles';
 
 const HR = () => {
     const dispatch = useDispatch();
@@ -564,7 +565,7 @@ const HR = () => {
         return role.includes('ceo') || role.includes('chief executive') ? vectorCeo : vectorEmployee;
     };
 
-    const handleExportDirectory = () => {
+    const handleExportDirectory = async () => {
         const headers = ['Name', 'Role', 'Department', 'Type', 'Status', 'Location', 'Salary', 'Commission', 'Email', 'Phone', 'Manager'];
         const csvContent = [
             headers.join(','),
@@ -575,12 +576,8 @@ const HR = () => {
             ].join(','))
         ].join('\n');
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `employee_directory_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        
+        await saveTextFile(csvContent, `employee_directory_${new Date().toISOString().split('T')[0]}.csv`);
+
         dispatch(addToast({ title: 'Export Complete', message: 'Employee directory exported to CSV successfully.', type: 'success' }));
     };
 
@@ -631,7 +628,7 @@ const HR = () => {
             });
 
             pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-            pdf.save(`organization_hierarchy_${new Date().toISOString().split('T')[0]}.pdf`);
+            await savePdfDoc(pdf, `organization_hierarchy_${new Date().toISOString().split('T')[0]}.pdf`);
             
             dispatch(addToast({ title: 'Success', message: 'Org Chart exported to PDF successfully.', type: 'success' }));
         } catch (err) {
@@ -792,7 +789,7 @@ const HR = () => {
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: [canvas.width / 2, canvas.height / 2] });
                 pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
-                pdf.save(`payroll_report_${payrollMonth.replace(' ', '_')}.pdf`);
+                await savePdfDoc(pdf, `payroll_report_${payrollMonth.replace(' ', '_')}.pdf`);
             }
 
             dispatch(addToast({ title: 'Payroll Processed', message: `Successfully processed ${currLabel}${totalNetPay.toLocaleString()} and generated PDF.`, type: 'success' }));

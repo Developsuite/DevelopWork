@@ -22,6 +22,8 @@ import tpl5 from '../../assets/templates/5.png';
 import tpl6 from '../../assets/templates/6.png';
 import './Docs.css';
 import html2pdf from 'html2pdf.js';
+import { saveBlob, isNativeApp } from '../../utils/nativeFiles';
+import { pickImageNative } from '../../utils/nativeCamera';
 
 const cleanInvisibleText = (html) => {
     if (!html) return html;
@@ -316,8 +318,13 @@ const Docs = () => {
 
         dispatch(addToast({ title: 'Exporting...', message: 'Generating PDF, please wait.', type: 'info' }));
 
-        html2pdf().set(opt).from(container).save().then(() => {
-            dispatch(addToast({ title: 'PDF Exported', message: `${selectedDoc.title}.pdf has been downloaded.`, type: 'success' }));
+        const worker = html2pdf().set(opt).from(container);
+        const exportPromise = isNativeApp()
+            ? worker.outputPdf('blob').then((blob) => saveBlob(blob, opt.filename))
+            : worker.save();
+
+        exportPromise.then(() => {
+            dispatch(addToast({ title: 'PDF Exported', message: `${selectedDoc.title}.pdf has been saved.`, type: 'success' }));
         }).catch((err) => {
             dispatch(addToast({ title: 'Export Failed', message: err.message || 'Could not generate PDF.', type: 'error' }));
         });
@@ -1258,7 +1265,13 @@ const Docs = () => {
                 break;
             }
             case 'image':
-                fileInputRef.current?.click();
+                if (isNativeApp()) {
+                    pickImageNative({ source: 'prompt', quality: 75, width: 1280 })
+                        .then((file) => { if (file) insertImageFile(file); })
+                        .catch(() => { /* cancelled / denied */ });
+                } else {
+                    fileInputRef.current?.click();
+                }
                 return;
             case 'link': {
                 const url = prompt('Enter URL:');
@@ -1273,8 +1286,7 @@ const Docs = () => {
         handleEditorInput();
     };
 
-    const handleImageUpload = (e) => {
-        const file = e.target.files?.[0];
+    const insertImageFile = (file) => {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -1283,6 +1295,11 @@ const Docs = () => {
             handleEditorInput();
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files?.[0];
+        insertImageFile(file);
         e.target.value = '';
     };
 
