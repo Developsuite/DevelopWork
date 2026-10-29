@@ -14,6 +14,28 @@
   box-sizing: border-box;
 }
 
+/* ---- Native / Capacitor tap-highlight fix ----
+   The WebView shows a blue rectangle on every tap by default.
+   Kill it globally so buttons, nav items, list rows, cards — everything —
+   respond instantly and visually cleanly. */
+a,
+button,
+[role="button"],
+input,
+label,
+select,
+textarea,
+summary,
+[tabindex] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;   /* iOS: disable "open in new tab" popup on long-press links */
+}
+
+/* Prevent the entire body from showing a tap rectangle on stray taps */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ---- Design Tokens ---- */
 :root {
   /* Primary Blue Palette */
