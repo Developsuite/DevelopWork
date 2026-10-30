@@ -14,7 +14,7 @@ const isItemActive = (item, location) => {
     return item.end ? location.pathname === itemPath : location.pathname.startsWith(itemPath);
 };
 
-const MobileBottomNav = ({ items = [], homeItem, settingsItem, onMore, accentColor }) => {
+const MobileBottomNav = ({ items = [], homeItem, settingsItem, onMore, notifItem, accentColor }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -29,7 +29,11 @@ const MobileBottomNav = ({ items = [], homeItem, settingsItem, onMore, accentCol
     shortcuts.forEach((item, i) => slots.push({ key: `shortcut-${i}`, item, position: `shortcut-${i}` }));
     if (homeItem) slots.push({ key: 'home', item: homeItem, position: 'home' });
     if (settingsItem) slots.push({ key: 'settings', item: settingsItem, position: 'settings' });
-    slots.push({ key: 'more', item: { label: 'More', onClick: onMore, icon: MoreHorizontal }, position: 'more' });
+    // If a notification item is provided use it as the 5th slot, otherwise fall back to More
+    const lastItem = notifItem
+        ? { key: 'notif', item: notifItem, position: 'notif' }
+        : { key: 'more', item: { label: 'More', onClick: onMore, icon: MoreHorizontal }, position: 'more' };
+    slots.push(lastItem);
 
     // The active item is any item (including Home) whose path matches the route.
     const activeKey = (() => {

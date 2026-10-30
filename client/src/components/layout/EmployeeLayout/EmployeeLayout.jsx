@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { signOutUser, updateUser } from '../../../store/slices/authSlice';
@@ -21,11 +21,23 @@ import {
     ExternalLink,
     Video,
     Menu,
-    X
+    X,
+    Bell,
+    LayoutGrid,
+    CheckCheck,
+    CheckCircle2,
+    Trash2,
 } from 'lucide-react';
 import { permissionsService } from '../../../services/permissionsService';
 import { supabase } from '../../../lib/supabase';
+import {
+    fetchNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    deleteNotification,
+} from '../../../store/slices/notificationsSlice';
 import MobileBottomNav from '../MobileBottomNav/MobileBottomNav';
+import '../TopBar/TopBar.css';
 import './EmployeeLayout.css';
 
 const navItems = [
@@ -50,10 +62,50 @@ const EmployeeLayout = () => {
     const location = useLocation();
     const { user } = useSelector((state) => state.auth);
     const theme = useSelector((state) => state.ui.theme);
+    const notifications = useSelector((state) => state.notifications?.items || []);
+    const unreadCount = notifications.filter((n) => !n.read).length;
 
     const [wsName, setWsName] = useState(() => localStorage.getItem('dw-workspace-name') || 'DevelopWork');
     const [permittedModules, setPermittedModules] = useState(() => permissionsService.getAccessibleModules(user));
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const [notifOpen, setNotifOpen] = useState(false);
+    const notifDropRef = useRef(null);
+
+    // Load notifications on mount
+    useEffect(() => {
+        if (user?.id) dispatch(fetchNotifications(user.id));
+    }, [user?.id, dispatch]);
+
+    // Click-outside closes notification dropdown
+    useEffect(() => {
+        if (!notifOpen) return;
+        const handler = (e) => {
+            if (notifDropRef.current && !notifDropRef.current.contains(e.target)) {
+                setNotifOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [notifOpen]);
+
+    const handleMarkRead = useCallback((id) => dispatch(markNotificationRead(id)), [dispatch]);
+    const handleMarkAllRead = useCallback(() => {
+        if (user?.id) dispatch(markAllNotificationsRead(user.id));
+    }, [dispatch, user?.id]);
+    const handleDeleteNotif = useCallback((e, id) => {
+        e.stopPropagation();
+        dispatch(deleteNotification(id));
+    }, [dispatch]);
+
+    const timeAgo = (dateStr) => {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const m = Math.floor(diff / 60000);
+        if (m < 1) return 'just now';
+        if (m < 60) return `${m}m ago`;
+        const h = Math.floor(m / 60);
+        if (h < 24) return `${h}h ago`;
+        return `${Math.floor(h / 24)}d ago`;
+    };
 
     // Close the mobile drawer whenever the route changes
     useEffect(() => {
@@ -168,14 +220,18 @@ const EmployeeLayout = () => {
         docs: 'Docs',
         meetings: 'Meetings',
     };
+    // Module shortcuts — use path so the floating circle moves to them when active
     const moduleShortcuts = permittedModules.slice(0, 2).map((mod) => ({
         label: mobileModuleLabels[mod.key] || mod.label,
         path: `/${mod.key}`,
         icon: modIconMap[mod.key] || FolderKanban,
     }));
+
+    // Fill 2 middle slots: prefer module shortcuts, fall back to tasks / menu
     const myTasksShortcut = {
         label: 'My Tasks',
         icon: CheckSquare,
+        path: '/employee/dashboard',
         isActive: () => false,
         onClick: () => {
             navigate('/employee/dashboard');
@@ -184,14 +240,25 @@ const EmployeeLayout = () => {
             }, 120);
         },
     };
-    const mobileItems = moduleShortcuts.length >= 2
-        ? moduleShortcuts
-        : moduleShortcuts.length === 1
-            ? [moduleShortcuts[0], myTasksShortcut]
-            : [
-                myTasksShortcut,
-                { label: 'Workspaces', icon: Briefcase, isActive: () => false, onClick: () => setMobileNavOpen(true) },
-            ];
+
+    const moreShortcut = {
+        label: 'More',
+        icon: LayoutGrid,
+        onClick: () => setMobileNavOpen(true),
+    };
+
+    let slot1, slot2;
+    if (moduleShortcuts.length >= 2) {
+        [slot1, slot2] = moduleShortcuts;
+    } else if (moduleShortcuts.length === 1) {
+        slot1 = moduleShortcuts[0];
+        slot2 = myTasksShortcut;
+    } else {
+        slot1 = myTasksShortcut;
+        slot2 = moreShortcut;
+    }
+
+    const mobileItems = [slot1, slot2];
 
     return (
         <div className="employee-layout">
@@ -327,6 +394,67 @@ const EmployeeLayout = () => {
                                 <span>{user.department}</span>
                             </div>
                         )}
+
+                        {/* Notification bell */}
+                        <div className="topbar__notif-wrap" ref={notifDropRef}>
+                            <button
+                                className={`topbar__icon-btn ${notifOpen ? 'active' : ''}`}
+                                title="Notifications"
+                                onClick={() => setNotifOpen((v) => !v)}
+                            >
+                                <Bell size={19} />
+                                {unreadCount > 0 && (
+                                    <span className="topbar__badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                                )}
+                            </button>
+
+                            {notifOpen && (
+                                <div className="notif-dropdown">
+                                    <div className="notif-dropdown__header">
+                                        <span className="notif-dropdown__title">Notifications</span>
+                                        {unreadCount > 0 && (
+                                            <button className="notif-dropdown__mark-all" onClick={handleMarkAllRead}>
+                                                <CheckCheck size={13} />
+                                                Mark all read
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="notif-dropdown__list">
+                                        {notifications.length === 0 ? (
+                                            <div className="notif-dropdown__empty">
+                                                <Bell size={28} strokeWidth={1.5} />
+                                                <p>No notifications yet</p>
+                                            </div>
+                                        ) : (
+                                            notifications.map((n) => (
+                                                <div
+                                                    key={n.id}
+                                                    className={`notif-item ${n.read ? '' : 'notif-item--unread'}`}
+                                                    onClick={() => !n.read && handleMarkRead(n.id)}
+                                                >
+                                                    <div className="notif-item__icon">
+                                                        <CheckCircle2 size={16} />
+                                                    </div>
+                                                    <div className="notif-item__body">
+                                                        <p className="notif-item__title">{n.title}</p>
+                                                        <p className="notif-item__message">{n.message}</p>
+                                                        <span className="notif-item__time">{timeAgo(n.created_at)}</span>
+                                                    </div>
+                                                    <button
+                                                        className="notif-item__delete"
+                                                        onClick={(e) => handleDeleteNotif(e, n.id)}
+                                                        title="Dismiss"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="employee-topbar__user">
                             <Avatar name={user?.name || 'E'} src={user?.avatar} size="xs" />
                             <span>{user?.name ? user.name.split(' ')[0] : 'User'}</span>
@@ -343,6 +471,12 @@ const EmployeeLayout = () => {
                 homeItem={{ label: 'Home', path: '/employee/dashboard', icon: Home, end: true }}
                 settingsItem={{ label: 'Settings', path: '/employee/settings', icon: Settings }}
                 onMore={() => setMobileNavOpen(true)}
+                notifItem={{
+                    label: 'Alerts',
+                    icon: Bell,
+                    badge: unreadCount || 0,
+                    onClick: () => setNotifOpen((v) => !v),
+                }}
             />
         </div>
     );
